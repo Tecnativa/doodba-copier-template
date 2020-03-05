@@ -1,0 +1,83 @@
+version: "2.4"
+
+services:
+  odoo:
+    extends:
+      file: common.yaml
+      service: odoo
+    env_file:
+      - .docker/odoo.env
+      - .docker/db-access.env
+    environment:
+      DOODBA_ENVIRONMENT: "${DOODBA_ENVIRONMENT-test}"
+      # To install demo data export DOODBA_WITHOUT_DEMO=false
+      WITHOUT_DEMO: "${DOODBA_WITHOUT_DEMO-all}"
+      SMTP_PORT: "1025"
+      SMTP_SERVER: smtplocal
+    restart: unless-stopped
+    depends_on:
+      - db
+      - smtp
+    networks:
+      default:
+      globalwhitelist_shared:
+    {%- if odoo_proxy == "traefik" %}
+      inverseproxy_shared:
+    labels:
+      traefik.frontend.headers.customResponseHeaders: "X-Robots-Tag:noindex, nofollow"
+      traefik.longpolling.frontend.rule: "Host:${DOMAIN_TEST};PathPrefix:/longpolling/"
+      traefik.www.frontend.rule: "Host:${DOMAIN_TEST}"
+    {%- endif %}
+    command:
+      - odoo
+      - --workers=2
+      - --max-cron-threads=1
+
+  db:
+    extends:
+      file: common.yaml
+      service: db
+    env_file:
+      - .docker/db-creation.env
+    restart: unless-stopped
+
+  smtp:
+    image: mailhog/mailhog
+    restart: unless-stopped
+    networks:
+      default:
+        aliases:
+          - smtplocal
+    {%- if odoo_proxy == "traefik" %}
+      inverseproxy_shared:
+    labels:
+      traefik.docker.network: "inverseproxy_shared"
+      traefik.enable: "true"
+      traefik.frontend.passHostHeader: "true"
+      traefik.frontend.rule: "Host:${DOMAIN_TEST};PathPrefixStrip:/smtpfake/"
+      traefik.port: "8025"
+    {%- endif %}
+    volumes:
+      - "smtpconf:/etc/mailhog:ro,z"
+    entrypoint: [sh, -c]
+    command:
+      - test -r /etc/mailhog/auth && export MH_AUTH_FILE=/etc/mailhog/auth; exec MailHog
+
+networks:
+  default:
+    internal: true
+    driver_opts:
+      encrypted: 1
+
+  globalwhitelist_shared:
+    external: true
+  {%- if odoo_proxy == "traefik" %}
+
+  inverseproxy_shared:
+    external: true
+  {%- endif %}
+
+volumes:
+  filestore:
+  db:
+  smtpconf:

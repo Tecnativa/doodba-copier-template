@@ -1,0 +1,36 @@
+[tool.poetry]
+authors = ["Jairo Llopis <jairo.llopis@tecnativa.com>"]
+description = "Copier template to maintain Doodba integration projects"
+license = "BSL-1.0"
+name = "doodba-copier-template"
+version = "0.1.0"
+
+[tool.poetry.dependencies]
+# TODO Use versioned copier after v3.0.0 is released
+# HACK https://github.com/pykong/copier/issues/112
+copier = {version = "^3.0.0-alpha.6", allow-prereleases = true}
+plumbum = "^1.6.8"
+python = "^3.6"
+
+[tool.poetry.dev-dependencies]
+black = "^19.10b0"
+docker-compose = "^1.25.4"
+flake8 = "^3.7.9"
+invoke = "^1.4.1"
+pre-commit = "^2.1.0"
+pylint = "^2.4.4"
+pytest = "^5.3.5"
+pytest-xdist = "^1.31.0"
+
+[tool.isort]
+# See https://github.com/psf/black
+combine_as_imports = true
+force_grid_wrap = 0
+include_trailing_comma = true
+line_length = 88
+multi_line_output = 3
+use_parentheses = true
+
+[build-system]
+build-backend = "poetry.masonry.api"
+requires = ["poetry>=0.12"]
