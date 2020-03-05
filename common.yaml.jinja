@@ -1,0 +1,43 @@
+version: "2.4"
+
+services:
+  odoo:
+    {%- if odoo_oci_image %}
+    image: $ODOO_IMAGE:$ODOO_MINOR
+    {%- endif %}
+    build:
+      context: ./odoo
+      args:
+        ODOO_VERSION: $ODOO_MINOR
+        UID: "${UID:-1000}"
+        GID: "${GID:-1000}"
+    environment:
+      EMAIL_FROM: "$SMTP_DEFAULT_FROM"
+      PGDATABASE: {{ postgres_dbname }}
+      PGUSER: {{ postgres_username }}
+      DB_FILTER: "$DB_FILTER"
+      PROXY_MODE: "$ODOO_PROXY_MODE"
+    hostname: "$SMTP_REAL_NON_CANONICAL_DEFAULT"
+    tty: true
+    volumes:
+      - filestore:/var/lib/odoo:z
+    {%- if odoo_proxy == "traefik" %}
+    labels:
+      traefik.backend.buffering.retryExpression: IsNetworkError() && Attempts() < 5
+      traefik.docker.network: "inverseproxy_shared"
+      traefik.enable: "true"
+      traefik.frontend.passHostHeader: "true"
+      traefik.longpolling.port: "8072"
+      traefik.port: "8069"
+    {%- endif %}
+
+  db:
+    image: tecnativa/postgres-autoconf:${DB_VERSION}-alpine
+    shm_size: 512mb
+    environment:
+      POSTGRES_DB: {{ postgres_dbname }}
+      POSTGRES_USER: {{ postgres_username }}
+      CONF_EXTRA: |
+        work_mem = 32MB
+    volumes:
+      - db:/var/lib/postgresql/data:z

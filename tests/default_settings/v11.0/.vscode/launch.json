@@ -1,0 +1,33 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run in debug mode and attach",
+      "type": "python",
+      "request": "attach",
+      "preLaunchTask": "Start project in debug mode",
+      "postDebugTask": "Stop project",
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceRoot}/odoo",
+          "remoteRoot": "/opt/odoo"
+        }
+      ],
+      "port": 6899,
+      "host": "localhost"
+    },
+    {
+      "name": "Attach to running container",
+      "type": "python",
+      "request": "attach",
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceRoot}/odoo",
+          "remoteRoot": "/opt/odoo"
+        }
+      ],
+      "port": 6899,
+      "host": "localhost"
+    }
+  ]
+}

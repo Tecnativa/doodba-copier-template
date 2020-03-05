@@ -1,0 +1,31 @@
+name: lint
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install python
+        uses: actions/setup-python@v1
+      - name: Generate cache key PY
+        run:
+          echo "::set-env name=PY::$(python --version --version | sha256sum | cut -d' '
+          -f1)"
+      - uses: actions/cache@v1
+        with:
+          path: .venv
+          key: venv|${{ env.PY }}|${{ hashFiles('poetry.lock') }}
+      - uses: actions/cache@v1
+        with:
+          path: ~/.cache
+          key:
+            pre-commit|${{ env.PY }}|${{ hashFiles('poetry.lock') }}|${{
+            hashFiles('.pre-commit-config.yaml') }}
+      - run: pip install invoke poetry
+      - run: invoke develop
+      - run: invoke lint

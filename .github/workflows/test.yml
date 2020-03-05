@@ -1,0 +1,48 @@
+name: test
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - 3.6
+          - 3.7
+          - 3.8
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install Docker
+        uses: docker-practice/actions-setup-docker@0.0.1
+      - name: Install Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Generate cache key PY for python ${{ matrix.python-version }}
+        run:
+          echo "::set-env name=PY::$(python --version --version | sha256sum | cut -d' '
+          -f1)"
+      - uses: actions/cache@v1
+        with:
+          path: .venv
+          key: venv|${{ env.PY }}|${{ hashFiles('poetry.lock') }}
+      - uses: actions/cache@v1
+        with:
+          path: ~/.cache
+          key:
+            pre-commit|${{ env.PY }}|${{ hashFiles('poetry.lock') }}|${{
+            hashFiles('.pre-commit-config.yaml') }}
+      - run: git config --global user.name CI
+      - run: git config --global user.email CI@GITHUB
+      - run: pip install invoke poetry
+      - run: invoke develop
+      # Precreate shared networks to avoid race conditions
+      - run: docker network create inverseproxy_shared
+      - run: docker network create globalwhitelist_shared
+      - run: invoke test --verbose
+        env:
+          QA_TEST: 1

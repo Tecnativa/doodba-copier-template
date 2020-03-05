@@ -1,0 +1,8 @@
+#jinja2: lstrip_blocks: "true", trim_blocks: "true"
+{%- if backup_aws_access_key_id %}
+AWS_ACCESS_KEY_ID={{ backup_aws_access_key_id }}
+{%- endif %}
+{%- if backup_aws_secret_access_key %}
+AWS_SECRET_ACCESS_KEY={{ backup_aws_secret_access_key }}
+{%- endif %}
+PASSPHRASE={{ backup_passphrase }}

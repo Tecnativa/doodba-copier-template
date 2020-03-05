@@ -1,0 +1,10 @@
+{
+  "folders": [
+    {
+      "path": "odoo/custom/src/private"
+    },
+    {
+      "path": "."
+    }
+  ]
+}

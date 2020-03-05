@@ -1,0 +1,374 @@
+# Configure jinja2 defaults to make syntax highlighters lives easier
+_templates_suffix: .jinja
+_envops:
+  block_end_string: "%}"
+  block_start_string: "{%"
+  comment_end_string: "#}"
+  comment_start_string: "{#"
+  keep_trailing_newline: true
+  variable_end_string: "}}"
+  variable_start_string: "{{"
+
+# Other Copier configurations
+_exclude:
+  - /.git
+  - /.github
+  - /.gitmodules
+  - /**.pyc
+  - /**.pyo
+  - /copier.yml
+  - /COPYING
+  - /docs
+  - /poetry.lock
+  - /pyproject.toml
+  - /scripts
+  - /tasks_downstream.py
+  - /tests
+  - /vendor
+
+_skip_if_exists:
+  - odoo/custom/src/addons.yaml
+  - odoo/custom/src/repos.yaml
+  - odoo/custom/src/private/*/
+
+_tasks:
+  - python3 -m invoke develop
+
+# Questions for the user
+project_name:
+  type: str
+  help: What's your project name?
+  default: myproject-odoo
+
+project_license:
+  help: >-
+    It's important to use a good license for your project.
+
+    In https://choosealicense.com/ you can read details about most common FOSS ones. In
+    https://www.odoo.com/documentation/user/13.0/legal/licenses/licenses.html you can
+    find other propietary licenses we support in this scaffolding. Make a wise choice!
+
+    So, what's your project's license?
+  default: BSL-1.0
+  choices:
+    No license: null
+    Apache License 2.0: Apache-2.0
+    Boost Software License 1.0: BSL-1.0
+    GNU Affero General Public License (AGPL) 3.0 or later: AGPL-3.0-or-later
+    GNU Library or "Lesser" General Public License (LGPL) 3.0 or later: LGPL-3.0-or-later
+    MIT license: MIT
+    Odoo Enterprise Edition License v1.0: OEEL-1.0
+    Odoo Proprietary License v1.0: OPL-1.0
+
+gitlab_host:
+  type: str
+  help: >-
+    If you host this project in Gitlab, then please enter here the host URL.
+
+    It must have no trailing slash.
+
+    💡 If you don't use Gitlab, leave this empty and ignore all other Gitlab questions.
+
+    Example: If you project is in https://gitlab.com/Tecnativa/your-doodba-project, then
+    the correct value here is `https://gitlab.com`.
+
+gitlab_org:
+  type: str
+  default: Tecnativa
+  help: >-
+    If you host this project in Gitlab, then please enter here the organization name.
+
+    Example: If you project is in https://gitlab.com/Tecnativa/your-doodba-project, then
+    the correct value here is `Tecnativa`.
+
+gitlab_project:
+  type: str
+  default: your-doodba-project
+  help: >-
+    If you host this project in Gitlab, then please enter here the project name.
+
+    Example: If you project is in https://gitlab.com/Tecnativa/your-doodba-project, then
+    the correct value here is `your-doodba-project`.
+
+gitlab_ci_templates_project:
+  type: str
+  default: ci-templates
+  help: >-
+    Gitlab CI lets you include repeated instructions in a template. See
+    https://docs.gitlab.com/ee/ci/yaml/#includefile to understand how.
+
+    If you share gitlab CI templates in a project in your gitlab instance, tell me that
+    project's name here. We assume it is under the same organization that the doodba
+    project.
+
+    Example: If you project is in https://gitlab.com/Tecnativa/your-doodba-project and
+    the shared templates exist in https://gitlab.com/Tecnativa/ci-templates then the
+    correct value for this variable is `ci-templates`.
+
+gitlab_ci_templates_path:
+  type: str
+  default: /doodba/main.yml
+  help: >-
+    If you use a shared template, then tell me where to find it in the project you
+    specified before.
+
+domain_prod:
+  type: str
+  help: >-
+    Write the main production domain for this project. Only the domain, no protocol or
+    things like that.
+
+    Example: www.example.com
+
+domain_prod_alternatives:
+  help: >-
+    Write a list of alternative domains that should produce a 301 redirection to the
+    main domain.
+
+    Example: [example.com, www.example.org, example.org]
+
+domain_test:
+  type: str
+  help: >-
+    Write the test domain for this project. Only the domain, no protocol or things like
+    that.
+
+    Example: demo.example.com
+
+odoo_version:
+  help: On which odoo version is it based?
+  type: float
+  default: 13.0
+  choices:
+    - 7.0
+    - 8.0
+    - 9.0
+    - 10.0
+    - 11.0
+    - 12.0
+    - 13.0
+
+odoo_initial_lang:
+  default: en_US
+  type: str
+  help: >-
+    If you want to initialize Odoo automatically in a specific language, write it here.
+    The format must be ll_CC where ll is the language code and CC is the country code.
+
+    Examples: en_US, es_ES, es_VE...
+
+odoo_oci_image:
+  type: str
+  help: >-
+    If you are using an OCI/Docker image registry (such as the Docker Hub, Quay or
+    Gitlab registry) to publish the Odoo images that will be built with this Doodba
+    project, specify here the path to the odoo image built with it. Leave it empty if
+    you are not using a registry.
+
+    Example: docker.io/myteam/example-odoo
+
+odoo_listdb:
+  default: false
+  type: bool
+  help: >-
+    Do you want to list databases publicly?
+
+odoo_admin_password:
+  secret: true
+  default: example-admin-password
+  type: str
+  help: >-
+    💡 To auto-generate strong passwords, see https://ddg.gg/?q=password+64+strong
+
+    ⚠️ This password is critical for security, especially if you have set odoo_listdb to
+    true, so keep it safe.
+
+    What will be your odoo admin password?
+
+odoo_dbfilter:
+  default: ".*"
+  type: str
+  help: >-
+    Set your Odoo db filter. It must be a regexp that matches the domain name being
+    visited. It is useful if you use Odoo in SaaS mode.
+
+odoo_proxy:
+  default: traefik
+  choices:
+    No proxy (dangerous for production): null
+    Traefik: traefik
+    Other proxy (it's up to you!): other
+  help: >-
+    ⚠️ Using a misconfigured proxy for production can create a security hole. Using none
+    can create performance problems.
+
+    Which proxy will you use to deploy odoo?
+
+postgres_version:
+  default: 12
+  help: >-
+    Which PostgreSQL version do you want to deploy?
+  choices:
+    I will use an external PostgreSQL server: null
+    "9.6": 9.6
+    "10": 10
+    "11": 11
+    "12": 12
+
+postgres_username:
+  type: str
+  default: odoo
+  help: >-
+    Which user name will be used to connect to the postgres server?
+
+postgres_dbname:
+  type: str
+  default: prod
+  help: >-
+    💡 If database names differ among environments, operations like restoring a database
+    from an alien environment will be harder to maintain, but can provide additional
+    security. It's up to you. We default to "prod" for historical reasons.
+
+    What is going to be the main database name?
+
+postgres_password:
+  secret: true
+  default: example-db-password
+  type: str
+  help: >-
+    What will be your postgres user password?
+
+smtp_default_from:
+  type: str
+  help: >-
+    Now, let's start configuring outgoing mail.
+
+    In case an email coming out from odoo doesn't have a valid `From:` header address,
+    which address should be the default one that sends the email?
+
+smtp_relay_host:
+  type: str
+  help: >-
+    ⚠️ If you leave this answer empty, all next SMTP settings will be ignored.
+
+    If you supply a valid SMTP host, production Odoo will be able to send emails without
+    needing to configure any `ir.mail_server` record, because Doodba will configure it
+    to use a mail relay that will manage a local mail queue before sending it to the
+    real SMTP endpoint (saving your mails from bad network conditions). The same relay
+    will be used to send backup reports.
+
+    So, what is your SMTP host?
+
+    Example: mail.example.com
+
+smtp_relay_port:
+  type: int
+  default: 587
+  help: >-
+    Indicate the port to connect in the SMTP server you just defined.
+
+smtp_relay_user:
+  type: str
+  help: >-
+    Indicate the user to connect in the SMTP server you just defined.
+
+    For Odoo to work fine, this user needs to be able to do mail spoofing.
+
+smtp_relay_password:
+  secret: true
+  type: str
+  default: example-smtp-password
+  help: >-
+    What is your SMTP password?
+
+smtp_canonical_default:
+  type: str
+  help: >-
+    Usually, if you send mails like "user@example.com", the canonical domain would be
+    "example.com".
+
+    This canonical domain should have correct SPF, DKIM and DMARC settings that allow
+    the SMTP host to send mails in its name.
+
+    When Odoo tries to send a mail that does not come from a canonical domain, the
+    domain you indicate here will be used when rewriting the address with SRS
+    (https://en.wikipedia.org/wiki/SRS).
+
+    What's your canonical domain?
+
+smtp_canonical_domains:
+  help: >-
+    Supply a list of other domains authorized to send email from this Odoo instance and
+    SMTP host. They will not be affected by SRS. They also must have valid SPF, DKIM and
+    DMARC settings.
+
+    You do not need to repeat the canonical domain you indicated above.
+
+    Example: [examplemail.com, example.org]
+
+backup_dst:
+  type: str
+  help: >-
+    If you want to use an Amazon S3 bucket, write its URL like
+    `s3://s3.amazonaws.com/example-bucket/example/path` to make sure it works fine.
+
+    If you want to use any other backend, supply any URL supported by Duplicity (our
+    choice backup engine; read http://duplicity.nongnu.org/vers8/duplicity.1.html#sect7
+    for those URL formats).
+
+    If you don't want bakcups, leave this empty.
+
+    Where should the backups be stored?
+
+backup_email_from:
+  type: str
+  help: >-
+    The backup container will send email reports if the SMTP relay is properly
+    configured.
+
+    What email address should it use to send them?
+
+backup_email_to:
+  type: str
+  help: >-
+    Where to send those backup reports?
+
+backup_deletion:
+  type: bool
+  help: >-
+    If you're using S3, you probably want to delete outdated backups using bucket
+    lifecycle rules. If you use other storage backend, then you probably want to enable
+    outdated backups deletion using duplicity itself.
+
+    So, do you want to enable duplicity backup deletion via cron?
+
+backup_tz:
+  type: str
+  default: UTC
+  help: >-
+    Set the timezone used by the backup cron for reports.
+
+    Visit https://www.cyberciti.biz/faq/linux-unix-set-tz-environment-variable/ to know
+    how to obtain a valid value for this variable.
+
+backup_aws_access_key_id:
+  type: str
+  default: null
+  help: >-
+    If you're using AWS S3 to store backups, provide here your access key ID.
+
+backup_aws_secret_access_key:
+  type: str
+  default: null
+  help: >-
+    If you're using AWS S3 to store backups, provide here your secret access key.
+
+backup_passphrase:
+  secret: true
+  type: str
+  default: example-backup-passphrase
+  help: >-
+    ⚠️ This passphrase is critical for security, so keep it safe. You will need it to
+    restore backups.
+
+    Which will be your backups passphrase?
