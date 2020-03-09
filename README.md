@@ -1,6 +1,9 @@
 [![Doodba deployment](https://img.shields.io/badge/deployment-doodba-informational)][doodba]
 [![Copier template](https://img.shields.io/badge/template%20engine-copier-informational)][copier]
 [![Boost Software License 1.0](https://img.shields.io/badge/license-bsl--1.0-important)](COPYING)
+![latest version](https://img.shields.io/github/v/release/Tecnativa/doodba-copier-template?sort=semver)
+![test](https://github.com/Tecnativa/doodba-copier-template/workflows/test/badge.svg)
+![lint](https://github.com/Tecnativa/doodba-copier-template/workflows/lint/badge.svg)
 
 # Doodba Copier Template
 
