@@ -32,7 +32,7 @@ _skip_if_exists:
   - odoo/custom/src/private/*/
 
 _tasks:
-  - python3 -m invoke develop
+  - invoke develop
 
 # Questions for the user
 project_name:

@@ -22,7 +22,8 @@ This project itself is just the template, but you need to install these tools to
 
 - [copier][] v3.0.0a6 or newer
 - [git](https://git-scm.com/)
-- [invoke](https://www.pyinvoke.org/) (`python3 -m pip install --user invoke`)
+- [invoke](https://www.pyinvoke.org/) installed in Python 3.6+ (and the binary must be
+  called `invoke`).
 - [pre-commit](https://pre-commit.com/)
 - [python](https://www.python.org/) 3.6+
 
