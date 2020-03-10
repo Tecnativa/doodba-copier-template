@@ -1,9 +1,13 @@
 # This file is to be executed with https://www.pyinvoke.org/ in Python 3.6+
 import json
+import re
 from glob import glob, iglob
 from pathlib import Path
+from unittest.mock import patch
 
 from invoke import task
+from invoke.util import yaml
+from invoke.vendor.yaml3.reader import Reader
 
 SRC_PATH = Path("odoo") / "custom" / "src"
 DEVELOP_DEPENDENCIES = (
@@ -15,11 +19,16 @@ DEVELOP_DEPENDENCIES = (
 
 def _load_answers():
     """Load copier answers file. This must be run after develop."""
-    # Import YAML now, that is surely available after docker-compose installation
-    import yaml
-
     with open(".copier-answers.yml", "r") as answers_fd:
-        return yaml.safe_load(answers_fd)
+        # HACK https://github.com/pyinvoke/invoke/issues/708
+        with patch.object(
+            Reader,
+            "NON_PRINTABLE",
+            re.compile(
+                "[^\x09\x0A\x0D\x20-\x7E\x85\xA0-\uD7FF\uE000-\uFFFD\U00010000-\U0010FFFF]"
+            ),
+        ):
+            return yaml.safe_load(answers_fd)
 
 
 def _write_code_workspace_file():
