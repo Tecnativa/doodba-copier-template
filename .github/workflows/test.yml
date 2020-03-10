@@ -44,8 +44,8 @@ jobs:
           key: local-bin ${{ env.PY }} ${{ env.PIPX }}
       - name: Patch $PATH
         run: echo "::set-env name=PATH::$HOME/.local/bin:$PATH"
-      - run: pipx install --force invoke
-      - run: pipx install --force poetry
+      - run: pipx install invoke
+      - run: pipx install poetry
       - run: invoke develop
 
       # Specific steps for this action
