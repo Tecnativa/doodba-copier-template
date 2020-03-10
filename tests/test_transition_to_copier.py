@@ -1,3 +1,6 @@
+from glob import glob
+from pathlib import Path
+
 import pytest
 from copier import copy
 from plumbum import local
@@ -37,11 +40,16 @@ def test_transtion_to_copier(tmpdir, odoo_version):
         answers_file = old / ".copier-answers.yml"
         answers_file_contents = answers_file.read()
         answers_file_contents = answers_file_contents.replace(
-            "_src_path: https://github.com/Tecnativa/doodba-copier-template",
+            "_src_path: https://github.com/Tecnativa/doodba-copier-template.git",
             f"_src_path: {tpl}",
         )
         answers_file.write(answers_file_contents)
         assert f"_src_path: {tpl}" in answers_file.read()
+        dep_files = glob(str(old / "odoo" / "custom" / "dependencies" / "*.txt"))
+        assert len(dep_files) == 5
+        for dep_file in map(Path, dep_files):
+            with dep_file.open("a") as dep_fd:
+                dep_fd.write("\n# a comment")
         git("add", ".")
         git("commit", "-m", "update")
         # Emulate user upgrading to copier, passing the right variables
@@ -59,3 +67,5 @@ def test_transtion_to_copier(tmpdir, odoo_version):
         assert f"ODOO_MINOR={odoo_version:.1f}" in env_contents
         assert (old / ".copier-answers.yml").isfile()
         assert 'server-tools: ["*"]' in addons_file.read()
+        for dep_file in map(Path, dep_files):
+            assert dep_file.read_text().endswith("\n# a comment")
