@@ -25,4 +25,6 @@ jobs:
           MERGE_DELETE_BRANCH: "true"
           MERGE_LABELS: "automerge,!work in progress"
           MERGE_METHOD: "rebase"
+          # Disable autorebasing PRs because they cannot retrigger checks
+          UPDATE_LABELS: ""
           UPDATE_METHOD: "rebase"
