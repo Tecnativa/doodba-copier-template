@@ -15,34 +15,49 @@ jobs:
           - 3.7
           - 3.8
     steps:
+      # Shared steps
       - uses: actions/checkout@v1
-      - name: Install Docker
-        uses: docker-practice/actions-setup-docker@0.0.1
-      - name: Install Python ${{ matrix.python-version }}
+      - name: Install python
         uses: actions/setup-python@v1
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Generate cache key PY for python ${{ matrix.python-version }}
+      - name: Generate cache key PY
         run:
-          echo "::set-env name=PY::$(python --version --version | sha256sum | cut -d' '
-          -f1)"
+          echo "::set-env name=PY::${{ runner.os }} $(python -VV | sha256sum | cut -d' '
+          -f1) ${{ hashFiles('pyproject.toml') }} ${{ hashFiles('poetry.lock') }}"
       - uses: actions/cache@v1
         with:
           path: .venv
-          key: venv|${{ env.PY }}|${{ hashFiles('poetry.lock') }}
+          key: venv ${{ env.PY }}
       - uses: actions/cache@v1
         with:
           path: ~/.cache
-          key:
-            pre-commit|${{ env.PY }}|${{ hashFiles('poetry.lock') }}|${{
-            hashFiles('.pre-commit-config.yaml') }}
-      - run: git config --global user.name CI
-      - run: git config --global user.email CI@GITHUB
-      - run: pip install invoke poetry
+          key: pre-commit ${{ env.PY }} ${{ hashFiles('.pre-commit-config.yaml') }}
+      - run: pip install pipx
+      - name: Generate cache key PIPX
+        run: echo "::set-env name=PIPX::$(pipx --version | sha256sum | cut -d' ' -f1)"
+      - uses: actions/cache@v1
+        with:
+          path: ~/.local/pipx/venvs
+          key: pipx ${{ env.PY }} ${{ env.PIPX }}
+      - uses: actions/cache@v1
+        with:
+          path: ~/.local/bin
+          key: local-bin ${{ env.PY }} ${{ env.PIPX }}
+      - name: Patch $PATH
+        run: echo "::set-env name=PATH::$HOME/.local/bin:$PATH"
+      - run: pipx install --force invoke
+      - run: pipx install --force poetry
       - run: invoke develop
+
+      # Specific steps for this action
+      - name: Install Docker
+        uses: docker-practice/actions-setup-docker@0.0.1
       # Precreate shared networks to avoid race conditions
       - run: docker network create inverseproxy_shared
       - run: docker network create globalwhitelist_shared
+      # Let tests issue git commits
+      - run: git config --global user.name CI
+      - run: git config --global user.email CI@GITHUB
+      # Run all tests
       - run: invoke test --verbose
         env:
           QA_TEST: 1
