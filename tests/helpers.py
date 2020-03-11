@@ -20,7 +20,7 @@ def clone_self_dirty(destination, tag="test", source="."):
     with local.cwd(destination):
         if patch:
             (git["apply", "--reject"] << patch)()
-            git("add", source)
+            git("add", ".")
             git(
                 "commit",
                 "--author=Test<test@test>",

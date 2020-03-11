@@ -27,9 +27,13 @@ services:
     labels:
       traefik.longpolling.frontend.rule: "Host:${DOMAIN_PROD};PathPrefix:/longpolling/"
       traefik.www.frontend.rule: "Host:${DOMAIN_PROD}"
-      traefik.alt.frontend.redirect.regex: "^(.*)://${DOMAIN_PROD_ALT}/(.*)$$"
-      traefik.alt.frontend.redirect.replacement: "$$1://${DOMAIN_PROD}/$$2"
-      traefik.alt.frontend.rule: "Host:${DOMAIN_PROD_ALT}"
+      {%- if domain_prod_alternatives %}
+      {%- for domain in domain_prod_alternatives %}
+      traefik.alt-{{ loop.index0 }}.frontend.redirect.regex: "^(.*)://${DOMAIN_PROD_ALT_{{ loop.index0 }}}/(.*)$$"
+      traefik.alt-{{ loop.index0 }}.frontend.redirect.replacement: "$$1://${DOMAIN_PROD}/$$2"
+      traefik.alt-{{ loop.index0 }}.frontend.rule: "Host:${DOMAIN_PROD_ALT_{{ loop.index0 }}}"
+      {%- endfor %}
+      {%- endif %}
     {%- endif %}
 
   db:
