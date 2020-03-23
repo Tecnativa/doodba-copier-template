@@ -1,6 +1,7 @@
 # Ignore all src directories except private and files with a dot
 /odoo/auto
-/odoo/custom/src/.git/..
+/odoo/custom/src/*/
+!/odoo/custom/src/private/
 
 # Ignore docker-compose.yml by default, to allow easy defaults per clone
 /docker-compose.yml
@@ -11,7 +12,6 @@
 **.py[co]
 **.egg-info
 **.orig
-**.rej
 
 # User-specific or editor-specific development files and settings
 !/.vscode/*.jinja

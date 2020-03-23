@@ -10,8 +10,8 @@ services:
         GID: "${GID:-1000}"
     environment:
       EMAIL_FROM: "$SMTP_DEFAULT_FROM"
-      PGDATABASE: prod
-      PGUSER: odoo
+      PGDATABASE: &dbname prod
+      PGUSER: &dbuser "$DB_USER"
       DB_FILTER: "$DB_FILTER"
       PROXY_MODE: "$ODOO_PROXY_MODE"
     hostname: "$SMTP_REAL_NON_CANONICAL_DEFAULT"
@@ -30,9 +30,12 @@ services:
     image: tecnativa/postgres-autoconf:${DB_VERSION}-alpine
     shm_size: 512mb
     environment:
-      POSTGRES_DB: prod
-      POSTGRES_USER: odoo
+      POSTGRES_DB: *dbname
+      POSTGRES_USER: *dbuser
       CONF_EXTRA: |
         work_mem = 32MB
     volumes:
       - db:/var/lib/postgresql/data:z
+
+  smtpfake:
+    image: mailhog/mailhog

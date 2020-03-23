@@ -2,6 +2,7 @@
 [![Last template update](https://img.shields.io/badge/last%20template%20update-test-informational)](https://github.com/Tecnativa/doodba-copier-template/tree/test)
 [![Odoo](https://img.shields.io/badge/odoo-v13-a3478a)](https://github.com/odoo/odoo/tree/13)
 [![BSL-1.0 license](https://img.shields.io/badge/license-BSL--1.0-success})](LICENSE)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
 # myproject-odoo - a Doodba deployment
 

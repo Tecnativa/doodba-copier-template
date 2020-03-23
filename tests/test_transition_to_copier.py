@@ -69,3 +69,8 @@ def test_transtion_to_copier(tmpdir, odoo_version):
         assert 'server-tools: ["*"]' in addons_file.read()
         for dep_file in map(Path, dep_files):
             assert dep_file.read_text().endswith("\n# a comment")
+        # Check migrations ran fine
+        assert not (old / ".travis.yml").exists()
+        assert not (old / ".vscode" / "doodba").exists()
+        assert not (old / ".vscode" / "doodbasetup.py").exists()
+        assert not (old / "odoo" / "custom" / "src" / "private" / ".empty").exists()

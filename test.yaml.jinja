@@ -42,7 +42,9 @@ services:
     restart: unless-stopped
 
   smtp:
-    image: mailhog/mailhog
+    extends:
+      file: common.yaml
+      service: smtpfake
     restart: unless-stopped
     networks:
       default:
