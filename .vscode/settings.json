@@ -27,6 +27,7 @@
 
   // General settings
   "editor.formatOnSave": true,
+  "markdown.extension.toc.updateOnSave": false,
   "python.formatting.blackArgs": [],
   "python.formatting.provider": "black",
   "python.linting.flake8Enabled": true,

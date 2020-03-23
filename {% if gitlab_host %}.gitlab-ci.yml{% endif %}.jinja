@@ -1,6 +1,0 @@
-include:
-  - remote: https://raw.githubusercontent.com/Tecnativa/doodba-qa/master/examples/.gitlab-ci.yml
-  {%- if gitlab_ci_templates_project and gitlab_ci_templates_path %}
-  - project: {{ gitlab_org }}/{{ gitlab_ci_templates_project }}
-    file: {{ gitlab_ci_templates_path }}
-  {%- endif %}

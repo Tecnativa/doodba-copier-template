@@ -1,5 +1,12 @@
-# This file is to be executed with https://www.pyinvoke.org/ in Python 3.6+
+# -*- coding: utf-8 -*-
+"""Doodba child project tasks.
+
+This file is to be executed with https://www.pyinvoke.org/ in Python 3.6+.
+
+Contains common helpers to develop using this child project.
+"""
 import json
+import os
 import re
 from glob import glob, iglob
 from pathlib import Path
@@ -9,7 +16,7 @@ from invoke import task
 from invoke.util import yaml
 from invoke.vendor.yaml3.reader import Reader
 
-SRC_PATH = Path("odoo") / "custom" / "src"
+SRC_PATH = Path("odoo", "custom", "src")
 DEVELOP_DEPENDENCIES = (
     "copier",
     "docker-compose",
@@ -25,7 +32,8 @@ def _load_answers():
             Reader,
             "NON_PRINTABLE",
             re.compile(
-                "[^\x09\x0A\x0D\x20-\x7E\x85\xA0-\uD7FF\uE000-\uFFFD\U00010000-\U0010FFFF]"
+                "[^\x09\x0A\x0D\x20-\x7E\x85\xA0-"
+                "\uD7FF\uE000-\uFFFD\U00010000-\U0010FFFF]"
             ),
         ):
             return yaml.safe_load(answers_fd)
@@ -60,7 +68,11 @@ def develop(c):
         try:
             c.run(f"{dep} --version", hide=True)
         except Exception:
-            c.run(f"python3 -m pip install --user {dep}")
+            try:
+                c.run("pipx --version")
+            except Exception:
+                c.run("python3 -m pip install --user pipx")
+            c.run(f"pipx install {dep}")
     # Prepare environment
     c.run("git init")
     c.run("ln -sf devel.yaml docker-compose.yml")
@@ -75,10 +87,8 @@ def git_aggregate(c):
     Executes git-aggregator from within the doodba container.
     """
     c.run(
-        """
-        env UID="$(id -u)" GID="$(id-g)" UMASK="$(umask)" docker-compose
-        --file setup-devel.yaml run --rm odoo
-        """
+        "docker-compose --file setup-devel.yaml run --rm odoo",
+        env={"GID": os.getgid(), "UID": os.getuid(), "UMASK": 27},
     )
     _write_code_workspace_file()
     for pre_commit_folder in iglob(
@@ -91,10 +101,10 @@ def git_aggregate(c):
 @task(develop)
 def img_build(c, pull=True):
     """Build docker images."""
-    cmd = 'env UID="$(id -u)" GID="$(id-g)" docker-compose build'
+    cmd = "docker-compose build"
     if pull:
         cmd += " --pull"
-    c.run(cmd)
+    c.run(cmd, env={"UID": os.getuid(), "GID": os.getgid()})
 
 
 @task(develop)
@@ -116,11 +126,9 @@ def lint(c, verbose=False):
 def start(c, detach=True, ptvsd=False):
     """Start environment."""
     cmd = "docker-compose up"
-    if ptvsd:
-        cmd = f"env DOODBA_PTVSD_ENABLE=1 {cmd}"
     if detach:
         cmd += " --detach"
-    c.run(cmd)
+    c.run(cmd, env={"DOODBA_PTVSD_ENABLE": int(ptvsd)})
 
 
 @task(develop, help={"purge": "Remove all related containers, images and volumes"})

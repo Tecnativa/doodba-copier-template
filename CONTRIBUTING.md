@@ -1,5 +1,23 @@
 # How to contribute
 
+<details>
+<summary>Table of contents</summary>
+<!-- prettier-ignore-start -->
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Contents:**
+
+- [General Discussion](#general-discussion)
+- [Issues](#issues)
+- [Propose Changes](#propose-changes)
+  - [Set up a Development Environment](#set-up-a-development-environment)
+    - [Know our Development Toolkit](#know-our-development-toolkit)
+  - [Open a Pull Request](#open-a-pull-request)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<!-- prettier-ignore-end -->
+</details>
+
 You should know how to use Github to contribute to this project. To learn, please follow
 these tutorials:
 

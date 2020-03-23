@@ -46,79 +46,41 @@ services:
   {%- if smtp_relay_host %}
 
   smtp:
-    image: tvial/docker-mailserver:latest
+    extends:
+      file: common.yaml
+      service: smtpreal
+    env_file:
+      - .docker/smtp.env
     networks:
       default:
         aliases:
           - smtplocal
     restart: unless-stopped
-    domainname: "$SMTP_REAL_MAILNAME"
-    stop_grace_period: 1m
-    volumes:
-      - mailconfig:/tmp/docker-mailserver:z
-      - maildata:/var/mail:z
-      - maillogs:/var/log/mail:z
-      - maillogssupervisord:/var/log/supervisor:z
-      - mailstate:/var/mail-state:z
-    cap_add:
-      - SYS_PTRACE
-    env_file:
-      - .docker/smtp.env
-    environment:
-      DEFAULT_RELAY_HOST: "[$SMTP_REAL_RELAY_HOST]:$SMTP_REAL_RELAY_PORT"
-      DMS_DEBUG: 0
-      ENABLE_SRS: 1
-      ONE_DIR: 1
-      PERMIT_DOCKER: connected-networks
-      POSTFIX_MESSAGE_SIZE_LIMIT: 52428800 # 50 MiB
-      RELAY_HOST: "$SMTP_REAL_RELAY_HOST"
-      RELAY_PORT: "$SMTP_REAL_RELAY_PORT"
-      RELAY_USER: "$SMTP_REAL_RELAY_USER"
-      SMTP_ONLY: 1
-      SRS_DOMAINNAME: "$SMTP_REAL_NON_CANONICAL_DEFAULT"
-      SRS_EXCLUDE_DOMAINS: "$SMTP_REAL_CANONICAL_DOMAINS"
-      SRS_SENDER_CLASSES: envelope_sender,header_sender
   {%- endif %}
   {%- if backup_dst %}
 
   backup:
-    image: tecnativa/duplicity:postgres-s3
-    hostname: backup
-    domainname: "$DOMAIN_PROD"
-    init: true
-    volumes:
-      - backup_cache:/root:z
-      - filestore:/mnt/backup/src/odoo:z
-    restart: unless-stopped
-    depends_on:
-      - db
-      {%- if smtp_relay_host %}
-      - smtp
-      {%- endif %}
+    extends:
+      file: common.yaml
+      service: backup
     env_file:
       - .docker/backup.env
       - .docker/db-access.env
-    environment:
-      DST: "s3://s3.amazonaws.com/$BACKUP_S3_BUCKET"
-      {%- if smtp_relay_host %}
-      EMAIL_FROM: "$BACKUP_EMAIL_FROM"
-      EMAIL_TO: "$BACKUP_EMAIL_TO"
-      {%- endif %}
-      PGDATABASE: {{ postgres_dbname }}
-      PGUSER: {{ postgres_username }}
-      {%- if smtp_relay_host %}
-      SMTP_HOST: smtplocal
-      {%- endif %}
-      TZ: {{ backup_tz }}
+    restart: unless-stopped
+    depends_on:
+      - db
+      - smtp
   {%- endif %}
 
 networks:
   default:
     driver_opts:
       encrypted: 1
+  {%- if odoo_proxy == "traefik" %}
 
   inverseproxy_shared:
     external: true
+  {%- endif %}
 
 volumes:
   {%- if backup_dst %}

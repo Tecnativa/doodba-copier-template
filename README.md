@@ -4,20 +4,28 @@
 ![latest version](https://img.shields.io/github/v/release/Tecnativa/doodba-copier-template?sort=semver)
 ![test](https://github.com/Tecnativa/doodba-copier-template/workflows/test/badge.svg)
 ![lint](https://github.com/Tecnativa/doodba-copier-template/workflows/lint/badge.svg)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
 # Doodba Copier Template
 
 This project lets you maintain [Odoo][] deployments based on [Doodba][] using
 [Copier][].
 
-<!-- toc -->
+<details>
+<summary>Table of contents</summary>
+<!-- prettier-ignore-start -->
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Contents:**
 
 - [Installation and Usage](#installation-and-usage)
 - [Getting Updates](#getting-updates)
 - [Contributing](#contributing)
 - [Credits](#credits)
 
-<!-- tocstop -->
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<!-- prettier-ignore-end -->
+</details>
 
 # Installation and Usage
 
@@ -26,9 +34,20 @@ This project itself is just the template, but you need to install these tools to
 - [copier][] v3.0.0a6 or newer
 - [git](https://git-scm.com/)
 - [invoke](https://www.pyinvoke.org/) installed in Python 3.6+ (and the binary must be
-  called `invoke`).
+  called `invoke` — beware if your distro installs it as `invoke3` or similar).
 - [pre-commit](https://pre-commit.com/)
 - [python](https://www.python.org/) 3.6+
+
+Install non-python apps with your distro's recommended package manager. The recommended
+way to install Python CLI apps is [pipx](https://pipxproject.github.io/pipx/):
+
+```bash
+python3 -m pip install --user pipx
+pipx install copier --pip-args=--pre
+pipx install invoke
+pipx install pre-commit
+pipx ensurepath
+```
 
 Once you installed everything, you can now use Copier to copy this template:
 

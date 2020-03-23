@@ -20,6 +20,7 @@ _exclude:
   - /copier.yml
   - /COPYING
   - /docs
+  - /migrations.py
   - /poetry.lock
   - /pyproject.toml
   - /scripts
@@ -35,6 +36,14 @@ _skip_if_exists:
 
 _tasks:
   - invoke develop
+
+_migrations:
+  - version: v0.0.1-0-0
+    after:
+      - - invoke
+        - --search-root={{ _copier_conf.src_path }}
+        - --collection=migrations
+        - from-doodba-scaffolding-to-copier
 
 # Questions for the user
 project_name:
@@ -62,57 +71,16 @@ project_license:
     Odoo Enterprise Edition License v1.0: OEEL-1.0
     Odoo Proprietary License v1.0: OPL-1.0
 
-gitlab_host:
+gitlab_url:
   type: str
   help: >-
-    If you host this project in Gitlab, then please enter here the host URL.
+    If you host this project in Gitlab, then please enter here the project URL.
 
     It must have no trailing slash.
 
     💡 If you don't use Gitlab, leave this empty and ignore all other Gitlab questions.
 
-    Example: If you project is in https://gitlab.com/Tecnativa/your-doodba-project, then
-    the correct value here is `https://gitlab.com`.
-
-gitlab_org:
-  type: str
-  default: Tecnativa
-  help: >-
-    If you host this project in Gitlab, then please enter here the organization name.
-
-    Example: If you project is in https://gitlab.com/Tecnativa/your-doodba-project, then
-    the correct value here is `Tecnativa`.
-
-gitlab_project:
-  type: str
-  default: your-doodba-project
-  help: >-
-    If you host this project in Gitlab, then please enter here the project name.
-
-    Example: If you project is in https://gitlab.com/Tecnativa/your-doodba-project, then
-    the correct value here is `your-doodba-project`.
-
-gitlab_ci_templates_project:
-  type: str
-  default: ci-templates
-  help: >-
-    Gitlab CI lets you include repeated instructions in a template. See
-    https://docs.gitlab.com/ee/ci/yaml/#includefile to understand how.
-
-    If you share gitlab CI templates in a project in your gitlab instance, tell me that
-    project's name here. We assume it is under the same organization that the doodba
-    project.
-
-    Example: If you project is in https://gitlab.com/Tecnativa/your-doodba-project and
-    the shared templates exist in https://gitlab.com/Tecnativa/ci-templates then the
-    correct value for this variable is `ci-templates`.
-
-gitlab_ci_templates_path:
-  type: str
-  default: /doodba/main.yml
-  help: >-
-    If you use a shared template, then tell me where to find it in the project you
-    specified before.
+    Example: `https://gitlab.com/Tecnativa/your-doodba-project`.
 
 domain_prod:
   type: str
