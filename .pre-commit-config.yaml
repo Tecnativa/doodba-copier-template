@@ -55,5 +55,8 @@ repos:
     rev: v1.4.0
     hooks:
       - id: doctoc
-        args: [--github, --maxlevel=6, --title=**Contents:**]
+        args:
+          - --github
+          - --maxlevel=6
+          - --title=<summary>Table of contents</summary>
         exclude: ^tests/

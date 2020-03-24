@@ -1,11 +1,10 @@
 # Migrating From Doodba Scaffolding
 
 <details>
-<summary>Table of contents</summary>
 <!-- prettier-ignore-start -->
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Contents:**
+<summary>Table of contents</summary>
 
 - [Why we needed something better](#why-we-needed-something-better)
 - [How to transition to doodba-copier-template](#how-to-transition-to-doodba-copier-template)

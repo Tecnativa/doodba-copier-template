@@ -12,11 +12,10 @@ This project lets you maintain [Odoo][] deployments based on [Doodba][] using
 [Copier][].
 
 <details>
-<summary>Table of contents</summary>
 <!-- prettier-ignore-start -->
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Contents:**
+<summary>Table of contents</summary>
 
 - [Installation and Usage](#installation-and-usage)
 - [Getting Updates](#getting-updates)

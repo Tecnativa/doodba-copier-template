@@ -1,11 +1,10 @@
 # How to contribute
 
 <details>
-<summary>Table of contents</summary>
 <!-- prettier-ignore-start -->
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Contents:**
+<summary>Table of contents</summary>
 
 - [General Discussion](#general-discussion)
 - [Issues](#issues)
