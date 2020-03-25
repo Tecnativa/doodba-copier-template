@@ -31,8 +31,9 @@ _exclude:
 _skip_if_exists:
   - odoo/custom/dependencies/*.txt
   - odoo/custom/src/addons.yaml
-  - odoo/custom/src/repos.yaml
   - odoo/custom/src/private/*/
+  - odoo/custom/src/repos.yaml
+  - odoo/custom/ssh/*
 
 _tasks:
   - invoke develop
