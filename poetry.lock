@@ -154,7 +154,7 @@ description = "A library for rendering project templates."
 name = "copier"
 optional = false
 python-versions = ">=3.6,<4.0"
-version = "3.0.1"
+version = "3.0.2"
 
 [package.dependencies]
 colorama = ">=0.4.0,<1.0.0"
@@ -895,7 +895,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "913c9a113dc036b0f52a513e8224c18f69933049193314b9795b83de7dab955f"
+content-hash = "4dbe7f82e6a09b96f19cc6dff2c179d4f682de9932e17de941ba53b8cd3b791c"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -998,8 +998,8 @@ colorama = [
     {file = "colorama-0.4.3.tar.gz", hash = "sha256:e96da0d330793e2cb9485e9ddfd918d456036c7149416295932478192f4436a1"},
 ]
 copier = [
-    {file = "copier-3.0.1-py3-none-any.whl", hash = "sha256:544bdeea033fe112f6ce83173ba3e094c5148fdd4dc32c9daed4ea7571a6c2da"},
-    {file = "copier-3.0.1.tar.gz", hash = "sha256:5630bd9992a0f0dd7ba8fa36bfe42fef38104359561ed40359383ff910bcb9f8"},
+    {file = "copier-3.0.2-py3-none-any.whl", hash = "sha256:c0ecf70cbe7df5973996b2fb52980005ec7282ccc05dbdd66293d9c900f075f5"},
+    {file = "copier-3.0.2.tar.gz", hash = "sha256:61ab23c1e8e31d6ee9b4ad39cfe0e42d4ebdabdd19eec3b719b70af897d3a3a5"},
 ]
 cryptography = [
     {file = "cryptography-2.8-cp27-cp27m-macosx_10_6_intel.whl", hash = "sha256:fb81c17e0ebe3358486cd8cc3ad78adbae58af12fc2bf2bc0bb84e8090fa5ce8"},
