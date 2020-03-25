@@ -18,7 +18,7 @@ def test_transtion_to_copier(tmpdir, odoo_version):
     tag = "v999999.99.99"
     clone_self_dirty(tpl, tag=tag)
     # Emulate user cloning scaffolding using the old workflow
-    git("clone", "-bcopier", "https://github.com/Tecnativa/doodba-scaffolding", old)
+    git("clone", "https://github.com/Tecnativa/doodba-scaffolding", old)
     with local.cwd(old):
         # Emulate user modifying some basic variables and committing
         env_file = old / ".env"
