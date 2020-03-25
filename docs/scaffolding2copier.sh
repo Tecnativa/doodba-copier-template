@@ -5,14 +5,14 @@
 # - `CUSTOM_COPIER_FLAGS` lets you configure this transition. Use `--force` to avoid
 #   Copier asking you things, if you are confident in the answers provided here.
 # - `TEMPLATE_VERSION` the only supported version to migrate from doodba-scaffolding
-#   is v1.0.0, but you can use others at your own risk.
+#   is the default one set here, but you can use others at your own risk.
 # - `GITLAB_PREFIX`
 # - `LICENSE`
 # - `PROJECT_NAME` defaults to the current folder name.
 
 source .env
 copier $CUSTOM_COPIER_FLAGS \
-  -r "${TEMPLATE_VERSION-v1.0.0}" \
+  -r "${TEMPLATE_VERSION-v1.0.1}" \
   -d project_name="${PROJECT_NAME-$(basename $PWD)}" \
   -d project_license="${LICENSE-BSL-1.0}" \
   -d gitlab_url="${GITLAB_PREFIX-https://gitlab.com/example}/${PROJECT_NAME-$(basename $PWD)}" \
