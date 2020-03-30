@@ -24,19 +24,16 @@ repos:
     hooks:
       - id: black
   - repo: https://github.com/prettier/prettier
-    rev: "1.19.1"
+    rev: 2.0.2
     hooks:
-      - id: prettier
-  # TODO Avoid awebdeveloper/pre-commit-prettier if possible
-  # HACK https://github.com/prettier/prettier/issues/7407
-  - repo: https://github.com/awebdeveloper/pre-commit-prettier
-    rev: v0.0.1
-    hooks:
-      - id: prettier
-        name: prettier xml plugin
+      - &prettier
+        id: prettier
         additional_dependencies:
-          - "prettier@1.19.1"
           - "@prettier/plugin-xml@0.7.2"
+        args:
+          - --plugin=@prettier/plugin-xml
+      - <<: *prettier
+        name: prettier + plugin-xml
         files: \.xml$
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: v6.8.0
@@ -47,7 +44,7 @@ repos:
           - --color
           - --fix
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.4.0
+    rev: v2.5.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -91,7 +88,7 @@ repos:
           - --rcfile=.pylintrc-mandatory
         additional_dependencies: ["pylint-odoo==3.1.0"]
   - repo: https://github.com/asottile/pyupgrade
-    rev: v1.26.2
+    rev: v2.1.0
     hooks:
       - id: pyupgrade
   - repo: https://github.com/timothycrosley/isort
