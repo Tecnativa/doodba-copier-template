@@ -47,3 +47,4 @@ def test_doodba_qa(tmpdir, odoo_version):
         qa_run["coverage"] & FG
     finally:
         qa_run["shutdown"] & FG
+        docker["system", "prune", "--all", "--force", "--volumes"]

@@ -11,7 +11,9 @@ version: "2.4"
 
 services:
   odoo:
+    {%- if odoo_oci_image %}
     image: $ODOO_IMAGE:$ODOO_MINOR
+    {%- endif %}
     build:
       context: ./odoo
       args:

@@ -87,14 +87,17 @@ def git_aggregate(c):
     """
     c.run(
         "docker-compose --file setup-devel.yaml run --rm odoo",
-        env={"GID": os.getgid(), "UID": os.getuid(), "UMASK": 27},
+        env={"GID": str(os.getgid()), "UID": str(os.getuid()), "UMASK": "27"},
     )
     _write_code_workspace_file()
-    for pre_commit_folder in iglob(
-        str(SRC_PATH / "*" / ".git" / ".." / ".pre-commit-config.yaml" / ".")
-    ):
-        with c.cd(pre_commit_folder):
-            c.run("pre-commit install")
+    for git_folder in iglob(str(SRC_PATH / "*" / ".git" / "..")):
+        action = (
+            "install"
+            if Path(git_folder, ".pre-commit-config.yaml").is_file()
+            else "uninstall"
+        )
+        with c.cd(git_folder):
+            c.run(f"pre-commit {action}")
 
 
 @task(develop)
@@ -103,7 +106,7 @@ def img_build(c, pull=True):
     cmd = "docker-compose build"
     if pull:
         cmd += " --pull"
-    c.run(cmd, env={"UID": os.getuid(), "GID": os.getgid()})
+    c.run(cmd, env={"UID": str(os.getuid()), "GID": str(os.getgid())})
 
 
 @task(develop)
@@ -127,7 +130,7 @@ def start(c, detach=True, ptvsd=False):
     cmd = "docker-compose up"
     if detach:
         cmd += " --detach"
-    c.run(cmd, env={"DOODBA_PTVSD_ENABLE": int(ptvsd)})
+    c.run(cmd, env={"DOODBA_PTVSD_ENABLE": str(int(ptvsd))})
 
 
 @task(develop, help={"purge": "Remove all related containers, images and volumes"})
