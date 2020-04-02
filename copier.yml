@@ -49,7 +49,10 @@ _migrations:
 # Questions for the user
 project_name:
   type: str
-  help: What's your project name?
+  help: >-
+    What's your project name?
+
+    Do not use dots or spaces in the name; just "A-Za-z0-9-_" please.
   default: myproject-odoo
 
 project_license:

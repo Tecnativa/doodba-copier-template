@@ -26,6 +26,24 @@ services:
       traefik.frontend.headers.customResponseHeaders: "X-Robots-Tag:noindex, nofollow"
       traefik.longpolling.frontend.rule: "Host:${DOMAIN_TEST};PathPrefix:/longpolling/"
       traefik.www.frontend.rule: "Host:${DOMAIN_TEST}"
+      # Main service
+      ? traefik.http.middlewares.myproject-odoo-12-0-test-main-buffering.buffering.retryExpression
+      : "IsNetworkError() && Attempts() < 5"
+      traefik.http.middlewares.myproject-odoo-12-0-test-main-compress.compress: "true"
+      traefik.http.routers.myproject-odoo-12-0-test-main.entrypoints: "web-main"
+      traefik.http.routers.myproject-odoo-12-0-test-main.middlewares: "myproject-odoo-12-0-test-main-compress,myproject-odoo-12-0-test-main-buffering"
+      traefik.http.routers.myproject-odoo-12-0-test-main.rule: "host(`${DOMAIN_TEST}`)"
+      traefik.http.routers.myproject-odoo-12-0-test-main.service: "myproject-odoo-12-0-test-main"
+      traefik.http.routers.myproject-odoo-12-0-test-main.tls.certresolver: "letsencrypt"
+      traefik.http.services.myproject-odoo-12-0-test-main.loadbalancer.server.port: 8069
+      # Longpolling service
+      traefik.http.routers.myproject-odoo-12-0-test-longpolling.entrypoints: "web-main"
+      traefik.http.routers.myproject-odoo-12-0-test-longpolling.rule:
+        "host(`${DOMAIN_TEST}`) && pathprefix(`/longpolling/`)"
+      traefik.http.routers.myproject-odoo-12-0-test-longpolling.service: "myproject-odoo-12-0-test-longpolling"
+      traefik.http.routers.myproject-odoo-12-0-test-longpolling.tls: "true"
+      traefik.http.routers.myproject-odoo-12-0-test-longpolling.tls.certresolver: "letsencrypt"
+      traefik.http.services.myproject-odoo-12-0-test-longpolling.loadbalancer.server.port: 8072
     command:
       - odoo
       - --workers=2
