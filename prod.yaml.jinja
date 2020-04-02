@@ -1,3 +1,4 @@
+{% set _key = '%s-%.1f-prod'|format(project_name, odoo_version)|replace('.', '-') %}
 version: "2.4"
 
 services:
@@ -34,6 +35,32 @@ services:
       traefik.alt-{{ loop.index0 }}.frontend.rule: "Host:${DOMAIN_PROD_ALT_{{ loop.index0 }}}"
       {%- endfor %}
       {%- endif %}
+      # Main service
+      traefik.http.middlewares.{{ _key }}-main-buffering.buffering.retryExpression: "IsNetworkError() && Attempts() < 5"
+      traefik.http.middlewares.{{ _key }}-main-compress.compress: "true"
+      traefik.http.routers.{{ _key }}-main.entrypoints: "web-main"
+      traefik.http.routers.{{ _key }}-main.middlewares: "{{ _key }}-main-compress,{{ _key }}-main-buffering"
+      traefik.http.routers.{{ _key }}-main.rule: "host(`${DOMAIN_PROD}`)"
+      traefik.http.routers.{{ _key }}-main.service: "{{ _key }}-main"
+      traefik.http.routers.{{ _key }}-main.tls: "true"
+      traefik.http.routers.{{ _key }}-main.tls.certresolver: "letsencrypt"
+      traefik.http.services.{{ _key }}-main.loadbalancer.server.port: 8069
+      # Redirect alternative domains to main domain
+      traefik.http.middlewares.{{ _key }}-redirect2main.redirectregex.regex: "^https://([^/]+)/(.*)$$"
+      traefik.http.middlewares.{{ _key }}-redirect2main.redirectregex.replacement: "https://${DOMAIN_PROD}/$${2}"
+      traefik.http.routers.{{ _key }}-altdomains.entrypoints: "web-main"
+      traefik.http.routers.{{ _key }}-altdomains.middlewares: "{{ _key }}-redirect2main"
+      traefik.http.routers.{{ _key }}-altdomains.rule: "host(`${DOMAIN_PROD_ALT}`)"
+      traefik.http.routers.{{ _key }}-altdomains.service: "{{ _key }}-main"
+      traefik.http.routers.{{ _key }}-altdomains.tls: "true"
+      traefik.http.routers.{{ _key }}-altdomains.tls.certresolver: "letsencrypt"
+      # Longpolling service
+      traefik.http.routers.{{ _key }}-longpolling.entrypoints: "web-main"
+      traefik.http.routers.{{ _key }}-longpolling.rule: "host(`${DOMAIN_PROD}`) && pathprefix(`/longpolling/`)"
+      traefik.http.routers.{{ _key }}-longpolling.service: "{{ _key }}-longpolling"
+      traefik.http.services.{{ _key }}-longpolling.loadbalancer.server.port: 8072
+      traefik.http.routers.{{ _key }}-longpolling.tls: "true"
+      traefik.http.routers.{{ _key }}-longpolling.tls.certresolver: "letsencrypt"
     {%- endif %}
 
   db:

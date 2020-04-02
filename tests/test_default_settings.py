@@ -27,6 +27,10 @@ def test_default_settings(tmp_path: Path, odoo_version: float):
             force=True,
             data={"odoo_version": odoo_version},
         )
+    with local.cwd(dst):
+        git("add", ".")
+        pre_commit("run", "-a", retcode=None)
+        git("commit", "-am", "Hello World")
     # The result matches what we expect
     diff(
         "--context=3",
@@ -35,11 +39,6 @@ def test_default_settings(tmp_path: Path, odoo_version: float):
         local.cwd / "tests" / "default_settings" / f"v{odoo_version:.1f}",
         dst,
     )
-    # The result is a git repo that does not violate pre-commit
-    with local.cwd(dst):
-        git("add", ".")
-        git("commit", "-m", "Hello World")
-        pre_commit("run", "-a")
 
 
 @pytest.mark.parametrize("odoo_version", (10.0, 13.0))

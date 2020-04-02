@@ -20,6 +20,34 @@ services:
     labels:
       traefik.longpolling.frontend.rule: "Host:${DOMAIN_PROD};PathPrefix:/longpolling/"
       traefik.www.frontend.rule: "Host:${DOMAIN_PROD}"
+      # Main service
+      ? traefik.http.middlewares.myproject-odoo-7-0-prod-main-buffering.buffering.retryExpression
+      : "IsNetworkError() && Attempts() < 5"
+      traefik.http.middlewares.myproject-odoo-7-0-prod-main-compress.compress: "true"
+      traefik.http.routers.myproject-odoo-7-0-prod-main.entrypoints: "web-main"
+      traefik.http.routers.myproject-odoo-7-0-prod-main.middlewares: "myproject-odoo-7-0-prod-main-compress,myproject-odoo-7-0-prod-main-buffering"
+      traefik.http.routers.myproject-odoo-7-0-prod-main.rule: "host(`${DOMAIN_PROD}`)"
+      traefik.http.routers.myproject-odoo-7-0-prod-main.service: "myproject-odoo-7-0-prod-main"
+      traefik.http.routers.myproject-odoo-7-0-prod-main.tls: "true"
+      traefik.http.routers.myproject-odoo-7-0-prod-main.tls.certresolver: "letsencrypt"
+      traefik.http.services.myproject-odoo-7-0-prod-main.loadbalancer.server.port: 8069
+      # Redirect alternative domains to main domain
+      traefik.http.middlewares.myproject-odoo-7-0-prod-redirect2main.redirectregex.regex: "^https://([^/]+)/(.*)$$"
+      traefik.http.middlewares.myproject-odoo-7-0-prod-redirect2main.redirectregex.replacement: "https://${DOMAIN_PROD}/$${2}"
+      traefik.http.routers.myproject-odoo-7-0-prod-altdomains.entrypoints: "web-main"
+      traefik.http.routers.myproject-odoo-7-0-prod-altdomains.middlewares: "myproject-odoo-7-0-prod-redirect2main"
+      traefik.http.routers.myproject-odoo-7-0-prod-altdomains.rule: "host(`${DOMAIN_PROD_ALT}`)"
+      traefik.http.routers.myproject-odoo-7-0-prod-altdomains.service: "myproject-odoo-7-0-prod-main"
+      traefik.http.routers.myproject-odoo-7-0-prod-altdomains.tls: "true"
+      traefik.http.routers.myproject-odoo-7-0-prod-altdomains.tls.certresolver: "letsencrypt"
+      # Longpolling service
+      traefik.http.routers.myproject-odoo-7-0-prod-longpolling.entrypoints: "web-main"
+      traefik.http.routers.myproject-odoo-7-0-prod-longpolling.rule:
+        "host(`${DOMAIN_PROD}`) && pathprefix(`/longpolling/`)"
+      traefik.http.routers.myproject-odoo-7-0-prod-longpolling.service: "myproject-odoo-7-0-prod-longpolling"
+      traefik.http.services.myproject-odoo-7-0-prod-longpolling.loadbalancer.server.port: 8072
+      traefik.http.routers.myproject-odoo-7-0-prod-longpolling.tls: "true"
+      traefik.http.routers.myproject-odoo-7-0-prod-longpolling.tls.certresolver: "letsencrypt"
 
   db:
     extends:
