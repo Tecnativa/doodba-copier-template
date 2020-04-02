@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from copier.main import copy
 from plumbum import local
-from plumbum.cmd import git
+from plumbum.cmd import diff, git
 
 from .helpers import clone_self_dirty
 
@@ -34,8 +34,19 @@ def test_no_vscode_in_private(tmp_path: Path):
     copy(".", str(tmp_path), vcs_ref="HEAD", force=True)
     with local.cwd(tmp_path):
         git("add", ".")
-        git("commit", "-am", "hello world")
+        git("commit", "--no-verify", "-am", "hello world")
         vscode = tmp_path / "odoo" / "custom" / "src" / "private" / ".vscode"
         vscode.mkdir()
         (vscode / "something").touch()
         assert not git("status", "--porcelain")
+
+
+def test_mqt_configs_synced():
+    """Make sure configs from MQT are in sync."""
+    template = Path("tests", "default_settings", "v13.0")
+    mqt = Path("vendor", "maintainer-quality-tools", "sample_files", "pre-commit-13.0")
+    good_diffs = Path("tests", "good_diffs")
+    for conf in (".pylintrc", ".pylintrc-mandatory"):
+        good = (good_diffs / f"{conf}.diff").read_text()
+        tested = diff(template / conf, mqt / conf, retcode=1)
+        assert good == tested

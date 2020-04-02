@@ -47,6 +47,14 @@ _migrations:
         - from-doodba-scaffolding-to-copier
 
 # Questions for the user
+project_author:
+  type: str
+  help: >-
+    Tell me who you are.
+
+    If private modules do not include this author, pylint will warn you.
+  default: Tecnativa, S.L.
+
 project_name:
   type: str
   help: >-
