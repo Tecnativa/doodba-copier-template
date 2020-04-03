@@ -28,18 +28,22 @@ services:
       traefik.frontend.headers.customResponseHeaders: "X-Robots-Tag:noindex, nofollow"
       traefik.longpolling.frontend.rule: "Host:${DOMAIN_TEST};PathPrefix:/longpolling/"
       traefik.www.frontend.rule: "Host:${DOMAIN_TEST}"
+      # Forbid crawlers
+      ? traefik.http.middlewares.{{ _key }}-forbid-crawlers.headers.customResponseHeaders.X-Robots-Tag
+      : "noindex, nofollow"
       # Main service
       ? traefik.http.middlewares.{{ _key }}-main-buffering.buffering.retryExpression
       : "IsNetworkError() && Attempts() < 5"
       traefik.http.middlewares.{{ _key }}-main-compress.compress: "true"
       traefik.http.routers.{{ _key }}-main.entrypoints: "web-main"
-      traefik.http.routers.{{ _key }}-main.middlewares: "{{ _key }}-main-compress,{{ _key }}-main-buffering"
+      traefik.http.routers.{{ _key }}-main.middlewares: "{{ _key }}-main-compress,{{ _key }}-main-buffering,{{ _key }}-forbid-crawlers"
       traefik.http.routers.{{ _key }}-main.rule: "host(`${DOMAIN_TEST}`)"
       traefik.http.routers.{{ _key }}-main.service: "{{ _key }}-main"
       traefik.http.routers.{{ _key }}-main.tls.certresolver: "letsencrypt"
       traefik.http.services.{{ _key }}-main.loadbalancer.server.port: 8069
       # Longpolling service
       traefik.http.routers.{{ _key }}-longpolling.entrypoints: "web-main"
+      traefik.http.routers.{{ _key }}-longpolling.middlewares: "{{ _key }}-forbid-crawlers"
       traefik.http.routers.{{ _key }}-longpolling.rule:
         "host(`${DOMAIN_TEST}`) && pathprefix(`/longpolling/`)"
       traefik.http.routers.{{ _key }}-longpolling.service: "{{ _key }}-longpolling"

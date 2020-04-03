@@ -117,6 +117,21 @@ domain_test:
 
     Example: demo.example.com
 
+paths_without_crawlers:
+  default:
+    - /web
+    - /website/info
+  help: >-
+    Tell me the list of paths which where you want to forbid crawlers.
+
+    Imagine you do not want your `/shop` and `/shop/**` pages to be indexed. Then put
+    here `[/shop]`.
+
+    ⚠️ It must be a list. And this is only supported if you deploy with Traefik.
+
+    💡 We will convert this to `Path` rules. Check valid syntax in
+    https://docs.traefik.io/routing/routers/#rule
+
 odoo_version:
   help: On which odoo version is it based?
   type: float
