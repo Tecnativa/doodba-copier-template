@@ -4,7 +4,7 @@
 ![latest version](https://img.shields.io/github/v/release/Tecnativa/doodba-copier-template?sort=semver)
 ![test](https://github.com/Tecnativa/doodba-copier-template/workflows/test/badge.svg)
 ![lint](https://github.com/Tecnativa/doodba-copier-template/workflows/lint/badge.svg)
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
 
 # Doodba Copier Template
 
