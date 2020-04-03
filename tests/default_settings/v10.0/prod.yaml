@@ -31,15 +31,6 @@ services:
       traefik.http.routers.myproject-odoo-10-0-prod-main.tls: "true"
       traefik.http.routers.myproject-odoo-10-0-prod-main.tls.certresolver: "letsencrypt"
       traefik.http.services.myproject-odoo-10-0-prod-main.loadbalancer.server.port: 8069
-      # Redirect alternative domains to main domain
-      traefik.http.middlewares.myproject-odoo-10-0-prod-redirect2main.redirectregex.regex: "^https://([^/]+)/(.*)$$"
-      traefik.http.middlewares.myproject-odoo-10-0-prod-redirect2main.redirectregex.replacement: "https://${DOMAIN_PROD}/$${2}"
-      traefik.http.routers.myproject-odoo-10-0-prod-altdomains.entrypoints: "web-main"
-      traefik.http.routers.myproject-odoo-10-0-prod-altdomains.middlewares: "myproject-odoo-10-0-prod-redirect2main"
-      traefik.http.routers.myproject-odoo-10-0-prod-altdomains.rule: "host(`${DOMAIN_PROD_ALT}`)"
-      traefik.http.routers.myproject-odoo-10-0-prod-altdomains.service: "myproject-odoo-10-0-prod-main"
-      traefik.http.routers.myproject-odoo-10-0-prod-altdomains.tls: "true"
-      traefik.http.routers.myproject-odoo-10-0-prod-altdomains.tls.certresolver: "letsencrypt"
       # Longpolling service
       traefik.http.routers.myproject-odoo-10-0-prod-longpolling.entrypoints: "web-main"
       traefik.http.routers.myproject-odoo-10-0-prod-longpolling.rule:

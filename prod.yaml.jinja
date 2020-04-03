@@ -46,15 +46,20 @@ services:
       traefik.http.routers.{{ _key }}-main.tls: "true"
       traefik.http.routers.{{ _key }}-main.tls.certresolver: "letsencrypt"
       traefik.http.services.{{ _key }}-main.loadbalancer.server.port: 8069
+      {%- if domain_prod_alternatives %}
       # Redirect alternative domains to main domain
       traefik.http.middlewares.{{ _key }}-redirect2main.redirectregex.regex: "^https://([^/]+)/(.*)$$"
       traefik.http.middlewares.{{ _key }}-redirect2main.redirectregex.replacement: "https://${DOMAIN_PROD}/$${2}"
       traefik.http.routers.{{ _key }}-altdomains.entrypoints: "web-main"
       traefik.http.routers.{{ _key }}-altdomains.middlewares: "{{ _key }}-redirect2main"
-      traefik.http.routers.{{ _key }}-altdomains.rule: "host(`${DOMAIN_PROD_ALT}`)"
+      traefik.http.routers.{{ _key }}-altdomains.rule: |
+        {%- for domain in domain_prod_alternatives %}
+        host(`${DOMAIN_PROD_ALT_{{ loop.index0 }}}`){% if not loop.last %} ||{% endif %}
+        {%- endfor %}
       traefik.http.routers.{{ _key }}-altdomains.service: "{{ _key }}-main"
       traefik.http.routers.{{ _key }}-altdomains.tls: "true"
       traefik.http.routers.{{ _key }}-altdomains.tls.certresolver: "letsencrypt"
+      {%- endif %}
       # Longpolling service
       traefik.http.routers.{{ _key }}-longpolling.entrypoints: "web-main"
       traefik.http.routers.{{ _key }}-longpolling.rule:
