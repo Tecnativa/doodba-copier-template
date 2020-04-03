@@ -1,5 +1,6 @@
 """Nitpicking small tests ahead."""
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
 from copier.main import copy
@@ -50,3 +51,21 @@ def test_mqt_configs_synced():
         good = (good_diffs / f"{conf}.diff").read_text()
         tested = diff(template / conf, mqt / conf, retcode=1)
         assert good == tested
+
+
+def test_gitlab_badges(tmp_path: Path):
+    """Gitlab badges are properly formatted in README."""
+    copy(
+        ".",
+        str(tmp_path),
+        vcs_ref="HEAD",
+        force=True,
+        data={"gitlab_url": "https://gitlab.example.com/Tecnativa/my-badged-odoo"},
+    )
+    expected_badges = dedent(
+        """
+        [![pipeline status](https://gitlab.example.com/Tecnativa/my-badged-odoo/badges/13.0/pipeline.svg)](https://gitlab.example.com/Tecnativa/my-badged-odoo/commits/13.0)
+        [![coverage report](https://gitlab.example.com/Tecnativa/my-badged-odoo/badges/13.0/coverage.svg)](https://gitlab.example.com/Tecnativa/my-badged-odoo/commits/13.0)
+        """
+    )
+    assert expected_badges.strip() in (tmp_path / "README.md").read_text()
