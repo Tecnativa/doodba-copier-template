@@ -28,6 +28,13 @@ services:
     labels:
       traefik.longpolling.frontend.rule: "Host:${DOMAIN_PROD};PathPrefix:/longpolling/"
       traefik.www.frontend.rule: "Host:${DOMAIN_PROD}"
+      {%- if paths_without_crawlers %}
+      traefik.forbid-crawlers.frontend.rule: "Host:${DOMAIN_PROD};PathPrefix:
+        {%- for path in paths_without_crawlers -%}
+        {{ path }},{{ path }}/{anything:.*}
+        {%- if not loop.last %},{% endif %}
+        {%- endfor %}"
+      {%- endif %}
       {%- if domain_prod_alternatives %}
       {%- for domain in domain_prod_alternatives %}
       traefik.alt-{{ loop.index0 }}.frontend.redirect.regex: "^(.*)://${DOMAIN_PROD_ALT_{{ loop.index0 }}}/(.*)$$"
@@ -68,6 +75,23 @@ services:
       traefik.http.services.{{ _key }}-longpolling.loadbalancer.server.port: 8072
       traefik.http.routers.{{ _key }}-longpolling.tls: "true"
       traefik.http.routers.{{ _key }}-longpolling.tls.certresolver: "letsencrypt"
+      {%- if paths_without_crawlers %}
+      # Forbid crawlers
+      ? traefik.http.middlewares.{{ _key }}-forbid-crawlers.headers.customResponseHeaders.X-Robots-Tag
+      : "noindex, nofollow"
+      traefik.http.routers.{{ _key }}-forbidden-crawlers.entrypoints: "web-main"
+      traefik.http.routers.{{ _key }}-forbidden-crawlers.middlewares: "{{ _key }}-forbid-crawlers"
+      traefik.http.routers.{{ _key }}-forbidden-crawlers.rule: |
+        Host(`${DOMAIN_PROD}`) && (
+          {%- for path in paths_without_crawlers %}
+          Path(`{{ path }}`, `{{ path }}/{anything:.*}`)
+          {%- if not loop.last %} ||{% endif %}
+          {%- endfor %}
+        )
+      traefik.http.routers.{{ _key }}-forbidden-crawlers.service: "{{ _key }}-main"
+      traefik.http.routers.{{ _key }}-forbidden-crawlers.tls: "true"
+      traefik.http.routers.{{ _key }}-forbidden-crawlers.tls.certresolver: "letsencrypt"
+      {%- endif %}
     {%- endif %}
 
   db:

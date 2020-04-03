@@ -5,7 +5,7 @@ import pytest
 import yaml
 from copier.main import copy
 from plumbum import local
-from plumbum.cmd import diff, git, invoke
+from plumbum.cmd import diff, git, invoke, pre_commit
 
 from .helpers import ALL_ODOO_VERSIONS, clone_self_dirty
 
@@ -28,6 +28,9 @@ def test_default_settings(tmp_path: Path, odoo_version: float):
             data={"odoo_version": odoo_version},
         )
     with local.cwd(dst):
+        # Pre-commit might be violated in these files and there's
+        # nothing we can do about it, so let's fix it here
+        pre_commit("run", "--files", ".copier-answers.yml", retcode=None)
         # The result is a working git repo that respects pre-commit
         git("add", ".")
         git("commit", "-am", "Hello World")

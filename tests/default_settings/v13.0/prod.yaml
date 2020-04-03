@@ -20,6 +20,7 @@ services:
     labels:
       traefik.longpolling.frontend.rule: "Host:${DOMAIN_PROD};PathPrefix:/longpolling/"
       traefik.www.frontend.rule: "Host:${DOMAIN_PROD}"
+      traefik.forbid-crawlers.frontend.rule: "Host:${DOMAIN_PROD};PathPrefix:/web,/web/{anything:.*},/website/info,/website/info/{anything:.*}"
       # Main service
       ? traefik.http.middlewares.myproject-odoo-13-0-prod-main-buffering.buffering.retryExpression
       : "IsNetworkError() && Attempts() < 5"
@@ -39,6 +40,19 @@ services:
       traefik.http.services.myproject-odoo-13-0-prod-longpolling.loadbalancer.server.port: 8072
       traefik.http.routers.myproject-odoo-13-0-prod-longpolling.tls: "true"
       traefik.http.routers.myproject-odoo-13-0-prod-longpolling.tls.certresolver: "letsencrypt"
+      # Forbid crawlers
+      ? traefik.http.middlewares.myproject-odoo-13-0-prod-forbid-crawlers.headers.customResponseHeaders.X-Robots-Tag
+      : "noindex, nofollow"
+      traefik.http.routers.myproject-odoo-13-0-prod-forbidden-crawlers.entrypoints: "web-main"
+      traefik.http.routers.myproject-odoo-13-0-prod-forbidden-crawlers.middlewares: "myproject-odoo-13-0-prod-forbid-crawlers"
+      traefik.http.routers.myproject-odoo-13-0-prod-forbidden-crawlers.rule: |
+        Host(`${DOMAIN_PROD}`) && (
+          Path(`/web`, `/web/{anything:.*}`) ||
+          Path(`/website/info`, `/website/info/{anything:.*}`)
+        )
+      traefik.http.routers.myproject-odoo-13-0-prod-forbidden-crawlers.service: "myproject-odoo-13-0-prod-main"
+      traefik.http.routers.myproject-odoo-13-0-prod-forbidden-crawlers.tls: "true"
+      traefik.http.routers.myproject-odoo-13-0-prod-forbidden-crawlers.tls.certresolver: "letsencrypt"
 
   db:
     extends:

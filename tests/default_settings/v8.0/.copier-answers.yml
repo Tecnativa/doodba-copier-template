@@ -18,6 +18,9 @@ odoo_listdb: false
 odoo_oci_image: null
 odoo_proxy: traefik
 odoo_version: 8.0
+paths_without_crawlers:
+  - /web
+  - /website/info
 postgres_dbname: prod
 postgres_username: odoo
 postgres_version: 12
