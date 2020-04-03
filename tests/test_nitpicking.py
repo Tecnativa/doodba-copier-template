@@ -69,3 +69,27 @@ def test_gitlab_badges(tmp_path: Path):
         """
     )
     assert expected_badges.strip() in (tmp_path / "README.md").read_text()
+
+
+def test_alt_domains_traefik2_rules(tmp_path: Path):
+    """Make sure alt domains redirections are good for Traefik 2."""
+    src, dst = tmp_path / "src", tmp_path / "dst"
+    clone_self_dirty(src)
+    copy(
+        str(src),
+        str(dst),
+        vcs_ref="HEAD",
+        force=True,
+        data={
+            "domain_prod": "www.example.com",
+            "domain_prod_alternatives": [
+                "old.example.com",
+                "example.com",
+                "example.org",
+                "www.example.org",
+            ],
+        },
+    )
+    expected = Path("tests", "samples", "alt-domains", "prod.yaml").read_text()
+    generated = (dst / "prod.yaml").read_text()
+    assert generated == expected
