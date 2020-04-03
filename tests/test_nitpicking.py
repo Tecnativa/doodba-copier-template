@@ -71,8 +71,8 @@ def test_gitlab_badges(tmp_path: Path):
     assert expected_badges.strip() in (tmp_path / "README.md").read_text()
 
 
-def test_alt_domains_traefik2_rules(tmp_path: Path):
-    """Make sure alt domains redirections are good for Traefik 2."""
+def test_alt_domains_rules(tmp_path: Path):
+    """Make sure alt domains redirections are good for Traefik."""
     src, dst = tmp_path / "src", tmp_path / "dst"
     clone_self_dirty(src)
     copy(
@@ -93,6 +93,22 @@ def test_alt_domains_traefik2_rules(tmp_path: Path):
     expected = Path("tests", "samples", "alt-domains", "prod.yaml").read_text()
     generated = (dst / "prod.yaml").read_text()
     assert generated == expected
+
+
+def test_cidr_whitelist_rules(tmp_path: Path):
+    """Make sure CIDR whitelist redirections are good for Traefik."""
+    src, dst = tmp_path / "src", tmp_path / "dst"
+    clone_self_dirty(src)
+    copy(
+        str(src),
+        str(dst),
+        vcs_ref="HEAD",
+        force=True,
+        data={"cidr_whitelist": ["123.123.123.123/24", "456.456.456.456"]},
+    )
+    expected = Path("tests", "samples", "cidr-whitelist")
+    assert (dst / "prod.yaml").read_text() == (expected / "prod.yaml").read_text()
+    assert (dst / "test.yaml").read_text() == (expected / "test.yaml").read_text()
 
 
 def test_template_update_badge(tmp_path: Path):

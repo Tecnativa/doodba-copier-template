@@ -1,4 +1,3 @@
-{% set _key = '%s-%.1f-test'|format(project_name, odoo_version)|replace('.', '-') -%}
 version: "2.4"
 
 services:
@@ -22,41 +21,35 @@ services:
     networks:
       default:
       globalwhitelist_shared:
-    {%- if odoo_proxy == "traefik" %}
       inverseproxy_shared:
     labels:
       traefik.frontend.headers.customResponseHeaders: "X-Robots-Tag:noindex, nofollow"
       traefik.longpolling.frontend.rule: "Host:${DOMAIN_TEST};PathPrefix:/longpolling/"
       traefik.www.frontend.rule: "Host:${DOMAIN_TEST}"
       # Forbid crawlers
-      ? traefik.http.middlewares.{{ _key }}-forbid-crawlers.headers.customResponseHeaders.X-Robots-Tag
+      ? traefik.http.middlewares.myproject-odoo-13-0-test-forbid-crawlers.headers.customResponseHeaders.X-Robots-Tag
       : "noindex, nofollow"
       # Main service
-      ? traefik.http.middlewares.{{ _key }}-main-buffering.buffering.retryExpression
+      ? traefik.http.middlewares.myproject-odoo-13-0-test-main-buffering.buffering.retryExpression
       : "IsNetworkError() && Attempts() < 5"
-      traefik.http.middlewares.{{ _key }}-main-compress.compress: "true"
-      {%- if cidr_whitelist %}
-      ? traefik.http.middlewares.{{ _key }}-main-whitelist.IPWhiteList.sourceRange
-      : {% for cidr in cidr_whitelist -%}
-        {{ cidr }}{% if not loop.last %}, {% endif %}
-        {%- endfor %}
-      {%- endif %}
-      traefik.http.routers.{{ _key }}-main.entrypoints: "web-main"
-      traefik.http.routers.{{ _key }}-main.middlewares: "{{ _key }}-main-compress,{{ _key }}-main-buffering,{{ _key }}-forbid-crawlers{% if cidr_whitelist %},{{ _key }}-main-whitelist{% endif %}"
-      traefik.http.routers.{{ _key }}-main.rule: "host(`${DOMAIN_TEST}`)"
-      traefik.http.routers.{{ _key }}-main.service: "{{ _key }}-main"
-      traefik.http.routers.{{ _key }}-main.tls.certresolver: "letsencrypt"
-      traefik.http.services.{{ _key }}-main.loadbalancer.server.port: 8069
+      traefik.http.middlewares.myproject-odoo-13-0-test-main-compress.compress: "true"
+      ? traefik.http.middlewares.myproject-odoo-13-0-test-main-whitelist.IPWhiteList.sourceRange
+      : 123.123.123.123/24, 456.456.456.456
+      traefik.http.routers.myproject-odoo-13-0-test-main.entrypoints: "web-main"
+      traefik.http.routers.myproject-odoo-13-0-test-main.middlewares: "myproject-odoo-13-0-test-main-compress,myproject-odoo-13-0-test-main-buffering,myproject-odoo-13-0-test-forbid-crawlers,myproject-odoo-13-0-test-main-whitelist"
+      traefik.http.routers.myproject-odoo-13-0-test-main.rule: "host(`${DOMAIN_TEST}`)"
+      traefik.http.routers.myproject-odoo-13-0-test-main.service: "myproject-odoo-13-0-test-main"
+      traefik.http.routers.myproject-odoo-13-0-test-main.tls.certresolver: "letsencrypt"
+      traefik.http.services.myproject-odoo-13-0-test-main.loadbalancer.server.port: 8069
       # Longpolling service
-      traefik.http.routers.{{ _key }}-longpolling.entrypoints: "web-main"
-      traefik.http.routers.{{ _key }}-longpolling.middlewares: "{{ _key }}-forbid-crawlers"
-      traefik.http.routers.{{ _key }}-longpolling.rule:
+      traefik.http.routers.myproject-odoo-13-0-test-longpolling.entrypoints: "web-main"
+      traefik.http.routers.myproject-odoo-13-0-test-longpolling.middlewares: "myproject-odoo-13-0-test-forbid-crawlers"
+      traefik.http.routers.myproject-odoo-13-0-test-longpolling.rule:
         "host(`${DOMAIN_TEST}`) && pathprefix(`/longpolling/`)"
-      traefik.http.routers.{{ _key }}-longpolling.service: "{{ _key }}-longpolling"
-      traefik.http.routers.{{ _key }}-longpolling.tls: "true"
-      traefik.http.routers.{{ _key }}-longpolling.tls.certresolver: "letsencrypt"
-      traefik.http.services.{{ _key }}-longpolling.loadbalancer.server.port: 8072
-    {%- endif %}
+      traefik.http.routers.myproject-odoo-13-0-test-longpolling.service: "myproject-odoo-13-0-test-longpolling"
+      traefik.http.routers.myproject-odoo-13-0-test-longpolling.tls: "true"
+      traefik.http.routers.myproject-odoo-13-0-test-longpolling.tls.certresolver: "letsencrypt"
+      traefik.http.services.myproject-odoo-13-0-test-longpolling.loadbalancer.server.port: 8072
     command:
       - odoo
       - --workers=2
@@ -79,7 +72,6 @@ services:
       default:
         aliases:
           - smtplocal
-    {%- if odoo_proxy == "traefik" %}
       inverseproxy_shared:
     labels:
       traefik.docker.network: "inverseproxy_shared"
@@ -87,7 +79,6 @@ services:
       traefik.frontend.passHostHeader: "true"
       traefik.frontend.rule: "Host:${DOMAIN_TEST};PathPrefixStrip:/smtpfake/"
       traefik.port: "8025"
-    {%- endif %}
     volumes:
       - "smtpconf:/etc/mailhog:ro,z"
     entrypoint: [sh, -c]
@@ -102,11 +93,9 @@ networks:
 
   globalwhitelist_shared:
     external: true
-  {%- if odoo_proxy == "traefik" %}
 
   inverseproxy_shared:
     external: true
-  {%- endif %}
 
 volumes:
   filestore:

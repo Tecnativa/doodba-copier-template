@@ -87,7 +87,7 @@ def test(c, verbose=False):
 
 
 @task(develop)
-def update_test_scaffoldings(c):
+def update_test_samples(c):
     """Update default scaffolding renderings."""
     # Make sure git repo is clean
     try:
@@ -108,3 +108,11 @@ def update_test_scaffoldings(c):
             shutil.rmtree(dst / ".git")
     finally:
         c.run("git tag --delete test")
+    samples = Path("tests", "samples")
+    c.run(
+        "poetry run copier -fr HEAD -x '**' -x '!prod.yaml' -x '!test.yaml' "
+        "-d cidr_whitelist='[123.123.123.123/24, 456.456.456.456]' "
+        f"copy . {samples / 'cidr-whitelist'}",
+        warn=True,
+    )
+    shutil.rmtree(samples / "cidr-whitelist" / ".venv")

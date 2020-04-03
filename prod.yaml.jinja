@@ -46,8 +46,14 @@ services:
       ? traefik.http.middlewares.{{ _key }}-main-buffering.buffering.retryExpression
       : "IsNetworkError() && Attempts() < 5"
       traefik.http.middlewares.{{ _key }}-main-compress.compress: "true"
+      {%- if cidr_whitelist %}
+      ? traefik.http.middlewares.{{ _key }}-main-whitelist.IPWhiteList.sourceRange
+      : {% for cidr in cidr_whitelist -%}
+        {{ cidr }}{% if not loop.last %}, {% endif %}
+        {%- endfor %}
+      {%- endif %}
       traefik.http.routers.{{ _key }}-main.entrypoints: "web-main"
-      traefik.http.routers.{{ _key }}-main.middlewares: "{{ _key }}-main-compress,{{ _key }}-main-buffering"
+      traefik.http.routers.{{ _key }}-main.middlewares: "{{ _key }}-main-compress,{{ _key }}-main-buffering{% if cidr_whitelist %},{{ _key }}-main-whitelist{% endif %}"
       traefik.http.routers.{{ _key }}-main.rule: "host(`${DOMAIN_PROD}`)"
       traefik.http.routers.{{ _key }}-main.service: "{{ _key }}-main"
       traefik.http.routers.{{ _key }}-main.tls: "true"
