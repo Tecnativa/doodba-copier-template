@@ -8,6 +8,7 @@ backup_dst: null
 backup_email_from: null
 backup_email_to: null
 backup_tz: UTC
+cidr_whitelist: null
 domain_prod: null
 domain_prod_alternatives: null
 domain_test: null

@@ -132,6 +132,14 @@ paths_without_crawlers:
     💡 We will convert this to `Path` rules. Check valid syntax in
     https://docs.traefik.io/routing/routers/#rule
 
+cidr_whitelist:
+  default: null
+  help: >-
+    If you need to whitelist certain CIDR to allow only them to access your Odoo
+    instance, set that here please.
+
+    ⚠️ It must be a list. And this is only supported if you deploy with Traefik 2+.
+
 odoo_version:
   help: On which odoo version is it based?
   type: float
