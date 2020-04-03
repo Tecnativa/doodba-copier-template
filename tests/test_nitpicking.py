@@ -93,3 +93,13 @@ def test_alt_domains_traefik2_rules(tmp_path: Path):
     expected = Path("tests", "samples", "alt-domains", "prod.yaml").read_text()
     generated = (dst / "prod.yaml").read_text()
     assert generated == expected
+
+
+def test_template_update_badge(tmp_path: Path):
+    """Test that the template update badge is properly formatted."""
+    src, dst = tmp_path / "src", tmp_path / "dst"
+    tag = "v99999.0.0-99999-bye-bye"
+    clone_self_dirty(src, tag=tag)
+    copy(str(src), str(dst), vcs_ref=tag, force=True)
+    expected = "[![Last template update](https://img.shields.io/badge/last%20template%20update-v99999.0.0--99999--bye--bye-informational)](https://github.com/Tecnativa/doodba-copier-template/tree/v99999.0.0-99999-bye-bye)"
+    assert expected in (dst / "README.md").read_text()
