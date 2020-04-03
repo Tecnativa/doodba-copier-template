@@ -5,7 +5,7 @@ import pytest
 import yaml
 from copier.main import copy
 from plumbum import local
-from plumbum.cmd import diff, git, invoke, pre_commit
+from plumbum.cmd import diff, git, invoke
 
 from .helpers import ALL_ODOO_VERSIONS, clone_self_dirty
 
@@ -28,8 +28,8 @@ def test_default_settings(tmp_path: Path, odoo_version: float):
             data={"odoo_version": odoo_version},
         )
     with local.cwd(dst):
+        # The result is a working git repo that respects pre-commit
         git("add", ".")
-        pre_commit("run", "-a", retcode=None)
         git("commit", "-am", "Hello World")
     # The result matches what we expect
     diff(

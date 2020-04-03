@@ -1,4 +1,4 @@
-{% set _key = '%s-%.1f-test'|format(project_name, odoo_version)|replace('.', '-') %}
+{% set _key = '%s-%.1f-test'|format(project_name, odoo_version)|replace('.', '-') -%}
 version: "2.4"
 
 services:
@@ -29,7 +29,8 @@ services:
       traefik.longpolling.frontend.rule: "Host:${DOMAIN_TEST};PathPrefix:/longpolling/"
       traefik.www.frontend.rule: "Host:${DOMAIN_TEST}"
       # Main service
-      traefik.http.middlewares.{{ _key }}-main-buffering.buffering.retryExpression: "IsNetworkError() && Attempts() < 5"
+      ? traefik.http.middlewares.{{ _key }}-main-buffering.buffering.retryExpression
+      : "IsNetworkError() && Attempts() < 5"
       traefik.http.middlewares.{{ _key }}-main-compress.compress: "true"
       traefik.http.routers.{{ _key }}-main.entrypoints: "web-main"
       traefik.http.routers.{{ _key }}-main.middlewares: "{{ _key }}-main-compress,{{ _key }}-main-buffering"
@@ -39,7 +40,8 @@ services:
       traefik.http.services.{{ _key }}-main.loadbalancer.server.port: 8069
       # Longpolling service
       traefik.http.routers.{{ _key }}-longpolling.entrypoints: "web-main"
-      traefik.http.routers.{{ _key }}-longpolling.rule: "host(`${DOMAIN_TEST}`) && pathprefix(`/longpolling/`)"
+      traefik.http.routers.{{ _key }}-longpolling.rule:
+        "host(`${DOMAIN_TEST}`) && pathprefix(`/longpolling/`)"
       traefik.http.routers.{{ _key }}-longpolling.service: "{{ _key }}-longpolling"
       traefik.http.routers.{{ _key }}-longpolling.tls: "true"
       traefik.http.routers.{{ _key }}-longpolling.tls.certresolver: "letsencrypt"
