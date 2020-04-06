@@ -65,10 +65,13 @@ services:
       traefik.http.middlewares.{{ _key }}-redirect2main.redirectregex.replacement: "https://${DOMAIN_PROD}/$${2}"
       traefik.http.routers.{{ _key }}-altdomains.entrypoints: "web-main"
       traefik.http.routers.{{ _key }}-altdomains.middlewares: "{{ _key }}-redirect2main"
-      traefik.http.routers.{{ _key }}-altdomains.rule: |
-        {%- for domain in domain_prod_alternatives %}
-        host(`${DOMAIN_PROD_ALT_{{ loop.index0 }}}`){% if not loop.last %} ||{% endif %}
-        {%- endfor %}
+      traefik.http.routers.{{ _key }}-altdomains.rule:
+        Host(
+          {%- for domain in domain_prod_alternatives -%}
+          `${DOMAIN_PROD_ALT_{{ loop.index0 }}}`
+          {%- if not loop.last %}, {% endif %}
+          {%- endfor -%}
+        )
       traefik.http.routers.{{ _key }}-altdomains.service: "{{ _key }}-main"
       traefik.http.routers.{{ _key }}-altdomains.tls: "true"
       traefik.http.routers.{{ _key }}-altdomains.tls.certresolver: "letsencrypt"
@@ -87,12 +90,12 @@ services:
       : "noindex, nofollow"
       traefik.http.routers.{{ _key }}-forbidden-crawlers.entrypoints: "web-main"
       traefik.http.routers.{{ _key }}-forbidden-crawlers.middlewares: "{{ _key }}-forbid-crawlers"
-      traefik.http.routers.{{ _key }}-forbidden-crawlers.rule: |
-        Host(`${DOMAIN_PROD}`) && (
-          {%- for path in paths_without_crawlers %}
-          Path(`{{ path }}`, `{{ path }}/{anything:.*}`)
-          {%- if not loop.last %} ||{% endif %}
-          {%- endfor %}
+      traefik.http.routers.{{ _key }}-forbidden-crawlers.rule:
+        Host(`${DOMAIN_PROD}`) && Path(
+          {%- for path in paths_without_crawlers -%}
+          `{{ path }}`, `{{ path }}/{anything:.*}`
+          {%- if not loop.last %}, {% endif %}
+          {%- endfor -%}
         )
       traefik.http.routers.{{ _key }}-forbidden-crawlers.service: "{{ _key }}-main"
       traefik.http.routers.{{ _key }}-forbidden-crawlers.tls: "true"

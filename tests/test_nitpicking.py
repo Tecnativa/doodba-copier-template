@@ -3,9 +3,10 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
+import yaml
 from copier.main import copy
 from plumbum import local
-from plumbum.cmd import diff, git
+from plumbum.cmd import diff, git, pre_commit
 
 from .helpers import clone_self_dirty
 
@@ -90,8 +91,24 @@ def test_alt_domains_rules(tmp_path: Path):
             ],
         },
     )
+    with local.cwd(dst):
+        git("add", "prod.yaml")
+        pre_commit("run", "-a", retcode=1)
     expected = Path("tests", "samples", "alt-domains", "prod.yaml").read_text()
     generated = (dst / "prod.yaml").read_text()
+    generated_scalar = yaml.load(generated)
+    assert (
+        "\n"
+        not in generated_scalar["services"]["odoo"]["labels"][
+            "traefik.http.routers.myproject-odoo-13-0-prod-altdomains.rule"
+        ]
+    )
+    assert (
+        "\n"
+        not in generated_scalar["services"]["odoo"]["labels"][
+            "traefik.http.routers.myproject-odoo-13-0-prod-forbidden-crawlers.rule"
+        ]
+    )
     assert generated == expected
 
 
@@ -106,6 +123,9 @@ def test_cidr_whitelist_rules(tmp_path: Path):
         force=True,
         data={"cidr_whitelist": ["123.123.123.123/24", "456.456.456.456"]},
     )
+    with local.cwd(dst):
+        git("add", "prod.yaml")
+        pre_commit("run", "-a", retcode=1)
     expected = Path("tests", "samples", "cidr-whitelist")
     assert (dst / "prod.yaml").read_text() == (expected / "prod.yaml").read_text()
     assert (dst / "test.yaml").read_text() == (expected / "test.yaml").read_text()

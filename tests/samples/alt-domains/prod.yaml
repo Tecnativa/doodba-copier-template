@@ -49,11 +49,9 @@ services:
       traefik.http.middlewares.myproject-odoo-13-0-prod-redirect2main.redirectregex.replacement: "https://${DOMAIN_PROD}/$${2}"
       traefik.http.routers.myproject-odoo-13-0-prod-altdomains.entrypoints: "web-main"
       traefik.http.routers.myproject-odoo-13-0-prod-altdomains.middlewares: "myproject-odoo-13-0-prod-redirect2main"
-      traefik.http.routers.myproject-odoo-13-0-prod-altdomains.rule: |
-        host(`${DOMAIN_PROD_ALT_0}`) ||
-        host(`${DOMAIN_PROD_ALT_1}`) ||
-        host(`${DOMAIN_PROD_ALT_2}`) ||
-        host(`${DOMAIN_PROD_ALT_3}`)
+      traefik.http.routers.myproject-odoo-13-0-prod-altdomains.rule:
+        Host(`${DOMAIN_PROD_ALT_0}`, `${DOMAIN_PROD_ALT_1}`, `${DOMAIN_PROD_ALT_2}`,
+        `${DOMAIN_PROD_ALT_3}`)
       traefik.http.routers.myproject-odoo-13-0-prod-altdomains.service: "myproject-odoo-13-0-prod-main"
       traefik.http.routers.myproject-odoo-13-0-prod-altdomains.tls: "true"
       traefik.http.routers.myproject-odoo-13-0-prod-altdomains.tls.certresolver: "letsencrypt"
@@ -70,11 +68,9 @@ services:
       : "noindex, nofollow"
       traefik.http.routers.myproject-odoo-13-0-prod-forbidden-crawlers.entrypoints: "web-main"
       traefik.http.routers.myproject-odoo-13-0-prod-forbidden-crawlers.middlewares: "myproject-odoo-13-0-prod-forbid-crawlers"
-      traefik.http.routers.myproject-odoo-13-0-prod-forbidden-crawlers.rule: |
-        Host(`${DOMAIN_PROD}`) && (
-          Path(`/web`, `/web/{anything:.*}`) ||
-          Path(`/website/info`, `/website/info/{anything:.*}`)
-        )
+      traefik.http.routers.myproject-odoo-13-0-prod-forbidden-crawlers.rule:
+        Host(`${DOMAIN_PROD}`) && Path(`/web`, `/web/{anything:.*}`, `/website/info`,
+        `/website/info/{anything:.*}`)
       traefik.http.routers.myproject-odoo-13-0-prod-forbidden-crawlers.service: "myproject-odoo-13-0-prod-main"
       traefik.http.routers.myproject-odoo-13-0-prod-forbidden-crawlers.tls: "true"
       traefik.http.routers.myproject-odoo-13-0-prod-forbidden-crawlers.tls.certresolver: "letsencrypt"
