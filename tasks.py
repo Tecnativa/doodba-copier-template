@@ -88,7 +88,16 @@ def test(c, verbose=False):
 
 @task(develop)
 def update_test_samples(c):
-    """Update default scaffolding renderings."""
+    """Update test samples renderings.
+
+    Since this project is just a template, some render results are stored as
+    tests to be able to check the templates produce the right results.
+
+    However, when something changes, the samples must be properly updated and
+    reviewed to make sure they are still OK.
+
+    This job updates all those samples.
+    """
     # Make sure git repo is clean
     try:
         c.run("git diff --quiet --exit-code")
@@ -129,4 +138,12 @@ def update_test_samples(c):
             )
             fd.write(c.run(f"diff {own} {mqt}", warn=True).stdout)
     shutil.rmtree(samples / "cidr-whitelist" / ".venv")
-    c.run("pre-commit run -a", warn=True)
+    c.run(
+        "poetry run copier -fr HEAD -x '**' -x '!prod.yaml' "
+        "-d domain_prod=www.example.com "
+        "-d domain_prod_alternatives='[old.example.com, example.com, example.org, www.example.org]' "
+        f"copy . {samples /'alt-domains'}",
+        warn=True,
+    )
+    shutil.rmtree(samples / "alt-domains" / ".venv")
+    c.run("poetry run pre-commit run -a", warn=True)
