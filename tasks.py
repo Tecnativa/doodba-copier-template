@@ -95,7 +95,9 @@ def update_test_samples(c):
     except Exception:
         print("git repo is dirty; clean it and repeat")
         raise
-    all_odoo_versions = _load_copier_conf()["odoo_version"]["choices"]
+    copier_conf = _load_copier_conf()
+    all_odoo_versions = copier_conf["odoo_version"]["choices"]
+    default_odoo_version = copier_conf["odoo_version"]["default"]
     default_settings_path = Path("tests", "default_settings")
     shutil.rmtree(default_settings_path)
     default_settings_path.mkdir()
@@ -115,4 +117,16 @@ def update_test_samples(c):
         f"copy . {samples / 'cidr-whitelist'}",
         warn=True,
     )
+    for file_name in (".pylintrc", ".pylintrc-mandatory"):
+        with (samples / "mqt-diffs" / f"{file_name}.diff").open("w") as fd:
+            own = default_settings_path / f"v{default_odoo_version}" / file_name
+            mqt = Path(
+                "vendor",
+                "maintainer-quality-tools",
+                "sample_files",
+                f"pre-commit-{default_odoo_version}",
+                file_name,
+            )
+            fd.write(c.run(f"diff {own} {mqt}", warn=True).stdout)
     shutil.rmtree(samples / "cidr-whitelist" / ".venv")
+    c.run("pre-commit run -a", warn=True)

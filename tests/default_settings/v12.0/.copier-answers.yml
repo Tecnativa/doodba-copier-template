@@ -25,7 +25,7 @@ paths_without_crawlers:
 postgres_dbname: prod
 postgres_username: odoo
 postgres_version: 12
-project_author: Tecnativa, S.L.
+project_author: Tecnativa
 project_license: BSL-1.0
 project_name: myproject-odoo
 smtp_canonical_default: null
