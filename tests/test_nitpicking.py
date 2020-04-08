@@ -46,7 +46,7 @@ def test_mqt_configs_synced():
     """Make sure configs from MQT are in sync."""
     template = Path("tests", "default_settings", "v13.0")
     mqt = Path("vendor", "maintainer-quality-tools", "sample_files", "pre-commit-13.0")
-    good_diffs = Path("tests", "good_diffs")
+    good_diffs = Path("tests", "samples", "mqt-diffs")
     for conf in (".pylintrc", ".pylintrc-mandatory"):
         good = (good_diffs / f"{conf}.diff").read_text()
         tested = diff(template / conf, mqt / conf, retcode=1)
