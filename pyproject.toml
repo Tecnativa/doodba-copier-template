@@ -8,7 +8,7 @@ version = "0.1.0"
 [tool.poetry.dependencies]
 # TODO Use versioned copier after v3.0.0 is released
 # HACK https://github.com/pykong/copier/issues/112
-copier = "^3.0.2"
+copier = "^3.0.6"
 plumbum = "^1.6.8"
 python = "^3.6"
 
