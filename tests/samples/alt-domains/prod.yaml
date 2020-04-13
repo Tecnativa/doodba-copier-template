@@ -34,11 +34,12 @@ services:
       traefik.alt-3.frontend.redirect.replacement: "$$1://${DOMAIN_PROD}/$$2"
       traefik.alt-3.frontend.rule: "Host:${DOMAIN_PROD_ALT_3}"
       # Main service
-      ? traefik.http.middlewares.myproject-odoo-13-0-prod-main-buffering.buffering.retryExpression
-      : "IsNetworkError() && Attempts() < 5"
-      traefik.http.middlewares.myproject-odoo-13-0-prod-main-compress.compress: "true"
+      ? traefik.http.middlewares.myproject-odoo-13-0-prod-buffering.buffering.retryExpression
+      : IsNetworkError() && Attempts() < 5
+      traefik.http.middlewares.myproject-odoo-13-0-prod-compress.compress: "true"
       traefik.http.routers.myproject-odoo-13-0-prod-main.entrypoints: "web-main"
-      traefik.http.routers.myproject-odoo-13-0-prod-main.middlewares: "myproject-odoo-13-0-prod-main-compress,myproject-odoo-13-0-prod-main-buffering"
+      traefik.http.routers.myproject-odoo-13-0-prod-main.middlewares:
+        myproject-odoo-13-0-prod-buffering, myproject-odoo-13-0-prod-compress
       traefik.http.routers.myproject-odoo-13-0-prod-main.rule: "host(`${DOMAIN_PROD}`)"
       traefik.http.routers.myproject-odoo-13-0-prod-main.service: "myproject-odoo-13-0-prod-main"
       traefik.http.routers.myproject-odoo-13-0-prod-main.tls: "true"
@@ -48,7 +49,8 @@ services:
       traefik.http.middlewares.myproject-odoo-13-0-prod-redirect2main.redirectregex.regex: "^https://([^/]+)/(.*)$$"
       traefik.http.middlewares.myproject-odoo-13-0-prod-redirect2main.redirectregex.replacement: "https://${DOMAIN_PROD}/$${2}"
       traefik.http.routers.myproject-odoo-13-0-prod-altdomains.entrypoints: "web-main"
-      traefik.http.routers.myproject-odoo-13-0-prod-altdomains.middlewares: "myproject-odoo-13-0-prod-redirect2main"
+      traefik.http.routers.myproject-odoo-13-0-prod-altdomains.middlewares:
+        myproject-odoo-13-0-prod-compress, myproject-odoo-13-0-prod-redirect2main
       traefik.http.routers.myproject-odoo-13-0-prod-altdomains.rule:
         Host(`${DOMAIN_PROD_ALT_0}`, `${DOMAIN_PROD_ALT_1}`, `${DOMAIN_PROD_ALT_2}`,
         `${DOMAIN_PROD_ALT_3}`)
@@ -67,7 +69,9 @@ services:
       ? traefik.http.middlewares.myproject-odoo-13-0-prod-forbid-crawlers.headers.customResponseHeaders.X-Robots-Tag
       : "noindex, nofollow"
       traefik.http.routers.myproject-odoo-13-0-prod-forbidden-crawlers.entrypoints: "web-main"
-      traefik.http.routers.myproject-odoo-13-0-prod-forbidden-crawlers.middlewares: "myproject-odoo-13-0-prod-forbid-crawlers"
+      traefik.http.routers.myproject-odoo-13-0-prod-forbidden-crawlers.middlewares:
+        myproject-odoo-13-0-prod-buffering, myproject-odoo-13-0-prod-compress,
+        myproject-odoo-13-0-prod-forbid-crawlers"
       traefik.http.routers.myproject-odoo-13-0-prod-forbidden-crawlers.rule:
         Host(`${DOMAIN_PROD}`) && Path(`/web`, `/web/{anything:.*}`, `/website/info`,
         `/website/info/{anything:.*}`)

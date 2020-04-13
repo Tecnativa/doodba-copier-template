@@ -29,27 +29,33 @@ services:
       traefik.longpolling.frontend.rule: "Host:${DOMAIN_TEST};PathPrefix:/longpolling/"
       traefik.www.frontend.rule: "Host:${DOMAIN_TEST}"
       # Forbid crawlers
-      ? traefik.http.middlewares.{{ _key }}-forbid-crawlers.headers.customResponseHeaders.X-Robots-Tag
-      : "noindex, nofollow"
+      traefik.http.middlewares.{{ _key }}-forbid-crawlers.headers.customResponseHeaders.X-Robots-Tag:
+        noindex, nofollow
       # Main service
-      ? traefik.http.middlewares.{{ _key }}-main-buffering.buffering.retryExpression
-      : "IsNetworkError() && Attempts() < 5"
-      traefik.http.middlewares.{{ _key }}-main-compress.compress: "true"
+      traefik.http.middlewares.{{ _key }}-buffering.buffering.retryExpression:
+        IsNetworkError() && Attempts() < 5
+      traefik.http.middlewares.{{ _key }}-compress.compress: "true"
       {%- if cidr_whitelist %}
-      ? traefik.http.middlewares.{{ _key }}-main-whitelist.IPWhiteList.sourceRange
+      ? traefik.http.middlewares.{{ _key }}-whitelist.IPWhiteList.sourceRange
       : {% for cidr in cidr_whitelist -%}
         {{ cidr }}{% if not loop.last %}, {% endif %}
         {%- endfor %}
       {%- endif %}
       traefik.http.routers.{{ _key }}-main.entrypoints: "web-main"
-      traefik.http.routers.{{ _key }}-main.middlewares: "{{ _key }}-main-compress,{{ _key }}-main-buffering,{{ _key }}-forbid-crawlers{% if cidr_whitelist %},{{ _key }}-main-whitelist{% endif %}"
+      traefik.http.routers.{{ _key }}-main.middlewares:
+        {{ _key }}-buffering,
+        {{ _key }}-compress,
+        {{ _key }}-forbid-crawlers
+        {%- if cidr_whitelist %}, {{ _key }}-whitelist{% endif %}
       traefik.http.routers.{{ _key }}-main.rule: "host(`${DOMAIN_TEST}`)"
       traefik.http.routers.{{ _key }}-main.service: "{{ _key }}-main"
       traefik.http.routers.{{ _key }}-main.tls.certresolver: "letsencrypt"
       traefik.http.services.{{ _key }}-main.loadbalancer.server.port: 8069
       # Longpolling service
       traefik.http.routers.{{ _key }}-longpolling.entrypoints: "web-main"
-      traefik.http.routers.{{ _key }}-longpolling.middlewares: "{{ _key }}-forbid-crawlers"
+      traefik.http.routers.{{ _key }}-longpolling.middlewares:
+        {{ _key }}-forbid-crawlers
+        {%- if cidr_whitelist %}, {{ _key }}-whitelist{% endif %}
       traefik.http.routers.{{ _key }}-longpolling.rule:
         "host(`${DOMAIN_TEST}`) && pathprefix(`/longpolling/`)"
       traefik.http.routers.{{ _key }}-longpolling.service: "{{ _key }}-longpolling"
@@ -87,6 +93,19 @@ services:
       traefik.frontend.passHostHeader: "true"
       traefik.frontend.rule: "Host:${DOMAIN_TEST};PathPrefixStrip:/smtpfake/"
       traefik.port: "8025"
+      # Mailhog service
+      traefik.http.middlewares.{{ _key }}-mailhog-stripprefix.stripPrefix.prefixes: /smtpfake
+      traefik.http.routers.{{ _key }}-mailhog.entrypoints: web-main
+      traefik.http.routers.{{ _key }}-mailhog.middlewares:
+        {{ _key }}-buffering,
+        {{ _key }}-compress,
+        {{ _key }}-forbid-crawlers,
+        {{ _key }}-mailhog-stripprefix
+        {%- if cidr_whitelist %}, {{ _key }}-whitelist{% endif %}
+      traefik.http.routers.{{ _key }}-mailhog.rule: Host(`${DOMAIN_TEST}`) && PathPrefix(`/smtpfake/`)
+      traefik.http.routers.{{ _key }}-mailhog.service: {{ _key }}-mailhog
+      traefik.http.routers.{{ _key }}-mailhog.tls.certresolver: letsencrypt
+      traefik.http.services.{{ _key }}-mailhog.loadbalancer.server.port: 8025
     {%- endif %}
     volumes:
       - "smtpconf:/etc/mailhog:ro,z"

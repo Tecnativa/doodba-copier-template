@@ -43,17 +43,20 @@ services:
       {%- endfor %}
       {%- endif %}
       # Main service
-      ? traefik.http.middlewares.{{ _key }}-main-buffering.buffering.retryExpression
-      : "IsNetworkError() && Attempts() < 5"
-      traefik.http.middlewares.{{ _key }}-main-compress.compress: "true"
+      traefik.http.middlewares.{{ _key }}-buffering.buffering.retryExpression:
+        IsNetworkError() && Attempts() < 5
+      traefik.http.middlewares.{{ _key }}-compress.compress: "true"
       {%- if cidr_whitelist %}
-      ? traefik.http.middlewares.{{ _key }}-main-whitelist.IPWhiteList.sourceRange
+      ? traefik.http.middlewares.{{ _key }}-whitelist.IPWhiteList.sourceRange
       : {% for cidr in cidr_whitelist -%}
         {{ cidr }}{% if not loop.last %}, {% endif %}
         {%- endfor %}
       {%- endif %}
       traefik.http.routers.{{ _key }}-main.entrypoints: "web-main"
-      traefik.http.routers.{{ _key }}-main.middlewares: "{{ _key }}-main-compress,{{ _key }}-main-buffering{% if cidr_whitelist %},{{ _key }}-main-whitelist{% endif %}"
+      traefik.http.routers.{{ _key }}-main.middlewares:
+        {{ _key }}-buffering,
+        {{ _key }}-compress
+        {%- if cidr_whitelist %}, {{ _key }}-whitelist{% endif %}
       traefik.http.routers.{{ _key }}-main.rule: "host(`${DOMAIN_PROD}`)"
       traefik.http.routers.{{ _key }}-main.service: "{{ _key }}-main"
       traefik.http.routers.{{ _key }}-main.tls: "true"
@@ -64,7 +67,10 @@ services:
       traefik.http.middlewares.{{ _key }}-redirect2main.redirectregex.regex: "^https://([^/]+)/(.*)$$"
       traefik.http.middlewares.{{ _key }}-redirect2main.redirectregex.replacement: "https://${DOMAIN_PROD}/$${2}"
       traefik.http.routers.{{ _key }}-altdomains.entrypoints: "web-main"
-      traefik.http.routers.{{ _key }}-altdomains.middlewares: "{{ _key }}-redirect2main"
+      traefik.http.routers.{{ _key }}-altdomains.middlewares:
+        {{ _key }}-compress,
+        {{ _key }}-redirect2main
+        {%- if cidr_whitelist %}, {{ _key }}-whitelist{% endif %}
       traefik.http.routers.{{ _key }}-altdomains.rule:
         Host(
           {%- for domain in domain_prod_alternatives -%}
@@ -78,6 +84,9 @@ services:
       {%- endif %}
       # Longpolling service
       traefik.http.routers.{{ _key }}-longpolling.entrypoints: "web-main"
+      {%- if cidr_whitelist %}
+      traefik.http.routers.{{ _key }}-longpolling.middlewares: {{ _key }}-whitelist
+      {%- endif %}
       traefik.http.routers.{{ _key }}-longpolling.rule:
         "host(`${DOMAIN_PROD}`) && pathprefix(`/longpolling/`)"
       traefik.http.routers.{{ _key }}-longpolling.service: "{{ _key }}-longpolling"
@@ -89,7 +98,11 @@ services:
       ? traefik.http.middlewares.{{ _key }}-forbid-crawlers.headers.customResponseHeaders.X-Robots-Tag
       : "noindex, nofollow"
       traefik.http.routers.{{ _key }}-forbidden-crawlers.entrypoints: "web-main"
-      traefik.http.routers.{{ _key }}-forbidden-crawlers.middlewares: "{{ _key }}-forbid-crawlers"
+      traefik.http.routers.{{ _key }}-forbidden-crawlers.middlewares:
+        {{ _key }}-buffering,
+        {{ _key }}-compress,
+        {{ _key }}-forbid-crawlers
+        {%- if cidr_whitelist %}, {{ _key }}-whitelist{% endif %}"
       traefik.http.routers.{{ _key }}-forbidden-crawlers.rule:
         Host(`${DOMAIN_PROD}`) && Path(
           {%- for path in paths_without_crawlers -%}
