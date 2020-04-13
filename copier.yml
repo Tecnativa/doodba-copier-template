@@ -357,12 +357,14 @@ backup_tz:
     how to obtain a valid value for this variable.
 
 backup_aws_access_key_id:
+  secret: true
   type: str
   default: null
   help: >-
     If you're using AWS S3 to store backups, provide here your access key ID.
 
 backup_aws_secret_access_key:
+  secret: true
   type: str
   default: null
   help: >-
