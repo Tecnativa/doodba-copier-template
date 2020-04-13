@@ -124,7 +124,7 @@ def test_cidr_whitelist_rules(tmp_path: Path):
         data={"cidr_whitelist": ["123.123.123.123/24", "456.456.456.456"]},
     )
     with local.cwd(dst):
-        git("add", "prod.yaml")
+        git("add", "prod.yaml", "test.yaml")
         pre_commit("run", "-a", retcode=1)
     expected = Path("tests", "samples", "cidr-whitelist")
     assert (dst / "prod.yaml").read_text() == (expected / "prod.yaml").read_text()
