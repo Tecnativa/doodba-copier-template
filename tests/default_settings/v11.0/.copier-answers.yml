@@ -1,8 +1,6 @@
 # Changes here will be overwritten by Copier
 _commit: test
 _src_path: .
-backup_aws_access_key_id: null
-backup_aws_secret_access_key: null
 backup_deletion: false
 backup_dst: null
 backup_email_from: null
