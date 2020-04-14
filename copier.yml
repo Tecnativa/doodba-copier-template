@@ -272,6 +272,8 @@ smtp_relay_port:
   help: >-
     Indicate the port to connect in the SMTP server you just defined.
 
+    ⚠️ NEVER use port 465 👉 https://github.com/tomav/docker-mailserver/issues/1428
+
 smtp_relay_user:
   type: str
   help: >-
