@@ -150,6 +150,10 @@ pre-commit run -a
 git commit -am '[IMP] 1st pre-commit execution'
 ```
 
+⚠️ Read
+[this warning about XML whitespace](faq.md#why-xml-is-broken-after-running-pre-commit)
+⚠️
+
 Your transition is finished! 🎉
 
 ## What changes for you now
