@@ -102,7 +102,7 @@ services:
         {{ _key }}-buffering,
         {{ _key }}-compress,
         {{ _key }}-forbid-crawlers
-        {%- if cidr_whitelist %}, {{ _key }}-whitelist{% endif %}"
+        {%- if cidr_whitelist %}, {{ _key }}-whitelist{% endif %}
       traefik.http.routers.{{ _key }}-forbidden-crawlers.rule:
         Host(`${DOMAIN_PROD}`) && Path(
           {%- for path in paths_without_crawlers -%}

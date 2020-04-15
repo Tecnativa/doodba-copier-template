@@ -71,7 +71,7 @@ services:
       traefik.http.routers.myproject-odoo-13-0-prod-forbidden-crawlers.entrypoints: "web-main"
       traefik.http.routers.myproject-odoo-13-0-prod-forbidden-crawlers.middlewares:
         myproject-odoo-13-0-prod-buffering, myproject-odoo-13-0-prod-compress,
-        myproject-odoo-13-0-prod-forbid-crawlers"
+        myproject-odoo-13-0-prod-forbid-crawlers
       traefik.http.routers.myproject-odoo-13-0-prod-forbidden-crawlers.rule:
         Host(`${DOMAIN_PROD}`) && Path(`/web`, `/web/{anything:.*}`, `/website/info`,
         `/website/info/{anything:.*}`)

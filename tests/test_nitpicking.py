@@ -97,18 +97,15 @@ def test_alt_domains_rules(tmp_path: Path):
     expected = Path("tests", "samples", "alt-domains", "prod.yaml").read_text()
     generated = (dst / "prod.yaml").read_text()
     generated_scalar = yaml.load(generated)
-    assert (
-        "\n"
-        not in generated_scalar["services"]["odoo"]["labels"][
-            "traefik.http.routers.myproject-odoo-13-0-prod-altdomains.rule"
-        ]
-    )
-    assert (
-        "\n"
-        not in generated_scalar["services"]["odoo"]["labels"][
-            "traefik.http.routers.myproject-odoo-13-0-prod-forbidden-crawlers.rule"
-        ]
-    )
+    # Any of these characters in a traefik label is an error almost for sure
+    error_chars = ("\n", "'", '"')
+    for service in generated_scalar["services"].values():
+        for key, value in service.get("labels", {}).items():
+            if not key.startswith("traefik."):
+                continue
+            for char in error_chars:
+                assert char not in key
+                assert char not in str(value)
     assert generated == expected
 
 
