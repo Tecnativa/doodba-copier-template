@@ -6,14 +6,10 @@ Contains common helpers to develop using this child project.
 """
 import json
 import os
-import re
 from glob import glob, iglob
 from pathlib import Path
-from unittest.mock import patch
 
 from invoke import task
-from invoke.util import yaml
-from invoke.vendor.yaml3.reader import Reader
 
 SRC_PATH = Path("odoo", "custom", "src")
 DEVELOP_DEPENDENCIES = (
@@ -23,33 +19,38 @@ DEVELOP_DEPENDENCIES = (
 )
 
 
-def _load_answers():
-    """Load copier answers file. This must be run after develop."""
-    with open(".copier-answers.yml", "r") as answers_fd:
-        # HACK https://github.com/pyinvoke/invoke/issues/708
-        with patch.object(
-            Reader,
-            "NON_PRINTABLE",
-            re.compile(
-                "[^\x09\x0A\x0D\x20-\x7E\x85\xA0-"
-                "\uD7FF\uE000-\uFFFD\U00010000-\U0010FFFF]"
-            ),
-        ):
-            return yaml.safe_load(answers_fd)
+@task
+def write_code_workspace_file(c, cw_path=None):
+    """Generate code-workspace file definition.
 
+    Some other tasks will call this one when needed, and since you cannot specify
+    the file name there, if you want a specific one, you should call this task
+    before.
 
-def _write_code_workspace_file():
-    """Generate code-workspace file definition"""
-    answers = _load_answers()
-    cw_path = f"doodba.{answers['project_name']}.code-workspace"
+    Most times you just can forget about this task and let it be run automatically
+    whenever needed.
+
+    If you don't define a workspace name, this task will reuse the 1st
+    `doodba.*.code-workspace` file found inside the current directory.
+    If none is found, it will default to `doodba.$(basename $PWD).code-workspace`.
+
+    If you define it manually, remember to use the same prefix and suffix if you
+    want it git-ignored by default.
+    Example: `--cw-path doodba.my-custom-name.code-workspace`
+    """
+    if not cw_path:
+        try:
+            cw_path = next(iglob(str(Path(c.cwd, "doodba.*.code-workspace"))))
+        except StopIteration:
+            cw_path = f"doodba.{Path(c.cwd).absolute().name}.code-workspace"
     try:
         with open(cw_path) as cw_fd:
             cw_config = json.load(cw_fd)
     except (FileNotFoundError, json.decoder.JSONDecodeError):
         cw_config = {}
     cw_config["folders"] = []
-    addon_repos = glob(str(SRC_PATH / "private"))
-    addon_repos += glob(str(SRC_PATH / "*" / ".git" / ".."))
+    addon_repos = glob(str(Path(c.cwd, SRC_PATH, "private")))
+    addon_repos += glob(str(Path(c.cwd, SRC_PATH, "*", ".git", "..")))
     for subrepo in sorted(addon_repos):
         cw_config["folders"].append({"path": subrepo})
     # HACK https://github.com/microsoft/vscode/issues/37947 put top folder last
@@ -75,7 +76,7 @@ def develop(c):
     # Prepare environment
     c.run("git init")
     c.run("ln -sf devel.yaml docker-compose.yml")
-    _write_code_workspace_file()
+    write_code_workspace_file(c)
     c.run("pre-commit install")
 
 
@@ -89,8 +90,8 @@ def git_aggregate(c):
         "docker-compose --file setup-devel.yaml run --rm odoo",
         env={"GID": str(os.getgid()), "UID": str(os.getuid()), "UMASK": "27"},
     )
-    _write_code_workspace_file()
-    for git_folder in iglob(str(SRC_PATH / "*" / ".git" / "..")):
+    write_code_workspace_file(c)
+    for git_folder in iglob(str(Path(c.cwd, SRC_PATH, "*", ".git", ".."))):
         action = (
             "install"
             if Path(git_folder, ".pre-commit-config.yaml").is_file()
