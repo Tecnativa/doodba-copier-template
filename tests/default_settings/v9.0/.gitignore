@@ -26,4 +26,4 @@
 /src
 
 # Project-specific docker configurations
-/.docker/*.env
+/.docker/

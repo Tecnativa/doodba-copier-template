@@ -131,6 +131,21 @@ def test_cidr_whitelist_rules(tmp_path: Path):
     assert (dst / "test.yaml").read_text() == (expected / "test.yaml").read_text()
 
 
+def test_dotdocker_ignore_content(tmp_path: Path):
+    """Everything inside .docker must be ignored."""
+    src, dst = tmp_path / "src", tmp_path / "dst"
+    clone_self_dirty(src)
+    copy(
+        str(src), str(dst), vcs_ref="HEAD", force=True,
+    )
+    with local.cwd(dst):
+        git("add", ".")
+        git("commit", "-am", "hello", retcode=1)
+        git("commit", "-am", "hello")
+        (dst / ".docker" / "some-file").touch()
+        assert not git("status", "--porcelain")
+
+
 def test_template_update_badge(tmp_path: Path):
     """Test that the template update badge is properly formatted."""
     src, dst = tmp_path / "src", tmp_path / "dst"
