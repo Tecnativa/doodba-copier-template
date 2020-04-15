@@ -17,7 +17,7 @@ def test_default_settings(tmp_path: Path, odoo_version: float):
     No params are given apart from odoo_version. This tests that scaffoldings
     render fine with default answers.
     """
-    src, dst = tmp_path / "src", tmp_path / "dst"
+    src, dst = tmp_path / "src", tmp_path / f"v{odoo_version:.1f}"
     clone_self_dirty(src)
     with local.cwd(src):
         copy(

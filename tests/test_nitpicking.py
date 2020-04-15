@@ -6,7 +6,7 @@ import pytest
 import yaml
 from copier.main import copy
 from plumbum import local
-from plumbum.cmd import diff, git, pre_commit
+from plumbum.cmd import diff, git, invoke, pre_commit
 
 from .helpers import clone_self_dirty
 
@@ -126,6 +126,25 @@ def test_cidr_whitelist_rules(tmp_path: Path):
     expected = Path("tests", "samples", "cidr-whitelist")
     assert (dst / "prod.yaml").read_text() == (expected / "prod.yaml").read_text()
     assert (dst / "test.yaml").read_text() == (expected / "test.yaml").read_text()
+
+
+def test_code_workspace_file(tmp_path: Path):
+    """The file is generated as expected."""
+    src, dst = tmp_path / "src", tmp_path / "dst"
+    clone_self_dirty(src)
+    copy(
+        str(src), str(dst), vcs_ref="HEAD", force=True,
+    )
+    assert (dst / "doodba.dst.code-workspace").is_file()
+    (dst / "doodba.dst.code-workspace").rename(dst / "doodba.other1.code-workspace")
+    with local.cwd(dst):
+        invoke("write-code-workspace-file")
+        assert (dst / "doodba.other1.code-workspace").is_file()
+        assert not (dst / "doodba.dst.code-workspace").is_file()
+        invoke("write-code-workspace-file", "-c", "doodba.other2.code-workspace")
+        assert not (dst / "doodba.dst.code-workspace").is_file()
+        assert (dst / "doodba.other1.code-workspace").is_file()
+        assert (dst / "doodba.other2.code-workspace").is_file()
 
 
 def test_dotdocker_ignore_content(tmp_path: Path):
