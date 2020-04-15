@@ -12,7 +12,7 @@
 
 source .env
 copier $CUSTOM_COPIER_FLAGS \
-  -r "${TEMPLATE_VERSION-v1.4.1}" \
+  -r "${TEMPLATE_VERSION-v1.4.2}" \
   -d project_name="${PROJECT_NAME-$(basename $PWD)}" \
   -d project_license="${LICENSE-BSL-1.0}" \
   -d gitlab_url="${GITLAB_PREFIX-https://gitlab.com/example}/${PROJECT_NAME-$(basename $PWD)}" \
