@@ -12,9 +12,16 @@ from invoke import task
 def from_doodba_scaffolding_to_copier(c):
     print("Removing remaining garbage from doodba-scaffolding.")
     shutil.rmtree(Path(".vscode", "doodba"), ignore_errors=True)
-    Path(".travis.yml").unlink()
-    Path(".vscode", "doodbasetup.py").unlink()
-    Path("odoo", "custom", "src", "private", ".empty").unlink()
+    garbage = (
+        Path(".travis.yml"),
+        Path(".vscode", "doodbasetup.py"),
+        Path("odoo", "custom", "src", "private", ".empty"),
+    )
+    for path in garbage:
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass
     # When using Copier >= 3.0.5, this file didn't get properly migrated
     editorconfig_file = Path(".editorconfig")
     editorconfig_contents = editorconfig_file.read_text()
