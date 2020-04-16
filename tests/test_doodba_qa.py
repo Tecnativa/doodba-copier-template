@@ -1,10 +1,9 @@
 import os
+from pathlib import Path
 
 import pytest
 from copier.main import copy
 from plumbum import FG
-
-from .helpers import CURRENT_ODOO_VERSIONS
 
 try:
     from plumbum.cmd import docker
@@ -16,24 +15,27 @@ except ImportError:
 @pytest.mark.skipif(
     os.environ.get("QA_TEST") != "1", reason="Missing QA_TEST=1 env variable"
 )
-@pytest.mark.parametrize("odoo_version", CURRENT_ODOO_VERSIONS)
-def test_doodba_qa(tmpdir, odoo_version):
+def test_doodba_qa(tmp_path: Path, supported_odoo_version: float):
     """Test Doodba QA works fine with a scaffolding copy."""
     copy(
-        ".", tmpdir, data={"odoo_version": odoo_version}, force=True, vcs_ref="HEAD",
+        ".",
+        tmp_path,
+        data={"odoo_version": supported_odoo_version},
+        force=True,
+        vcs_ref="HEAD",
     )
     qa_run = docker[
         "container",
         "run",
         "--rm",
         "--privileged",
-        f"-v{tmpdir}:{tmpdir}:z",
+        f"-v{tmp_path}:{tmp_path}:z",
         "-v/var/run/docker.sock:/var/run/docker.sock:z",
-        f"-w{tmpdir}",
+        f"-w{tmp_path}",
         "-eADDON_CATEGORIES=-p",
         "-eCOMPOSE_FILE=test.yaml",
-        f"-eODOO_MAJOR={int(odoo_version)}",
-        f"-eODOO_MINOR={odoo_version:.1f}",
+        f"-eODOO_MAJOR={int(supported_odoo_version)}",
+        f"-eODOO_MINOR={supported_odoo_version:.1f}",
         "tecnativa/doodba-qa",
     ]
     try:

@@ -78,8 +78,7 @@ def lint(c, verbose=False):
 @task(develop)
 def test(c, verbose=False):
     """Test project."""
-    all_odoo_versions = _load_copier_conf()["odoo_version"]["choices"]
-    flags = [f"-n{len(all_odoo_versions)}", "--color=yes"]
+    flags = ["-n", "auto", "--color=yes"]
     if verbose:
         flags.append("-vv")
     flags = " ".join(flags)
