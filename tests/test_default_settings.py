@@ -7,25 +7,23 @@ from copier.main import copy
 from plumbum import local
 from plumbum.cmd import diff, git, invoke
 
-from .helpers import ALL_ODOO_VERSIONS, clone_self_dirty
 
-
-@pytest.mark.parametrize("odoo_version", ALL_ODOO_VERSIONS)
-def test_default_settings(tmp_path: Path, odoo_version: float):
+def test_default_settings(
+    tmp_path: Path, any_odoo_version: float, cloned_template: Path
+):
     """Test that a template rendered from zero is OK for each version.
 
     No params are given apart from odoo_version. This tests that scaffoldings
     render fine with default answers.
     """
-    src, dst = tmp_path / "src", tmp_path / f"v{odoo_version:.1f}"
-    clone_self_dirty(src)
-    with local.cwd(src):
+    dst = tmp_path / f"v{any_odoo_version:.1f}"
+    with local.cwd(cloned_template):
         copy(
             ".",
             str(dst),
             vcs_ref="test",
             force=True,
-            data={"odoo_version": odoo_version},
+            data={"odoo_version": any_odoo_version},
         )
     with local.cwd(dst):
         # TODO When copier runs pre-commit before extracting diff, make sure
@@ -38,13 +36,12 @@ def test_default_settings(tmp_path: Path, odoo_version: float):
         "--context=3",
         "--exclude=.git",
         "--recursive",
-        local.cwd / "tests" / "default_settings" / f"v{odoo_version:.1f}",
+        local.cwd / "tests" / "default_settings" / f"v{any_odoo_version:.1f}",
         dst,
     )
 
 
-@pytest.mark.parametrize("odoo_version", (10.0, 13.0))
-def test_pre_commit_autoinstall(tmp_path: Path, odoo_version: float):
+def test_pre_commit_autoinstall(tmp_path: Path, supported_odoo_version: float):
     """Test that pre-commit is automatically (un)installed in alien repos.
 
     This test is slower because it has to download and build OCI images and
@@ -53,12 +50,14 @@ def test_pre_commit_autoinstall(tmp_path: Path, odoo_version: float):
     - 10.0 because it's Python 2 and has no pre-commit configurations in OCA.
     - 13.0 because it's Python 3 and has pre-commit configurations in OCA.
     """
+    if supported_odoo_version not in {10.0, 13.0}:
+        pytest.skip("this test is only tested with other odoo versions")
     copy(
         ".",
         str(tmp_path),
         vcs_ref="HEAD",
         force=True,
-        data={"odoo_version": odoo_version},
+        data={"odoo_version": supported_odoo_version},
     )
     with local.cwd(tmp_path):
         with (tmp_path / "odoo" / "custom" / "src" / "addons.yaml").open("w") as fd:
@@ -66,7 +65,7 @@ def test_pre_commit_autoinstall(tmp_path: Path, odoo_version: float):
         # User can download git code
         invoke("git-aggregate")
         # Check pre-commit is properly (un)installed
-        pre_commit_present = odoo_version >= 13.0
+        pre_commit_present = supported_odoo_version >= 13.0
         server_tools_git = (
             tmp_path / "odoo" / "custom" / "src" / "server-tools" / ".git"
         )

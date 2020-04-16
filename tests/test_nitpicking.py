@@ -8,8 +8,6 @@ from copier.main import copy
 from plumbum import local
 from plumbum.cmd import diff, git, invoke, pre_commit
 
-from .helpers import clone_self_dirty
-
 WHITESPACE_PREFIXED_LICENSES = (
     "AGPL-3.0-or-later",
     "Apache-2.0",
@@ -18,11 +16,12 @@ WHITESPACE_PREFIXED_LICENSES = (
 
 
 @pytest.mark.parametrize("project_license", WHITESPACE_PREFIXED_LICENSES)
-def test_license_whitespace_prefix(tmp_path: Path, project_license):
-    src, dst = tmp_path / "src", tmp_path / "dst"
-    clone_self_dirty(src)
+def test_license_whitespace_prefix(
+    tmp_path: Path, cloned_template: Path, project_license
+):
+    dst = tmp_path / "dst"
     copy(
-        str(src),
+        str(cloned_template),
         str(dst),
         vcs_ref="test",
         force=True,
@@ -72,13 +71,11 @@ def test_gitlab_badges(tmp_path: Path):
     assert expected_badges.strip() in (tmp_path / "README.md").read_text()
 
 
-def test_alt_domains_rules(tmp_path: Path):
+def test_alt_domains_rules(tmp_path: Path, cloned_template: Path):
     """Make sure alt domains redirections are good for Traefik."""
-    src, dst = tmp_path / "src", tmp_path / "dst"
-    clone_self_dirty(src)
     copy(
-        str(src),
-        str(dst),
+        str(cloned_template),
+        str(tmp_path),
         vcs_ref="HEAD",
         force=True,
         data={
@@ -91,11 +88,11 @@ def test_alt_domains_rules(tmp_path: Path):
             ],
         },
     )
-    with local.cwd(dst):
+    with local.cwd(tmp_path):
         git("add", "prod.yaml")
         pre_commit("run", "-a", retcode=1)
     expected = Path("tests", "samples", "alt-domains", "prod.yaml").read_text()
-    generated = (dst / "prod.yaml").read_text()
+    generated = (tmp_path / "prod.yaml").read_text()
     generated_scalar = yaml.load(generated)
     # Any of these characters in a traefik label is an error almost for sure
     error_chars = ("\n", "'", '"')
@@ -109,64 +106,61 @@ def test_alt_domains_rules(tmp_path: Path):
     assert generated == expected
 
 
-def test_cidr_whitelist_rules(tmp_path: Path):
+def test_cidr_whitelist_rules(tmp_path: Path, cloned_template: Path):
     """Make sure CIDR whitelist redirections are good for Traefik."""
-    src, dst = tmp_path / "src", tmp_path / "dst"
-    clone_self_dirty(src)
     copy(
-        str(src),
-        str(dst),
+        str(cloned_template),
+        str(tmp_path),
         vcs_ref="HEAD",
         force=True,
         data={"cidr_whitelist": ["123.123.123.123/24", "456.456.456.456"]},
     )
-    with local.cwd(dst):
+    with local.cwd(tmp_path):
         git("add", "prod.yaml", "test.yaml")
         pre_commit("run", "-a", retcode=1)
     expected = Path("tests", "samples", "cidr-whitelist")
-    assert (dst / "prod.yaml").read_text() == (expected / "prod.yaml").read_text()
-    assert (dst / "test.yaml").read_text() == (expected / "test.yaml").read_text()
+    assert (tmp_path / "prod.yaml").read_text() == (expected / "prod.yaml").read_text()
+    assert (tmp_path / "test.yaml").read_text() == (expected / "test.yaml").read_text()
 
 
-def test_code_workspace_file(tmp_path: Path):
+def test_code_workspace_file(tmp_path: Path, cloned_template: Path):
     """The file is generated as expected."""
-    src, dst = tmp_path / "src", tmp_path / "dst"
-    clone_self_dirty(src)
     copy(
-        str(src), str(dst), vcs_ref="HEAD", force=True,
+        str(cloned_template), str(tmp_path), vcs_ref="HEAD", force=True,
     )
-    assert (dst / "doodba.dst.code-workspace").is_file()
-    (dst / "doodba.dst.code-workspace").rename(dst / "doodba.other1.code-workspace")
-    with local.cwd(dst):
+    assert (tmp_path / f"doodba.{tmp_path.name}.code-workspace").is_file()
+    (tmp_path / f"doodba.{tmp_path.name}.code-workspace").rename(
+        tmp_path / "doodba.other1.code-workspace"
+    )
+    with local.cwd(tmp_path):
         invoke("write-code-workspace-file")
-        assert (dst / "doodba.other1.code-workspace").is_file()
-        assert not (dst / "doodba.dst.code-workspace").is_file()
+        assert (tmp_path / "doodba.other1.code-workspace").is_file()
+        assert not (tmp_path / f"doodba.{tmp_path.name}.code-workspace").is_file()
         invoke("write-code-workspace-file", "-c", "doodba.other2.code-workspace")
-        assert not (dst / "doodba.dst.code-workspace").is_file()
-        assert (dst / "doodba.other1.code-workspace").is_file()
-        assert (dst / "doodba.other2.code-workspace").is_file()
+        assert not (tmp_path / f"doodba.{tmp_path.name}.code-workspace").is_file()
+        assert (tmp_path / "doodba.other1.code-workspace").is_file()
+        assert (tmp_path / "doodba.other2.code-workspace").is_file()
 
 
-def test_dotdocker_ignore_content(tmp_path: Path):
+def test_dotdocker_ignore_content(tmp_path: Path, cloned_template: Path):
     """Everything inside .docker must be ignored."""
-    src, dst = tmp_path / "src", tmp_path / "dst"
-    clone_self_dirty(src)
     copy(
-        str(src), str(dst), vcs_ref="HEAD", force=True,
+        str(cloned_template), str(tmp_path), vcs_ref="HEAD", force=True,
     )
-    with local.cwd(dst):
+    with local.cwd(tmp_path):
         git("add", ".")
         git("commit", "-am", "hello", retcode=1)
         git("commit", "-am", "hello")
-        (dst / ".docker" / "some-file").touch()
+        (tmp_path / ".docker" / "some-file").touch()
         assert not git("status", "--porcelain")
 
 
-def test_template_update_badge(tmp_path: Path):
+def test_template_update_badge(tmp_path: Path, cloned_template: Path):
     """Test that the template update badge is properly formatted."""
-    src, dst = tmp_path / "src", tmp_path / "dst"
     tag = "v99999.0.0-99999-bye-bye"
-    clone_self_dirty(src, tag=tag)
-    copy(str(src), str(dst), vcs_ref=tag, force=True)
+    with local.cwd(cloned_template):
+        git("tag", "--delete", "test")
+        git("tag", "--force", tag)
+    copy(str(cloned_template), str(tmp_path), vcs_ref=tag, force=True)
     expected = "[![Last template update](https://img.shields.io/badge/last%20template%20update-v99999.0.0--99999--bye--bye-informational)](https://github.com/Tecnativa/doodba-copier-template/tree/v99999.0.0-99999-bye-bye)"
-    assert expected in (dst / "README.md").read_text()
+    assert expected in (tmp_path / "README.md").read_text()
