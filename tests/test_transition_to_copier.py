@@ -3,7 +3,7 @@ from pathlib import Path
 
 from copier import copy
 from plumbum import local
-from plumbum.cmd import git
+from plumbum.cmd import git, invoke
 
 LATEST_VERSION_WITHOUT_COPIER = "v0.0.0"
 
@@ -75,3 +75,11 @@ def test_transtion_to_copier(
         assert not (
             tmp_path / "odoo" / "custom" / "src" / "private" / ".empty"
         ).exists()
+        # Ensure migrations are resilient to subproject changes
+        invoke(
+            "--search-root",
+            cloned_template,
+            "--collection",
+            "migrations",
+            "from-doodba-scaffolding-to-copier",
+        )
