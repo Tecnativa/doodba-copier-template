@@ -83,3 +83,33 @@ def test_transtion_to_copier(
             "migrations",
             "from-doodba-scaffolding-to-copier",
         )
+
+
+def test_v1_5_2_migration(
+    tmp_path: Path, cloned_template: Path, supported_odoo_version: float
+):
+    """Test migration to v1.5.2."""
+    auto = tmp_path / "odoo" / "auto"
+    empty = auto / ".empty"  # This file existed in doodba-scaffolding
+    # This part makes sense v1.5.2 is not yet released
+    with local.cwd(cloned_template):
+        if "v1.5.2" not in git("tag").split():
+            git("tag", "-d", "test")
+            git("tag", "v1.5.2")
+    with local.cwd(tmp_path):
+        # Copy v1.5.1
+        copy(src_path=str(cloned_template), vcs_ref="v1.5.1", force=True)
+        auto.mkdir()
+        empty.touch()
+        assert empty.exists()
+        git("add", ".")
+        git("add", "-f", empty)
+        git("commit", "-am", "reformat", retcode=1)
+        git("commit", "-am", "copied from template in v1.5.1")
+        # Update to v1.5.2
+        copy(vcs_ref="v1.5.2", force=True)
+        assert not empty.exists()
+        assert not auto.exists()
+        invoke("develop")
+        assert auto.exists()
+        assert not empty.exists()
