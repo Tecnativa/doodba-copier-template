@@ -29,3 +29,15 @@ def from_doodba_scaffolding_to_copier(c):
         "[*.yml]", "[*.{code-snippets,code-workspace,json,md,yaml,yml}{,.jinja}]", 1
     )
     editorconfig_file.write_text(editorconfig_contents)
+
+
+@task
+def remove_odoo_auto_folder(c):
+    """This folder makes no more sense for us.
+
+    The `invoke develop` task now handles its creation, which is done with
+    host user UID and GID to avoid problems.
+
+    There's no need to have it in our code tree anymore.
+    """
+    shutil.rmtree(Path("odoo", "auto"), ignore_errors=True)

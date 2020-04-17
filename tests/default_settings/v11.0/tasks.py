@@ -80,6 +80,7 @@ def develop(c):
                 c.run("python3 -m pip install --user pipx")
             c.run(f"pipx install {dep}")
     # Prepare environment
+    Path(PROJECT_ROOT, "odoo", "auto").mkdir(exist_ok=True)
     with c.cd(str(PROJECT_ROOT)):
         c.run("git init")
         c.run("ln -sf devel.yaml docker-compose.yml")

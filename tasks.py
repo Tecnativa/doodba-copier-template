@@ -113,6 +113,7 @@ def update_test_samples(c):
                 dst = default_settings_path / f"v{v}"
                 c.run(f"poetry run copier -fr test -d odoo_version={v} copy . {dst}")
                 shutil.rmtree(dst / ".git")
+                shutil.rmtree(dst / "odoo" / "auto")
         finally:
             c.run("git tag --delete test")
         samples = Path("tests", "samples")

@@ -45,6 +45,12 @@ _migrations:
         - --search-root={{ _copier_conf.src_path }}
         - --collection=migrations
         - from-doodba-scaffolding-to-copier
+  - version: v1.5.2
+    after:
+      - - invoke
+        - --search-root={{ _copier_conf.src_path }}
+        - --collection=migrations
+        - remove-odoo-auto-folder
 
 # Questions for the user
 project_author:
