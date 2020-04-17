@@ -62,8 +62,9 @@ def test_pre_commit_autoinstall(tmp_path: Path, supported_odoo_version: float):
     with local.cwd(tmp_path):
         with (tmp_path / "odoo" / "custom" / "src" / "addons.yaml").open("w") as fd:
             yaml.dump({"server-tools": "*"}, fd)
-        # User can download git code
-        invoke("git-aggregate")
+        # User can download git code from any folder
+        with local.cwd(tmp_path / "odoo" / "custom" / "src" / "private"):
+            invoke("git-aggregate")
         # Check pre-commit is properly (un)installed
         pre_commit_present = supported_odoo_version >= 13.0
         server_tools_git = (
