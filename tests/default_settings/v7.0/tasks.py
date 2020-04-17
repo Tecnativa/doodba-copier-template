@@ -12,12 +12,14 @@ from pathlib import Path
 
 from invoke import task
 
-SRC_PATH = Path("odoo", "custom", "src")
+PROJECT_ROOT = Path(__file__).parent.absolute()
+SRC_PATH = PROJECT_ROOT / "odoo" / "custom" / "src"
 DEVELOP_DEPENDENCIES = (
     "copier",
     "docker-compose",
     "pre-commit",
 )
+UID_ENV = {"GID": str(os.getgid()), "UID": str(os.getuid()), "UMASK": "27"}
 
 
 @task
@@ -41,19 +43,23 @@ def write_code_workspace_file(c, cw_path=None):
     """
     if not cw_path:
         try:
-            cw_path = next(iglob(str(Path(c.cwd, "doodba.*.code-workspace"))))
+            cw_path = next(iglob(str(PROJECT_ROOT / "doodba.*.code-workspace")))
         except StopIteration:
-            cw_path = f"doodba.{Path(c.cwd).absolute().name}.code-workspace"
+            cw_path = f"doodba.{PROJECT_ROOT.name}.code-workspace"
+    if not Path(cw_path).is_absolute():
+        cw_path = PROJECT_ROOT / cw_path
+    cw_config = {}
     try:
         with open(cw_path) as cw_fd:
             cw_config = json.load(cw_fd)
     except (FileNotFoundError, json.decoder.JSONDecodeError):
-        cw_config = {}
+        pass  # Nevermind, we start with a new config
     cw_config["folders"] = []
-    addon_repos = glob(str(Path(c.cwd, SRC_PATH, "private")))
-    addon_repos += glob(str(Path(c.cwd, SRC_PATH, "*", ".git", "..")))
+    addon_repos = glob(str(SRC_PATH / "private"))
+    addon_repos += glob(str(SRC_PATH / "*" / ".git" / ".."))
     for subrepo in sorted(addon_repos):
-        cw_config["folders"].append({"path": subrepo})
+        subrepo = Path(subrepo)
+        cw_config["folders"].append({"path": str(subrepo.relative_to(PROJECT_ROOT))})
     # HACK https://github.com/microsoft/vscode/issues/37947 put top folder last
     cw_config["folders"].append({"path": "."})
     with open(cw_path, "w") as cw_fd:
@@ -75,10 +81,11 @@ def develop(c):
                 c.run("python3 -m pip install --user pipx")
             c.run(f"pipx install {dep}")
     # Prepare environment
-    c.run("git init")
-    c.run("ln -sf devel.yaml docker-compose.yml")
-    write_code_workspace_file(c)
-    c.run("pre-commit install")
+    with c.cd(str(PROJECT_ROOT)):
+        c.run("git init")
+        c.run("ln -sf devel.yaml docker-compose.yml")
+        write_code_workspace_file(c)
+        c.run("pre-commit install")
 
 
 @task(develop)
@@ -87,12 +94,12 @@ def git_aggregate(c):
 
     Executes git-aggregator from within the doodba container.
     """
-    c.run(
-        "docker-compose --file setup-devel.yaml run --rm odoo",
-        env={"GID": str(os.getgid()), "UID": str(os.getuid()), "UMASK": "27"},
-    )
+    with c.cd(str(PROJECT_ROOT)):
+        c.run(
+            "docker-compose --file setup-devel.yaml run --rm odoo", env=UID_ENV,
+        )
     write_code_workspace_file(c)
-    for git_folder in iglob(str(Path(c.cwd, SRC_PATH, "*", ".git", ".."))):
+    for git_folder in iglob(str(SRC_PATH / "*" / ".git" / "..")):
         action = (
             "install"
             if Path(git_folder, ".pre-commit-config.yaml").is_file()
@@ -108,13 +115,15 @@ def img_build(c, pull=True):
     cmd = "docker-compose build"
     if pull:
         cmd += " --pull"
-    c.run(cmd, env={"UID": str(os.getuid()), "GID": str(os.getgid())})
+    with c.cd(str(PROJECT_ROOT)):
+        c.run(cmd, env=UID_ENV)
 
 
 @task(develop)
 def img_pull(c):
     """Pull docker images."""
-    c.run("docker-compose pull")
+    with c.cd(str(PROJECT_ROOT)):
+        c.run("docker-compose pull")
 
 
 @task(develop)
@@ -123,7 +132,8 @@ def lint(c, verbose=False):
     cmd = "pre-commit run --show-diff-on-failure --all-files --color=always"
     if verbose:
         cmd += " --verbose"
-    c.run(cmd)
+    with c.cd(str(PROJECT_ROOT)):
+        c.run(cmd)
 
 
 @task(develop)
@@ -132,10 +142,14 @@ def start(c, detach=True, ptvsd=False):
     cmd = "docker-compose up"
     if detach:
         cmd += " --detach"
-    c.run(cmd, env={"DOODBA_PTVSD_ENABLE": str(int(ptvsd))})
+    with c.cd(str(PROJECT_ROOT)):
+        c.run(cmd, env={"DOODBA_PTVSD_ENABLE": str(int(ptvsd))})
 
 
-@task(develop, help={"purge": "Remove all related containers, images and volumes"})
+@task(
+    develop,
+    help={"purge": "Remove all related containers, networks images and volumes"},
+)
 def stop(c, purge=False):
     """Stop and (optionally) purge environment."""
     cmd = "docker-compose"
@@ -143,7 +157,8 @@ def stop(c, purge=False):
         cmd += " down --remove-orphans --rmi local --volumes"
     else:
         cmd += " stop"
-    c.run(cmd)
+    with c.cd(str(PROJECT_ROOT)):
+        c.run(cmd)
 
 
 @task(develop)
@@ -153,7 +168,8 @@ def restart(c, quick=True):
     if quick:
         cmd = f"{cmd} -t0"
     cmd = f"{cmd} odoo odoo_proxy"
-    c.run(cmd)
+    with c.cd(str(PROJECT_ROOT)):
+        c.run(cmd)
 
 
 @task(develop)
@@ -162,4 +178,5 @@ def logs(c, tail=10):
     cmd = "docker-compose logs -f"
     if tail:
         cmd += f" --tail {tail}"
-    c.run(cmd)
+    with c.cd(str(PROJECT_ROOT)):
+        c.run(cmd)
