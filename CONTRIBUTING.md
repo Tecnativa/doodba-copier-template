@@ -44,10 +44,10 @@ to know how to do it.
 To hack in this project, you need to set up a development environment. To do that, first
 make sure you have installed the essential dependencies:
 
-- [curl](https://curl.haxx.se/)
 - [git](https://git-scm.com/)
+- [invoke](https://www.pyinvoke.org/)
+- [poetry](https://python-poetry.org/)
 - [python](https://www.python.org/) 3.6+
-- [invoke](https://www.pyinvoke.org/) (`python3 -m pip install --user invoke`)
 
 Then, execute:
 

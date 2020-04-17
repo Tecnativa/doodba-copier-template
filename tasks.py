@@ -13,7 +13,7 @@ from invoke import task
 from invoke.util import yaml
 from invoke.vendor.yaml3.reader import Reader
 
-ESSENTIALS = ("git", "python3", "curl")
+ESSENTIALS = ("git", "python3", "poetry")
 
 
 def _load_copier_conf():
@@ -51,14 +51,6 @@ def develop(c):
     if not (Path(c.cwd) / ".venv").is_dir():
         c.run("python3 -m venv .venv")
     c.run("git submodule update --init --checkout --recursive")
-    # Ensure poetry is installed
-    try:
-        c.run("poetry --version")
-    except Exception:
-        # Official installation method of poetry
-        c.run(
-            "curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3"
-        )
     # Use poetry to set up development environment in a local venv
     c.run("poetry env use .venv/bin/python")
     c.run("poetry install")
