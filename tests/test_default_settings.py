@@ -28,6 +28,7 @@ def test_default_settings(
     with local.cwd(dst):
         # TODO When copier runs pre-commit before extracting diff, make sure
         # here that it works as expected
+        Path(dst, "odoo", "auto", "addons").rmdir()
         Path(dst, "odoo", "auto").rmdir()
         git("add", ".")
         git("commit", "-am", "Hello World", retcode=1)  # pre-commit fails

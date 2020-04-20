@@ -51,6 +51,12 @@ _migrations:
         - --search-root={{ _copier_conf.src_path }}
         - --collection=migrations
         - remove-odoo-auto-folder
+  - version: v1.5.3
+    after:
+      - - invoke
+        - --search-root={{ _copier_conf.src_path }}
+        - --collection=migrations
+        - remove-odoo-auto-folder
 
 # Questions for the user
 project_author:
