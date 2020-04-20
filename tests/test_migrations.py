@@ -91,11 +91,6 @@ def test_v1_5_2_migration(
     """Test migration to v1.5.2."""
     auto = tmp_path / "odoo" / "auto"
     empty = auto / ".empty"  # This file existed in doodba-scaffolding
-    # This part makes sense v1.5.2 is not yet released
-    with local.cwd(cloned_template):
-        if "v1.5.2" not in git("tag").split():
-            git("tag", "-d", "test")
-            git("tag", "v1.5.2")
     with local.cwd(tmp_path):
         # Copy v1.5.1
         copy(src_path=str(cloned_template), vcs_ref="v1.5.1", force=True)
@@ -113,3 +108,29 @@ def test_v1_5_2_migration(
         invoke("develop")
         assert auto.exists()
         assert not empty.exists()
+
+
+def test_v1_5_3_migration(
+    tmp_path: Path, cloned_template: Path, supported_odoo_version: float
+):
+    """Test migration to v1.5.3."""
+    auto_addons = tmp_path / "odoo" / "auto" / "addons"
+    # This part makes sense only when v1.5.3 is not yet released
+    with local.cwd(cloned_template):
+        if "v1.5.3" not in git("tag").split():
+            git("tag", "-d", "test")
+            git("tag", "v1.5.3")
+    with local.cwd(tmp_path):
+        # Copy v1.5.2
+        copy(src_path=str(cloned_template), vcs_ref="v1.5.2", force=True)
+        assert not auto_addons.exists()
+        git("add", ".")
+        git("commit", "-am", "reformat", retcode=1)
+        git("commit", "-am", "copied from template in v1.5.2")
+        # Update to v1.5.3
+        copy(vcs_ref="v1.5.3", force=True)
+        assert not auto_addons.exists()
+        invoke("develop")
+        assert auto_addons.is_dir()
+        # odoo/auto/addons dir must be writable
+        (auto_addons / "sample").touch()
