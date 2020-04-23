@@ -1,4 +1,5 @@
 """Nitpicking small tests ahead."""
+import json
 from pathlib import Path
 from textwrap import dedent
 
@@ -136,10 +137,21 @@ def test_code_workspace_file(tmp_path: Path, cloned_template: Path):
         invoke("write-code-workspace-file")
         assert (tmp_path / "doodba.other1.code-workspace").is_file()
         assert not (tmp_path / f"doodba.{tmp_path.name}.code-workspace").is_file()
+        # Do a stupid and dirty git clone to check it's sorted fine
+        git("clone", cloned_template, Path("odoo", "custom", "src", "zzz"))
         invoke("write-code-workspace-file", "-c", "doodba.other2.code-workspace")
         assert not (tmp_path / f"doodba.{tmp_path.name}.code-workspace").is_file()
         assert (tmp_path / "doodba.other1.code-workspace").is_file()
         assert (tmp_path / "doodba.other2.code-workspace").is_file()
+        with (tmp_path / "doodba.other2.code-workspace").open() as fp:
+            workspace_definition = json.load(fp)
+        assert workspace_definition == {
+            "folders": [
+                {"path": "odoo/custom/src/zzz"},
+                {"path": "odoo/custom/src/private"},
+                {"path": "."},
+            ]
+        }
 
 
 def test_dotdocker_ignore_content(tmp_path: Path, cloned_template: Path):
