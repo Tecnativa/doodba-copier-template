@@ -55,11 +55,14 @@ def write_code_workspace_file(c, cw_path=None):
     except (FileNotFoundError, json.decoder.JSONDecodeError):
         pass  # Nevermind, we start with a new config
     cw_config["folders"] = []
-    addon_repos = glob(str(SRC_PATH / "private"))
-    addon_repos += glob(str(SRC_PATH / "*" / ".git" / ".."))
+    addon_repos = glob(str(SRC_PATH / "*" / ".git" / ".."))
     for subrepo in sorted(addon_repos):
-        subrepo = Path(subrepo)
+        subrepo = Path(subrepo).resolve()
         cw_config["folders"].append({"path": str(subrepo.relative_to(PROJECT_ROOT))})
+    # HACK https://github.com/microsoft/vscode/issues/95963 put private second to last
+    private = SRC_PATH / "private"
+    if private.is_dir():
+        cw_config["folders"].append({"path": str(private.relative_to(PROJECT_ROOT))})
     # HACK https://github.com/microsoft/vscode/issues/37947 put top folder last
     cw_config["folders"].append({"path": "."})
     with open(cw_path, "w") as cw_fd:
