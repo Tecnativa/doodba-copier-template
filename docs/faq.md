@@ -330,8 +330,18 @@ Our recommendation is that, at least, before you run it for the 1st time, search
 (literally) among your private modules, and in case you find any, be careful about what
 Prettier does with them.
 
-You can wrap any XML code among _Prettier ignore tags_ to tell prettier "don't touch
-this":
+If you install Fish, you can run these commands to find those dangerous things. If one
+fails with `No matches for wildcard`, it means there are no files to check and thus you
+can ignore that error:
+
+```bash
+cd $project_root/odoo/custom/src/private
+fish -c 'grep "<pre" **.{xml,html}'
+fish -c 'grep -E "white-space:\s*(pre|break-spaces)" **.{less,sass,scss,css}'
+```
+
+You can wrap any XML code among [ignore tags](https://prettier.io/docs/en/ignore.html)
+to tell Prettier "don't touch this":
 
 ```xml
 <!-- prettier-ignore-start -->
