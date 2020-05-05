@@ -11,7 +11,6 @@ from unittest import mock
 
 from invoke import task
 from invoke.util import yaml
-from invoke.vendor.yaml3.reader import Reader
 
 TEMPLATE_ROOT = Path(__file__).parent.resolve()
 ESSENTIALS = ("git", "python3", "poetry")
@@ -23,7 +22,7 @@ def _load_copier_conf():
         # HACK https://stackoverflow.com/a/44875714/1468388
         # TODO Remove hack when https://github.com/pyinvoke/invoke/issues/708 is fixed
         with mock.patch.object(
-            Reader,
+            yaml.Reader,
             "NON_PRINTABLE",
             re.compile(
                 "[^\x09\x0A\x0D\x20-\x7E\x85\xA0-"
