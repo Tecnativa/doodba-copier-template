@@ -113,7 +113,7 @@ endless. Inspect its code to understand the environment variables that can alter
 behavior. Run it like this:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/Tecnativa/doodba-copier-template/master/docs/scaffolding2copier.sh | bash
+bash -c 'source <(curl -sSL https://raw.githubusercontent.com/Tecnativa/doodba-copier-template/master/docs/scaffolding2copier.sh)'
 ```
 
 If anything goes wrong, reset and use the manual way:
