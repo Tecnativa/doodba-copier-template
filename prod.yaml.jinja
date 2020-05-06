@@ -149,7 +149,9 @@ services:
     restart: unless-stopped
     depends_on:
       - db
+      {%- if smtp_relay_host %}
       - smtp
+      {%- endif %}
   {%- endif %}
 
 networks:
