@@ -76,7 +76,7 @@ services:
   {%- if backup_dst %}
 
   backup:
-    image: tecnativa/duplicity:postgres-s3
+    image: tecnativa/duplicity:postgres{% if backup_dst.startswith('s3://') %}-s3{% endif %}
     hostname: backup
     domainname: "$DOMAIN_PROD"
     init: true
@@ -85,6 +85,10 @@ services:
       {%- if smtp_relay_host %}
       EMAIL_FROM: "$BACKUP_EMAIL_FROM"
       EMAIL_TO: "$BACKUP_EMAIL_TO"
+      {%- endif %}
+      {%- if backup_deletion %}
+      JOB_800_WHAT: dup --force remove-older-than 3M $$DST
+      JOB_800_WHEN: weekly
       {%- endif %}
       PGDATABASE: *dbname
       PGUSER: *dbuser
