@@ -176,3 +176,35 @@ def test_template_update_badge(tmp_path: Path, cloned_template: Path):
     copy(str(cloned_template), str(tmp_path), vcs_ref=tag, force=True)
     expected = "[![Last template update](https://img.shields.io/badge/last%20template%20update-v99999.0.0--99999--bye--bye-informational)](https://github.com/Tecnativa/doodba-copier-template/tree/v99999.0.0-99999-bye-bye)"
     assert expected in (tmp_path / "README.md").read_text()
+
+
+def test_pre_commit_config(
+    tmp_path: Path, cloned_template: Path, supported_odoo_version: float
+):
+    """Test that .pre-commit-config.yaml has some specific settings fine."""
+    copy(
+        str(cloned_template),
+        str(tmp_path),
+        vcs_ref="HEAD",
+        force=True,
+        data={"odoo_version": supported_odoo_version},
+    )
+    pre_commit_config = yaml.load((tmp_path / ".pre-commit-config.yaml").read_text())
+    is_py3 = supported_odoo_version >= 11
+    found = 0
+    should_find = 1
+    for repo in pre_commit_config["repos"]:
+        if repo["repo"] == "https://github.com/pre-commit/pre-commit-hooks":
+            found += 1
+            if is_py3:
+                assert {"id": "debug-statements"} in repo["hooks"]
+                assert {"id": "fix-encoding-pragma", "args": ["--remove"]} in repo[
+                    "hooks"
+                ]
+            else:
+                assert {"id": "debug-statements"} not in repo["hooks"]
+                assert {"id": "fix-encoding-pragma", "args": ["--remove"]} not in repo[
+                    "hooks"
+                ]
+                assert {"id": "fix-encoding-pragma"} in repo["hooks"]
+    assert found == should_find
