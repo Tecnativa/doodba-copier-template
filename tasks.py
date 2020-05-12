@@ -22,7 +22,7 @@ def _load_copier_conf():
         # HACK https://stackoverflow.com/a/44875714/1468388
         # TODO Remove hack when https://github.com/pyinvoke/invoke/issues/708 is fixed
         with mock.patch.object(
-            yaml.Reader,
+            yaml.reader.Reader,
             "NON_PRINTABLE",
             re.compile(
                 "[^\x09\x0A\x0D\x20-\x7E\x85\xA0-"
