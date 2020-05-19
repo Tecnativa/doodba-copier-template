@@ -183,3 +183,28 @@ def logs(c, tail=10):
         cmd += f" --tail {tail}"
     with c.cd(str(PROJECT_ROOT)):
         c.run(cmd)
+
+
+@task(develop)
+def psql(c, db=None):
+    """Get a psql"""
+    cmd = "docker-compose run --rm odoo psql"
+    if db:
+        cmd += f" {db}"
+    c.run(cmd)
+
+
+@task(develop)
+def shell(c, db=None):
+    """Get an Odoo shell"""
+    cmd = "docker-compose run --rm odoo odoo shell"
+    if db:
+        cmd += f" -d {db}"
+    c.run(cmd)
+
+
+@task(develop)
+def scaffold(c, name):
+    """Create a scaffold"""
+    cmd = f"docker-compose run --rm odoo odoo scaffold {name} /opt/odoo/custom/src/private"
+    c.run(cmd)
