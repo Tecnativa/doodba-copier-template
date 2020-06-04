@@ -208,3 +208,17 @@ def test_pre_commit_config(
                 ]
                 assert {"id": "fix-encoding-pragma"} in repo["hooks"]
     assert found == should_find
+
+
+def test_no_python_write_bytecode_in_devel(
+    tmp_path: Path, cloned_template: Path, supported_odoo_version: float
+):
+    copy(
+        str(cloned_template),
+        str(tmp_path),
+        vcs_ref="HEAD",
+        force=True,
+        data={"odoo_version": supported_odoo_version},
+    )
+    devel = yaml.load((tmp_path / "devel.yaml").read_text())
+    assert devel["services"]["odoo"]["environment"]["PYTHONDONTWRITEBYTECODE"] == 1
