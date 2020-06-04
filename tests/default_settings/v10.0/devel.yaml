@@ -32,6 +32,7 @@ services:
       LIST_DB: "true"
       PTVSD_ENABLE: "${DOODBA_PTVSD_ENABLE:-0}"
       PGDATABASE: &dbname devel
+      PYTHONDONTWRITEBYTECODE: 1
       PYTHONOPTIMIZE: ""
       PYTHONPATH: /opt/odoo/custom/src/odoo
       SMTP_PORT: "1025"
