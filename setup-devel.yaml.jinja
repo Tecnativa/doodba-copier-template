@@ -24,6 +24,8 @@ services:
         PIP_INSTALL_ODOO: "false"
         CLEAN: "false"
         COMPILE: "false"
+        UID: "${UID:-1000}"
+        GID: "${GID:-1000}"
     networks:
       - public
     volumes:

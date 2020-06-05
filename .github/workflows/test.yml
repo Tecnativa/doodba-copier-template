@@ -70,5 +70,5 @@ jobs:
       # Run all tests
       - run: invoke test --verbose
         env:
-          QA_TEST: 1
+          DOCKER_TEST: 1
           SELECTED_ODOO_VERSIONS: ${{ matrix.odoo-version }}

@@ -23,6 +23,9 @@ services:
       args:
         # To aggregate in development, use `setup-devel.yaml`
         AGGREGATE: "false"
+        # Export these variables to own files created by odoo in your filesystem
+        UID: "${UID:-1000}"
+        GID: "${GID:-1000}"
         # No need for this in development
         PIP_INSTALL_ODOO: "false"
         CLEAN: "false"
