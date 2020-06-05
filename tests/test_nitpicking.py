@@ -43,14 +43,22 @@ def test_no_vscode_in_private(tmp_path: Path):
         assert not git("status", "--porcelain")
 
 
-def test_mqt_configs_synced():
+def test_mqt_configs_synced(
+    tmp_path: Path, cloned_template: Path, supported_odoo_version: float
+):
     """Make sure configs from MQT are in sync."""
-    template = Path("tests", "default_settings", "v13.0")
+    copy(
+        str(cloned_template),
+        str(tmp_path),
+        vcs_ref="test",
+        force=True,
+        data={"odoo_version": supported_odoo_version},
+    )
     mqt = Path("vendor", "maintainer-quality-tools", "sample_files", "pre-commit-13.0")
     good_diffs = Path("tests", "samples", "mqt-diffs")
     for conf in (".pylintrc", ".pylintrc-mandatory"):
         good = (good_diffs / f"{conf}.diff").read_text()
-        tested = diff(template / conf, mqt / conf, retcode=1)
+        tested = diff(tmp_path / conf, mqt / conf, retcode=1)
         assert good == tested
 
 

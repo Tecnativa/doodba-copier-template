@@ -5,7 +5,7 @@ and are related to the maintenance of this template project, not the child
 projects generated with it.
 """
 import re
-import shutil
+import tempfile
 from pathlib import Path
 from unittest import mock
 
@@ -100,21 +100,7 @@ def update_test_samples(c):
             print("git repo is dirty; clean it and repeat")
             raise
         copier_conf = _load_copier_conf()
-        all_odoo_versions = copier_conf["odoo_version"]["choices"]
         default_odoo_version = copier_conf["odoo_version"]["default"]
-        default_settings_path = Path("tests", "default_settings")
-        shutil.rmtree(default_settings_path)
-        default_settings_path.mkdir()
-        try:
-            c.run("git tag --force test")
-            for odoo_version in all_odoo_versions:
-                v = f"{odoo_version:.1f}"
-                dst = default_settings_path / f"v{v}"
-                c.run(f"poetry run copier -fr test -d odoo_version={v} copy . {dst}")
-                shutil.rmtree(dst / ".git")
-                shutil.rmtree(dst / "odoo" / "auto")
-        finally:
-            c.run("git tag --delete test")
         samples = Path("tests", "samples")
         c.run(
             "poetry run copier -fr HEAD -x '**' -x '!prod.yaml' -x '!test.yaml' "
@@ -123,8 +109,14 @@ def update_test_samples(c):
             warn=True,
         )
         for file_name in (".pylintrc", ".pylintrc-mandatory"):
-            with (samples / "mqt-diffs" / f"{file_name}.diff").open("w") as fd:
-                own = default_settings_path / f"v{default_odoo_version}" / file_name
+            with (samples / "mqt-diffs" / f"{file_name}.diff").open(
+                "w"
+            ) as fd, tempfile.mkdtemp(prefix="dct-samples") as copy_path:
+                c.run(
+                    "poetry run copier -fr HEAD -x '**' -x '!.pylintrc*' "
+                    f"copy . {copy_path}"
+                )
+                own = Path(copy_path, f"v{default_odoo_version}", file_name)
                 mqt = Path(
                     "vendor",
                     "maintainer-quality-tools",

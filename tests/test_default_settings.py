@@ -5,42 +5,29 @@ import pytest
 import yaml
 from copier.main import copy
 from plumbum import local
-from plumbum.cmd import diff, git, invoke
+from plumbum.cmd import git, invoke
 
 
 def test_default_settings(
     tmp_path: Path, any_odoo_version: float, cloned_template: Path
 ):
-    """Test that a template rendered from zero is OK for each version.
-
-    No params are given apart from odoo_version. This tests that scaffoldings
-    render fine with default answers.
-    """
-    dst = tmp_path / f"v{any_odoo_version:.1f}"
+    """Test that a template can be rendered from zero for each version."""
     with local.cwd(cloned_template):
         copy(
             ".",
-            str(dst),
+            str(tmp_path),
             vcs_ref="test",
             force=True,
             data={"odoo_version": any_odoo_version},
         )
-    with local.cwd(dst):
+    with local.cwd(tmp_path):
         # TODO When copier runs pre-commit before extracting diff, make sure
         # here that it works as expected
-        Path(dst, "odoo", "auto", "addons").rmdir()
-        Path(dst, "odoo", "auto").rmdir()
+        Path(tmp_path, "odoo", "auto", "addons").rmdir()
+        Path(tmp_path, "odoo", "auto").rmdir()
         git("add", ".")
         git("commit", "-am", "Hello World", retcode=1)  # pre-commit fails
         git("commit", "-am", "Hello World")
-    # The result matches what we expect
-    diff(
-        "--context=3",
-        "--exclude=.git",
-        "--recursive",
-        local.cwd / "tests" / "default_settings" / f"v{any_odoo_version:.1f}",
-        dst,
-    )
 
 
 def test_pre_commit_autoinstall(tmp_path: Path, supported_odoo_version: float):
