@@ -91,7 +91,7 @@ def test_backup_config(
             force=True,
             data=data,
         )
-        prod = yaml.load(docker_compose("-f", "prod.yaml", "config"))
+        prod = yaml.safe_load(docker_compose("-f", "prod.yaml", "config"))
     # Check backup service existence
     if not backup_dst:
         assert "backup" not in prod["services"]
