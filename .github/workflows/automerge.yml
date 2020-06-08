@@ -26,7 +26,7 @@ jobs:
           MERGE_LABELS: "automerge,!work in progress"
           MERGE_METHOD: "rebase"
           # Disable autorebasing PRs because they cannot retrigger checks
-          UPDATE_LABELS: ""
+          UPDATE_LABELS: "disable"
           UPDATE_METHOD: "rebase"
           # Our CI takes about 15m to complete; keep retrying for 30m
           MERGE_RETRIES: 30
