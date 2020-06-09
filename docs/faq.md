@@ -19,6 +19,7 @@ Maybe not so frequent, but interesting anyway. 🤷
 - [How to have good QA and test in my CI with Doodba?](#how-to-have-good-qa-and-test-in-my-ci-with-doodba)
 - [This project is too opinionated, but can I question any of those opinions?](#this-project-is-too-opinionated-but-can-i-question-any-of-those-opinions)
 - [Why XML is broken after running pre-commit?](#why-xml-is-broken-after-running-pre-commit)
+- [Why is Odoo saying that its database is not initialized?](#why-is-odoo-saying-that-its-database-is-not-initialized)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 <!-- prettier-ignore-end -->
@@ -360,3 +361,39 @@ ________________
 
 You can also replace our default for `xmlWhitespaceSensitivity: "strict"` inside your
 `.prettierrc.yml` file.
+
+## Why is Odoo saying that its database is not initialized?
+
+This is a common problem within the development workflow. From Odoo 12.0, the database
+needs to be initialized by hand. You can know that you're facing this problem if you see
+in Odoo's logs something like this:
+
+```log
+2020-06-09 10:24:26,715 1 ERROR ? odoo.modules.loading: Database devel not initialized, you can force it with `-i base`
+2020-06-09 10:25:26,781 1 ERROR devel odoo.sql_db: bad query: SELECT latest_version FROM ir_module_module WHERE name='base'
+ERROR: relation "ir_module_module" does not exist
+LINE 1: SELECT latest_version FROM ir_module_module WHERE name='base...
+                                   ^
+```
+
+You can do as **the log is clearly telling you to do** (side note: READ THE LOGS! 😀):
+
+```bash
+docker-compose run --rm odoo --stop-after-init -i base
+invoke restart
+```
+
+Or you can use the `resetdb` task to reset your `devel` database:
+
+```bash
+invoke resetdb
+```
+
+If you use this method, Odoo will have 2 databases created. You should use the one
+called `devel`; the other one is just a cache, so the next time you run this command
+it's faster.
+
+This is just a helper over these tools, which you might want to use directly instead:
+
+- [`click-odoo-dropdb`](https://github.com/acsone/click-odoo-contrib#click-odoo-dropdb-stable)
+- [`click-odoo-initdb`](https://github.com/acsone/click-odoo-contrib#click-odoo-initdb-stable)

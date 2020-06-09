@@ -49,8 +49,11 @@ should know your toolbox, specifically these tools:
 - [Docker Compose](https://docs.docker.com/compose/overview/)
 - [Docker Engine](https://www.docker.com/products/docker-engine)
 - [Git](https://git-scm.com/)
+- [git-aggregator](https://github.com/acsone/git-aggregator)
 - [invoke](https://www.pyinvoke.org/)
+- [Odoo](https://www.odoo.com/) 😆
 - [python](https://www.python.org/)
+- [click-odoo-contrib](https://github.com/acsone/click-odoo-contrib)
 
 Go read their docs and learn them fine.
 
@@ -67,14 +70,27 @@ develop, and some special features for it are supplied.
 Get Odoo and addons code with:
 
 ```bash
-invoke git-aggregate
+invoke img-pull
 invoke img-build --pull
+invoke git-aggregate
+```
+
+Initialize a new empty database with:
+
+```bash
+invoke initdb
 ```
 
 Start Odoo with:
 
 ```bash
 invoke start
+```
+
+All of the above in one shot:
+
+```bash
+invoke img-pull img-build --pull git-aggregate initdb start
 ```
 
 See the other tasks we ship for you with:
@@ -516,3 +532,7 @@ adding the whitelist proxy like this to your docker-compose.yml:
 [development]: #development
 [testing]: #testing
 [production]: #production
+
+```
+
+```
