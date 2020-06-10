@@ -78,7 +78,7 @@ invoke git-aggregate
 Initialize a new empty database with:
 
 ```bash
-invoke initdb
+invoke resetdb
 ```
 
 Start Odoo with:
@@ -90,7 +90,7 @@ invoke start
 All of the above in one shot:
 
 ```bash
-invoke img-pull img-build --pull git-aggregate initdb start
+invoke img-pull img-build --pull git-aggregate resetdb start
 ```
 
 See the other tasks we ship for you with:
