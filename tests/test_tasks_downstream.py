@@ -34,21 +34,25 @@ def test_resetdb(tmp_path: Path, cloned_template: Path, supported_odoo_version: 
     - git-aggregate
     - stop --purge
     """
-    with local.cwd(tmp_path):
-        copy(
-            src_path=str(cloned_template),
-            vcs_ref="HEAD",
-            force=True,
-            data={"odoo_version": supported_odoo_version},
-        )
-        try:
-            invoke("img-build")
-            invoke("git-aggregate")
+    try:
+        with local.cwd(tmp_path):
+            copy(
+                src_path=str(cloned_template),
+                vcs_ref="HEAD",
+                force=True,
+                data={"odoo_version": supported_odoo_version},
+            )
+            # Imagine the user is in the src subfolder for these tasks
+            with local.cwd(tmp_path / "odoo" / "custom" / "src"):
+                invoke("img-build")
+                invoke("git-aggregate")
             # No ir_module_module table exists yet
             with pytest.raises(ProcessExecutionError):
                 _install_status("base")
-            # This should install just "base" addon
-            stdout = invoke("resetdb")
+            # Imagine the user is in the odoo subrepo for these tasks
+            with local.cwd(tmp_path / "odoo" / "custom" / "src" / "odoo"):
+                # This should install just "base
+                stdout = invoke("resetdb")
             assert "Creating database cache" in stdout
             assert "from template devel" in stdout
             assert _install_status("base") == "installed"
@@ -78,5 +82,7 @@ def test_resetdb(tmp_path: Path, cloned_template: Path, supported_odoo_version: 
             assert _install_status("base") == "installed"
             assert _install_status("purchase") == "uninstalled"
             assert _install_status("sale") == "installed"
-        finally:
+    finally:
+        # Imagine the user is in the odoo subrepo for this command
+        with local.cwd(tmp_path / "odoo" / "custom" / "src" / "odoo"):
             invoke("stop", "--purge")

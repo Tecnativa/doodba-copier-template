@@ -177,18 +177,19 @@ def resetdb(c, modules="base", dbname="devel"):
     Uses click-odoo-initdb behind the scenes, which has a caching system that
     makes DB resets quicker. See its docs for more info.
     """
-    c.run("docker-compose stop odoo", pty=True)
-    c.run(
-        f"docker-compose run --rm odoo click-odoo-dropdb {dbname}",
-        env=UID_ENV,
-        warn=True,
-        pty=True,
-    )
-    c.run(
-        f"docker-compose run --rm odoo click-odoo-initdb -n {dbname} -m {modules}",
-        env=UID_ENV,
-        pty=True,
-    )
+    with c.cd(str(PROJECT_ROOT)):
+        c.run("docker-compose stop odoo", pty=True)
+        c.run(
+            f"docker-compose run --rm odoo click-odoo-dropdb {dbname}",
+            env=UID_ENV,
+            warn=True,
+            pty=True,
+        )
+        c.run(
+            f"docker-compose run --rm odoo click-odoo-initdb -n {dbname} -m {modules}",
+            env=UID_ENV,
+            pty=True,
+        )
 
 
 @task(develop)
