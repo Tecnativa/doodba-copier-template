@@ -18,6 +18,7 @@ Maybe not so frequent, but interesting anyway. 🤷
 - [How to get proper assets when printing reports?](#how-to-get-proper-assets-when-printing-reports)
 - [How to have good QA and test in my CI with Doodba?](#how-to-have-good-qa-and-test-in-my-ci-with-doodba)
 - [This project is too opinionated, but can I question any of those opinions?](#this-project-is-too-opinionated-but-can-i-question-any-of-those-opinions)
+- [Why pre-commit fails each time I copy or update the template?](#why-pre-commit-fails-each-time-i-copy-or-update-the-template)
 - [Why XML is broken after running pre-commit?](#why-xml-is-broken-after-running-pre-commit)
 - [Why is Odoo saying that its database is not initialized?](#why-is-odoo-saying-that-its-database-is-not-initialized)
 
@@ -303,6 +304,33 @@ Go there to get more instructions.
 ## This project is too opinionated, but can I question any of those opinions?
 
 Of course. There's no guarantee that we will like it, but please do it. 😉
+
+## Why pre-commit fails each time I copy or update the template?
+
+We format here YAML files using [Prettier](https://prettier.io/) inside
+[pre-commit](https://pre-commit.com/).
+
+However, when the template is generated, you have a lot of chances that your YAML files
+are badly formatted. For instance, depending on the length of you alternate domains,
+Traefik rules might be longer or shorter, triggering a different reformat on each
+project, or on each update. That is expected good behavior.
+
+Also, the way Copier formats your `.copier-answers.yml` file almost always violates
+Prettier's rules.
+
+So, if you find out that after generating the project for the 1st time, or after
+updating it, it fails pre-commit validations, don't worry about that. Just let
+pre-commit reformat your files in next commit, and commit again.
+
+Quick dirty recipe:
+
+```bash
+copier --force update
+git add .
+pre-commit run
+git add .
+git commit -m 'Update from template'
+```
 
 ## Why XML is broken after running pre-commit?
 
