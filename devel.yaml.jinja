@@ -43,7 +43,7 @@ services:
       WITHOUT_DEMO: "${DOODBA_WITHOUT_DEMO-false}"
     volumes:
       - ./odoo/custom:/opt/odoo/custom:ro,z
-      - ./odoo/auto/addons:/opt/odoo/auto/addons:rw,z
+      - ./odoo/auto:/opt/odoo/auto:rw,z
     depends_on:
       - cdnjs_cloudflare_proxy
       - db
