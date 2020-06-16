@@ -6,8 +6,8 @@
     {
       "label": "Start project in debug mode",
       "type": "process",
-      "command": "python3",
-      "args": ["-minvoke", "start", "--detach", "--ptvsd"],
+      "command": "invoke",
+      "args": ["start", "--detach", "--ptvsd"],
       "presentation": {
         "echo": true,
         "reveal": "silent",
@@ -21,8 +21,8 @@
     {
       "label": "Stop project",
       "type": "process",
-      "command": "python3",
-      "args": ["-minvoke", "stop"],
+      "command": "invoke",
+      "args": ["stop"],
       "presentation": {
         "echo": true,
         "reveal": "silent",
