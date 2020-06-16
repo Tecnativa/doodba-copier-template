@@ -532,7 +532,3 @@ adding the whitelist proxy like this to your docker-compose.yml:
 [development]: #development
 [testing]: #testing
 [production]: #production
-
-```
-
-```
