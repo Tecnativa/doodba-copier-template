@@ -353,6 +353,7 @@ backup_email_to:
     Where to send those backup reports?
 
 backup_deletion:
+  default: false
   type: bool
   help: >-
     If you're using S3, you probably want to delete outdated backups using bucket
