@@ -13,11 +13,6 @@ from invoke import task
 
 PROJECT_ROOT = Path(__file__).parent.absolute()
 SRC_PATH = PROJECT_ROOT / "odoo" / "custom" / "src"
-DEVELOP_DEPENDENCIES = (
-    "copier",
-    "docker-compose",
-    "pre-commit",
-)
 UID_ENV = {"GID": str(os.getgid()), "UID": str(os.getuid()), "UMASK": "27"}
 
 
@@ -72,16 +67,6 @@ def write_code_workspace_file(c, cw_path=None):
 @task
 def develop(c):
     """Set up a basic development environment."""
-    # Install basic dependencies
-    for dep in DEVELOP_DEPENDENCIES:
-        try:
-            c.run(f"{dep} --version", hide=True)
-        except Exception:
-            try:
-                c.run("pipx --version")
-            except Exception:
-                c.run("python3 -m pip install --user pipx")
-            c.run(f"pipx install {dep}")
     # Prepare environment
     Path(PROJECT_ROOT, "odoo", "auto", "addons").mkdir(parents=True, exist_ok=True)
     with c.cd(str(PROJECT_ROOT)):
