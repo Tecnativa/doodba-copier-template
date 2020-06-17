@@ -37,6 +37,7 @@ This project lets you maintain [Odoo][] deployments based on [Doodba][] using
 This project itself is just the template, but you need to install these tools to use it:
 
 - [copier][] v3.0.6 or newer
+- [docker-compose](https://docs.docker.com/compose/install/)
 - [git](https://git-scm.com/) 2.24 or newer
 - [invoke](https://www.pyinvoke.org/) installed in Python 3.6+ (and the binary must be
   called `invoke` — beware if your distro installs it as `invoke3` or similar).
