@@ -43,6 +43,7 @@ This project itself is just the template, but you need to install these tools to
   called `invoke` — beware if your distro installs it as `invoke3` or similar).
 - [pre-commit](https://pre-commit.com/)
 - [python](https://www.python.org/) 3.6+
+- [venv](https://docs.python.org/3/library/venv.html)
 
 Install non-python apps with your distro's recommended package manager. The recommended
 way to install Python CLI apps is [pipx](https://pipxproject.github.io/pipx/):
