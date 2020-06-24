@@ -242,6 +242,14 @@ volumes:
   acme:
 ```
 
+Don't forget to change ACME.Email value from this line into a valid email address
+
+```
+      - --ACME.Email=you@example.com
+```
+
+Invalid email will restrict traefik from obtaining SSL Certificate from Let's Encrypt
+
 </details>
 
 <details>
