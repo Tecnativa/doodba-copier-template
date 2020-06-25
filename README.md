@@ -50,6 +50,7 @@ way to install Python CLI apps is [pipx](https://pipxproject.github.io/pipx/):
 
 ```bash
 python3 -m pip install --user pipx
+pipx install docker-compose
 pipx install copier
 pipx install invoke
 pipx install pre-commit
