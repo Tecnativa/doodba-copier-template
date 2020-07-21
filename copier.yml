@@ -329,7 +329,7 @@ backup_dst:
   type: str
   help: >-
     If you want to use an Amazon S3 bucket, write its URL like
-    `s3://s3.amazonaws.com/example-bucket/example/path` to make sure it works fine.
+    `boto3+s3://example_bucket[/example/path]` to make sure it works fine.
 
     If you want to use any other backend, supply any URL supported by Duplicity (our
     choice backup engine; read http://duplicity.nongnu.org/vers8/duplicity.1.html#sect7
