@@ -63,7 +63,10 @@ def test_prod_alt_domains(
 
 
 @pytest.mark.parametrize("backup_deletion", (False, True))
-@pytest.mark.parametrize("backup_dst", (None, "s3://example", "sftp://example"))
+@pytest.mark.parametrize(
+    "backup_dst",
+    (None, "s3://example", "s3+http://example", "boto3+s3://example", "sftp://example"),
+)
 @pytest.mark.parametrize("smtp_relay_host", (None, "example"))
 def test_backup_config(
     backup_deletion: bool,
@@ -97,7 +100,7 @@ def test_backup_config(
         assert "backup" not in prod["services"]
         return
     # Check selected duplicity image
-    if backup_dst == "s3://example":
+    if "s3" in backup_dst:
         assert prod["services"]["backup"]["image"] == "tecnativa/duplicity:postgres-s3"
     else:
         assert prod["services"]["backup"]["image"] == "tecnativa/duplicity:postgres"
