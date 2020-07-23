@@ -2,16 +2,8 @@ name: test
 
 on:
   pull_request:
-    paths-ignore:
-      - README.md
-      - CONTRIBUTING.md
-      - docs/**.md
   push:
     branches: [master]
-    paths-ignore:
-      - README.md
-      - CONTRIBUTING.md
-      - docs/**.md
 
 jobs:
   test:
