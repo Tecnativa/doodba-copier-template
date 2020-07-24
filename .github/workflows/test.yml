@@ -5,6 +5,9 @@ on:
   push:
     branches: [master]
 
+env:
+  POETRY_VIRTUALENVS_IN_PROJECT: "true"
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -50,9 +53,8 @@ jobs:
           key: local-bin ${{ env.PY }} ${{ env.PIPX }}
       - name: Patch $PATH
         run: echo "::set-env name=PATH::$HOME/.local/bin:$PATH"
-      - run: pipx install invoke
       - run: pipx install poetry
-      - run: invoke develop
+      - run: poetry install
 
       # Specific steps for this action
       - name: Install Docker
@@ -64,7 +66,7 @@ jobs:
       - run: git config --global user.name CI
       - run: git config --global user.email CI@GITHUB
       # Run all tests
-      - run: invoke test --verbose
+      - run: poetry run invoke test --verbose
         env:
           DOCKER_TEST: 1
           SELECTED_ODOO_VERSIONS: ${{ matrix.odoo-version }}

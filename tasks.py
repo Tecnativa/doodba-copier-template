@@ -49,11 +49,8 @@ def check_dependencies(c):
 def develop(c):
     """Set up a development environment."""
     with c.cd(str(TEMPLATE_ROOT)):
-        if not Path(".venv").is_dir():
-            c.run("python3 -m venv .venv")
         c.run("git submodule update --init --checkout --recursive")
         # Use poetry to set up development environment in a local venv
-        c.run("poetry env use .venv/bin/python")
         c.run("poetry install")
         c.run("poetry run pre-commit install")
 

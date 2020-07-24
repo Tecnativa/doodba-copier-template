@@ -5,6 +5,9 @@ on:
   push:
     branches: [master]
 
+env:
+  POETRY_VIRTUALENVS_IN_PROJECT: "true"
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -21,10 +24,6 @@ jobs:
         with:
           path: .venv
           key: venv ${{ env.PY }}
-      - uses: actions/cache@v1
-        with:
-          path: ~/.cache
-          key: pre-commit ${{ env.PY }} ${{ hashFiles('.pre-commit-config.yaml') }}
       - run: pip install pipx
       - name: Generate cache key PIPX
         run: echo "::set-env name=PIPX::$(pipx --version | sha256sum | cut -d' ' -f1)"
@@ -38,10 +37,12 @@ jobs:
           key: local-bin ${{ env.PY }} ${{ env.PIPX }}
       - name: Patch $PATH
         run: echo "::set-env name=PATH::$HOME/.local/bin:$PATH"
-      - run: pipx install invoke
       - run: pipx install poetry
-      - run: pipx ensurepath
-      - run: invoke develop
+      - run: poetry install
 
       # Specific steps for this action
-      - run: invoke lint
+      - uses: actions/cache@v1
+        with:
+          path: ~/.cache
+          key: pre-commit ${{ env.PY }} ${{ hashFiles('.pre-commit-config.yaml') }}
+      - run: poetry run invoke lint
