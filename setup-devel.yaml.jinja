@@ -30,6 +30,7 @@ services:
       - public
     volumes:
       - ./odoo/custom/src:/opt/odoo/custom/src:rw,z
+      - ./odoo/custom/ssh:/opt/odoo/custom/ssh:ro,z
     environment:
       DEPTH_DEFAULT: 100
       # XXX Export these variables before running setup to own the files
