@@ -97,7 +97,7 @@ services:
     ports:
       - "127.0.0.1:1984:1984"
     # HACK https://github.com/Kozea/wdb/issues/136
-    stop_signal: KILL
+    init: true
 
   # Whitelist outgoing traffic for tests, reports, etc.
   cdnjs_cloudflare_proxy:
