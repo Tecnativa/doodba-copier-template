@@ -15,6 +15,7 @@ it now? You'll learn that here.
     - [MailHog](#mailhog)
     - [Network isolation](#network-isolation)
     - [wdb](#wdb)
+    - [pgweb](#pgweb)
   - [Production](#production)
     - [Prebuilding images](#prebuilding-images)
     - [Adding secrets](#adding-secrets)
@@ -163,6 +164,14 @@ It's available by default on the [development][] environment, where you can brow
 http://localhost:1984 to use it.
 
 **⚠️ DO NOT USE IT IN PRODUCTION ENVIRONMENTS ⚠️** (I had to say it).
+
+#### pgweb
+
+[Pgweb](http://sosedoff.github.io/pgweb/) is a small, beautiful and quick tool to
+inspect a Postgres database.
+
+We ship it preconfigured in the [development][] environment. Just start it and open
+http://localhost:8081 to use it.
 
 ### Production
 
