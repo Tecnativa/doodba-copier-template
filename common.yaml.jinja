@@ -79,7 +79,7 @@ services:
   backup:
     image: tecnativa/duplicity:postgres{% if backup_dst.startswith(('boto3+s3://', 's3://', 's3+http://')) %}-s3{% endif %}
     hostname: backup
-    domainname: "$DOMAIN_PROD"
+    domainname: "$DOMAIN_PROD_0"
     init: true
     environment:
       DST: "$BACKUP_DST"

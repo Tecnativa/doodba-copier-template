@@ -99,12 +99,6 @@ def update_test_samples(c):
         copier_conf = _load_copier_conf()
         default_odoo_version = copier_conf["odoo_version"]["default"]
         samples = Path("tests", "samples")
-        c.run(
-            "poetry run copier -fr HEAD -x '**' -x '!prod.yaml' -x '!test.yaml' "
-            "-d cidr_whitelist='[123.123.123.123/24, 456.456.456.456]' "
-            f"copy . {samples / 'cidr-whitelist'}",
-            warn=True,
-        )
         for file_name in (".pylintrc", ".pylintrc-mandatory"):
             with (samples / "mqt-diffs" / f"{file_name}.diff").open(
                 "w"
@@ -124,8 +118,7 @@ def update_test_samples(c):
                 fd.write(c.run(f"diff {own} {mqt}", warn=True).stdout)
         c.run(
             "poetry run copier -fr HEAD -x '**' -x '!prod.yaml' "
-            "-d domain_prod=www.example.com "
-            "-d domain_prod_alternatives='[old.example.com, example.com, example.org, www.example.org]' "
+            "-d domains_prod='{www.example.com: [old.example.com, example.com, example.org, www.example.org]' "
             f"copy . {samples / 'alt-domains'}",
             warn=True,
         )

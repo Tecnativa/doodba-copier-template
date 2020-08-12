@@ -1,6 +1,7 @@
 from glob import glob
 from pathlib import Path
 
+import yaml
 from copier import copy
 from plumbum import local
 from plumbum.cmd import git, invoke
@@ -93,7 +94,12 @@ def test_v1_5_2_migration(
     empty = auto / ".empty"  # This file existed in doodba-scaffolding
     with local.cwd(tmp_path):
         # Copy v1.5.1
-        copy(src_path=str(cloned_template), vcs_ref="v1.5.1", force=True)
+        copy(
+            src_path=str(cloned_template),
+            vcs_ref="v1.5.1",
+            force=True,
+            data={"odoo_version": supported_odoo_version},
+        )
         auto.mkdir()
         empty.touch()
         assert empty.exists()
@@ -134,3 +140,48 @@ def test_v1_5_3_migration(
         assert auto_addons.is_dir()
         # odoo/auto/addons dir must be writable
         (auto_addons / "sample").touch()
+
+
+def test_v2_0_0_migration(
+    tmp_path: Path, cloned_template: Path, supported_odoo_version: float
+):
+    """Test migration to v2.0.0."""
+    # This part makes sense only when v2.0.0 is not yet released
+    with local.cwd(cloned_template):
+        if "v2.0.0" not in git("tag").split():
+            git("tag", "-d", "test")
+            git("tag", "v2.0.0")
+    with local.cwd(tmp_path):
+        # Copy v1.6.0
+        copy(
+            src_path=str(cloned_template),
+            vcs_ref="v1.6.0",
+            force=True,
+            answers_file=".custom.copier-answers.yaml",
+            data={
+                "domain_prod": "www.example.com",
+                "domain_prod_alternatives": [
+                    "example.com",
+                    "www.example.org",
+                    "example.org",
+                ],
+                "domain_test": "demo.example.com",
+            },
+        )
+        git("add", ".")
+        git("commit", "-am", "reformat", retcode=1)
+        git("commit", "-am", "copied from template in v1.6.0")
+        # Update to v2.0.0
+        copy(answers_file=".custom.copier-answers.yaml", vcs_ref="v2.0.0", force=True)
+        git("add", ".")
+        git("commit", "-am", "reformat", retcode=1)
+        git("commit", "-am", "updated from template in v2.0.0")
+        # Assert domain structure migration
+        answers = yaml.safe_load(Path(".custom.copier-answers.yaml").read_text())
+        assert "domain_prod" not in answers
+        assert "domain_prod_alternatives" not in answers
+        assert "domain_test" not in answers
+        assert answers["domains_prod"] == {
+            "www.example.com": ["example.com", "www.example.org", "example.org"]
+        }
+        assert answers["domains_staging"] == ["demo.example.com"]
