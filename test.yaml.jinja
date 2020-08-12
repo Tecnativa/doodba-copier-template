@@ -22,12 +22,22 @@ services:
     networks:
       default:
       globalwhitelist_shared:
-    {%- if odoo_proxy == "traefik" %}
+    {%- if odoo_proxy == "traefik" and domains_staging %}
       inverseproxy_shared:
     labels:
       traefik.frontend.headers.customResponseHeaders: "X-Robots-Tag:noindex, nofollow"
-      traefik.longpolling.frontend.rule: "Host:${DOMAIN_TEST};PathPrefix:/longpolling/"
-      traefik.www.frontend.rule: "Host:${DOMAIN_TEST}"
+      traefik.longpolling.frontend.rule:
+        Host:
+        {%- for main_domain in domains_staging -%}
+          $DOMAIN_STAGING_{{ loop.index0 }}
+          {%- if not loop.last %},{% endif -%}
+        {%- endfor -%};PathPrefix:/longpolling/
+      traefik.www.frontend.rule:
+        Host:
+        {%- for main_domain in domains_staging -%}
+          $DOMAIN_STAGING_{{ loop.index0 }}
+          {%- if not loop.last %},{% endif -%}
+        {%- endfor %}
       # Forbid crawlers
       traefik.http.middlewares.{{ _key }}-forbid-crawlers.headers.customResponseHeaders.X-Robots-Tag:
         noindex, nofollow
@@ -47,9 +57,17 @@ services:
         {{ _key }}-compress,
         {{ _key }}-forbid-crawlers
         {%- if cidr_whitelist %}, {{ _key }}-whitelist{% endif %}
-      traefik.http.routers.{{ _key }}-main.rule: "host(`${DOMAIN_TEST}`)"
+      traefik.http.routers.{{ _key }}-main.rule:
+        Host(
+          {%- for main_domain in domains_staging -%}
+            `$DOMAIN_STAGING_{{ loop.index0 }}`
+            {%- if not loop.last %}, {% endif -%}
+          {%- endfor -%}
+        )
       traefik.http.routers.{{ _key }}-main.service: "{{ _key }}-main"
-      traefik.http.routers.{{ _key }}-main.tls.certresolver: "letsencrypt"
+      {%- if traefik_cert_resolver %}
+      traefik.http.routers.{{ _key }}-main.tls.certresolver: "{{ traefik_cert_resolver }}"
+      {%- endif %}
       traefik.http.services.{{ _key }}-main.loadbalancer.server.port: 8069
       # Longpolling service
       traefik.http.routers.{{ _key }}-longpolling.entrypoints: "web-main"
@@ -57,10 +75,16 @@ services:
         {{ _key }}-forbid-crawlers
         {%- if cidr_whitelist %}, {{ _key }}-whitelist{% endif %}
       traefik.http.routers.{{ _key }}-longpolling.rule:
-        "host(`${DOMAIN_TEST}`) && pathprefix(`/longpolling/`)"
+        Host(
+          {%- for main_domain in domains_staging -%}
+            `$DOMAIN_STAGING_{{ loop.index0 }}`
+            {%- if not loop.last %}, {% endif -%}
+          {%- endfor -%}
+        ) && PathPrefix(`/longpolling/`)
       traefik.http.routers.{{ _key }}-longpolling.service: "{{ _key }}-longpolling"
-      traefik.http.routers.{{ _key }}-longpolling.tls: "true"
-      traefik.http.routers.{{ _key }}-longpolling.tls.certresolver: "letsencrypt"
+      {%- if traefik_cert_resolver %}
+      traefik.http.routers.{{ _key }}-longpolling.tls.certresolver: "{{ traefik_cert_resolver }}"
+      {%- endif %}
       traefik.http.services.{{ _key }}-longpolling.loadbalancer.server.port: 8072
     {%- endif %}
     command:
@@ -85,13 +109,18 @@ services:
       default:
         aliases:
           - smtplocal
-    {%- if odoo_proxy == "traefik" %}
+    {%- if odoo_proxy == "traefik" and domains_staging %}
       inverseproxy_shared:
     labels:
       traefik.docker.network: "inverseproxy_shared"
       traefik.enable: "true"
       traefik.frontend.passHostHeader: "true"
-      traefik.frontend.rule: "Host:${DOMAIN_TEST};PathPrefixStrip:/smtpfake/"
+      traefik.frontend.rule:
+        Host:
+        {%- for main_domain in domains_staging -%}
+          $DOMAIN_STAGING_{{ loop.index0 }}
+          {%- if not loop.last %},{% endif -%}
+        {%- endfor -%};PathPrefixStrip:/smtpfake/
       traefik.port: "8025"
       # Mailhog service
       traefik.http.middlewares.{{ _key }}-mailhog-stripprefix.stripPrefix.prefixes: /smtpfake
@@ -102,9 +131,17 @@ services:
         {{ _key }}-forbid-crawlers,
         {{ _key }}-mailhog-stripprefix
         {%- if cidr_whitelist %}, {{ _key }}-whitelist{% endif %}
-      traefik.http.routers.{{ _key }}-mailhog.rule: Host(`${DOMAIN_TEST}`) && PathPrefix(`/smtpfake/`)
+      traefik.http.routers.{{ _key }}-mailhog.rule:
+        Host(
+          {%- for main_domain in domains_staging -%}
+            `$DOMAIN_STAGING_{{ loop.index0 }}`
+            {%- if not loop.last %}, {% endif -%}
+          {%- endfor -%}
+        ) && PathPrefix(`/smtpfake/`)
       traefik.http.routers.{{ _key }}-mailhog.service: {{ _key }}-mailhog
-      traefik.http.routers.{{ _key }}-mailhog.tls.certresolver: letsencrypt
+      {%- if traefik_cert_resolver %}
+      traefik.http.routers.{{ _key }}-mailhog.tls.certresolver: "{{ traefik_cert_resolver }}"
+      {%- endif %}
       traefik.http.services.{{ _key }}-mailhog.loadbalancer.server.port: 8025
     {%- endif %}
     volumes:

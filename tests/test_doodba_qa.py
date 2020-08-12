@@ -1,22 +1,12 @@
-import os
 from pathlib import Path
 
-import pytest
 from copier.main import copy
 from plumbum import FG
 from plumbum.cmd import invoke
-
-try:
-    from plumbum.cmd import docker
-except ImportError:
-    docker = None
+from plumbum.machines.local import LocalCommand
 
 
-@pytest.mark.skipif(docker is None, reason="Need docker CLI to test doodba-qa")
-@pytest.mark.skipif(
-    os.environ.get("DOCKER_TEST") != "1", reason="Missing DOCKER_TEST=1 env variable"
-)
-def test_doodba_qa(tmp_path: Path, supported_odoo_version: float):
+def test_doodba_qa(tmp_path: Path, supported_odoo_version: float, docker: LocalCommand):
     """Test Doodba QA works fine with a scaffolding copy."""
     copy(
         ".",

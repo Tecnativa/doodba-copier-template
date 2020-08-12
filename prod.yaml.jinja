@@ -23,25 +23,48 @@ services:
       {%- endif %}
     networks:
       default:
-    {%- if odoo_proxy == "traefik" %}
+    {%- if odoo_proxy == "traefik" and domains_prod %}
       inverseproxy_shared:
     labels:
-      traefik.longpolling.frontend.rule: "Host:${DOMAIN_PROD};PathPrefix:/longpolling/"
-      traefik.www.frontend.rule: "Host:${DOMAIN_PROD}"
       {%- if paths_without_crawlers %}
-      traefik.forbid-crawlers.frontend.rule: "Host:${DOMAIN_PROD};PathPrefix:
+      traefik.forbid-crawlers.frontend.rule:
+        Host:
+        {%- for main_domain in domains_prod -%}
+          $DOMAIN_PROD_{{ loop.index0 }}
+          {%- if not loop.last %},{% endif -%}
+        {%- endfor -%}
+        ;PathPrefix:
         {%- for path in paths_without_crawlers -%}
         {{ path }},{{ path }}/{anything:.*}
         {%- if not loop.last %},{% endif %}
-        {%- endfor %}"
+        {%- endfor %}
       {%- endif %}
-      {%- if domain_prod_alternatives %}
-      {%- for domain in domain_prod_alternatives %}
-      traefik.alt-{{ loop.index0 }}.frontend.redirect.regex: "^(.*)://${DOMAIN_PROD_ALT_{{ loop.index0 }}}/(.*)$$"
-      traefik.alt-{{ loop.index0 }}.frontend.redirect.replacement: "$$1://${DOMAIN_PROD}/$$2"
-      traefik.alt-{{ loop.index0 }}.frontend.rule: "Host:${DOMAIN_PROD_ALT_{{ loop.index0 }}}"
+      traefik.longpolling.frontend.rule:
+        Host:
+        {%- for main_domain in domains_prod -%}
+          $DOMAIN_PROD_{{ loop.index0 }}
+          {%- if not loop.last %},{% endif -%}
+        {%- endfor -%}
+        ;PathPrefix:/longpolling/
+      traefik.www.frontend.rule:
+        Host:
+        {%- for main_domain in domains_prod -%}
+          $DOMAIN_PROD_{{ loop.index0 }}
+          {%- if not loop.last %},{% endif -%}
+        {%- endfor -%}
+      {%- for main_domain, alt_list in domains_prod.items() %}
+      {%- if alt_list %}
+      {%- set main_index = loop.index0 %}
+      traefik.alt-{{ main_index }}.frontend.redirect.regex: ^(.*)://([^/]+)/(.*)$$
+      traefik.alt-{{ main_index }}.frontend.redirect.replacement: $$1://$DOMAIN_PROD_{{ main_index }}/$$3
+      traefik.alt-{{ main_index }}.frontend.rule:
+        Host:
+        {%- for alt_domain in alt_list -%}
+          $DOMAIN_PROD_{{ main_index }}_ALT_{{ loop.index0 }}
+          {%- if not loop.last %},{% endif -%}
+        {%- endfor -%}
+      {%- endif %}
       {%- endfor %}
-      {%- endif %}
       # Main service
       traefik.http.middlewares.{{ _key }}-buffering.buffering.retryExpression:
         IsNetworkError() && Attempts() < 5
@@ -57,42 +80,59 @@ services:
         {{ _key }}-buffering,
         {{ _key }}-compress
         {%- if cidr_whitelist %}, {{ _key }}-whitelist{% endif %}
-      traefik.http.routers.{{ _key }}-main.rule: "host(`${DOMAIN_PROD}`)"
-      traefik.http.routers.{{ _key }}-main.service: "{{ _key }}-main"
-      traefik.http.routers.{{ _key }}-main.tls: "true"
-      traefik.http.routers.{{ _key }}-main.tls.certresolver: "letsencrypt"
-      traefik.http.services.{{ _key }}-main.loadbalancer.server.port: 8069
-      {%- if domain_prod_alternatives %}
-      # Redirect alternative domains to main domain
-      traefik.http.middlewares.{{ _key }}-redirect2main.redirectregex.regex: "^https://([^/]+)/(.*)$$"
-      traefik.http.middlewares.{{ _key }}-redirect2main.redirectregex.replacement: "https://${DOMAIN_PROD}/$${2}"
-      traefik.http.routers.{{ _key }}-altdomains.entrypoints: "web-main"
-      traefik.http.routers.{{ _key }}-altdomains.middlewares:
-        {{ _key }}-compress,
-        {{ _key }}-redirect2main
-        {%- if cidr_whitelist %}, {{ _key }}-whitelist{% endif %}
-      traefik.http.routers.{{ _key }}-altdomains.rule:
+      traefik.http.routers.{{ _key }}-main.rule:
         Host(
-          {%- for domain in domain_prod_alternatives -%}
-          `${DOMAIN_PROD_ALT_{{ loop.index0 }}}`
+          {%- for main_domain in domains_prod -%}
+            `$DOMAIN_PROD_{{ loop.index0 }}`
+            {%- if not loop.last %}, {% endif -%}
+          {%- endfor -%}
+        )
+      traefik.http.routers.{{ _key }}-main.service: "{{ _key }}-main"
+      {%- if traefik_cert_resolver %}
+      traefik.http.routers.{{ _key }}-main.tls.certresolver: "{{ traefik_cert_resolver }}"
+      {%- endif %}
+      traefik.http.services.{{ _key }}-main.loadbalancer.server.port: 8069
+      {%- for main_domain, alt_list in domains_prod.items() %}
+      {%- if alt_list %}
+      # Redirect alternative domains to main domains
+      {%- set main_index = loop.index0 %}
+      traefik.http.middlewares.{{ _key }}-redirect2main-{{ main_index }}.redirectregex.regex: ^(.*)://([^/]+)/(.*)$$
+      traefik.http.middlewares.{{ _key }}-redirect2main-{{ main_index }}.redirectregex.replacement: $$1://$DOMAIN_PROD_{{ main_index }}/$$3
+      traefik.http.routers.{{ _key }}-altdomains-{{ main_index }}.entrypoints: "web-main"
+      traefik.http.routers.{{ _key }}-altdomains-{{ main_index }}.middlewares:
+        {{ _key }}-compress,
+        {{ _key }}-redirect2main-{{ main_index }}
+        {%- if cidr_whitelist %}, {{ _key }}-whitelist{% endif %}
+      traefik.http.routers.{{ _key }}-altdomains-{{ main_index }}.rule:
+        Host(
+          {%- for alt_domain in alt_list -%}
+          `${DOMAIN_PROD_{{ main_index }}_ALT_{{ loop.index0 }}}`
           {%- if not loop.last %}, {% endif %}
           {%- endfor -%}
         )
-      traefik.http.routers.{{ _key }}-altdomains.service: "{{ _key }}-main"
-      traefik.http.routers.{{ _key }}-altdomains.tls: "true"
-      traefik.http.routers.{{ _key }}-altdomains.tls.certresolver: "letsencrypt"
+      traefik.http.routers.{{ _key }}-altdomains-{{ main_index }}.service: "{{ _key }}-main"
+      {%- if traefik_cert_resolver %}
+      traefik.http.routers.{{ _key }}-altdomains-{{ main_index }}.tls.certresolver: "{{ traefik_cert_resolver }}"
       {%- endif %}
+      {%- endif %}
+      {%- endfor %}
       # Longpolling service
       traefik.http.routers.{{ _key }}-longpolling.entrypoints: "web-main"
       {%- if cidr_whitelist %}
       traefik.http.routers.{{ _key }}-longpolling.middlewares: {{ _key }}-whitelist
       {%- endif %}
       traefik.http.routers.{{ _key }}-longpolling.rule:
-        "host(`${DOMAIN_PROD}`) && pathprefix(`/longpolling/`)"
+        Host(
+          {%- for main_domain in domains_prod -%}
+            `$DOMAIN_PROD_{{ loop.index0 }}`
+            {%- if not loop.last %}, {% endif -%}
+          {%- endfor -%}
+        ) && PathPrefix(`/longpolling/`)
       traefik.http.routers.{{ _key }}-longpolling.service: "{{ _key }}-longpolling"
       traefik.http.services.{{ _key }}-longpolling.loadbalancer.server.port: 8072
-      traefik.http.routers.{{ _key }}-longpolling.tls: "true"
-      traefik.http.routers.{{ _key }}-longpolling.tls.certresolver: "letsencrypt"
+      {%- if traefik_cert_resolver %}
+      traefik.http.routers.{{ _key }}-longpolling.tls.certresolver: "{{ traefik_cert_resolver }}"
+      {%- endif %}
       {%- if paths_without_crawlers %}
       # Forbid crawlers
       ? traefik.http.middlewares.{{ _key }}-forbid-crawlers.headers.customResponseHeaders.X-Robots-Tag
@@ -104,15 +144,21 @@ services:
         {{ _key }}-forbid-crawlers
         {%- if cidr_whitelist %}, {{ _key }}-whitelist{% endif %}
       traefik.http.routers.{{ _key }}-forbidden-crawlers.rule:
-        Host(`${DOMAIN_PROD}`) && Path(
+        Host(
+          {%- for main_domain in domains_prod -%}
+            `$DOMAIN_PROD_{{ loop.index0 }}`
+            {%- if not loop.last %}, {% endif -%}
+          {%- endfor -%}
+        ) && Path(
           {%- for path in paths_without_crawlers -%}
           `{{ path }}`, `{{ path }}/{anything:.*}`
           {%- if not loop.last %}, {% endif %}
           {%- endfor -%}
         )
       traefik.http.routers.{{ _key }}-forbidden-crawlers.service: "{{ _key }}-main"
-      traefik.http.routers.{{ _key }}-forbidden-crawlers.tls: "true"
-      traefik.http.routers.{{ _key }}-forbidden-crawlers.tls.certresolver: "letsencrypt"
+      {%- if traefik_cert_resolver %}
+      traefik.http.routers.{{ _key }}-forbidden-crawlers.tls.certresolver: "{{ traefik_cert_resolver }}"
+      {%- endif %}
       {%- endif %}
     {%- endif %}
 

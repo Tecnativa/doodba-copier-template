@@ -10,6 +10,7 @@ _envops:
   variable_start_string: "{{"
 
 # Other Copier configurations
+_min_copier_version: "4.1.0"
 _exclude:
   - /.git
   - /.github
@@ -57,6 +58,14 @@ _migrations:
         - --search-root={{ _copier_conf.src_path }}
         - --collection=migrations
         - remove-odoo-auto-folder
+  - version: v2.0.0
+    before:
+      - - invoke
+        - --search-root={{ _copier_conf.src_path }}
+        - --collection=migrations
+        - update-domains-structure
+        - "{{ _copier_conf.dst_path }}"
+        - "{{ _copier_conf.answers_file }}"
 
 # Questions for the user
 project_author:
@@ -106,28 +115,28 @@ gitlab_url:
 
     Example: `https://gitlab.com/Tecnativa/your-doodba-project`.
 
-domain_prod:
-  type: str
+domains_prod:
+  type: yaml
   help: >-
-    Write the main production domain for this project. Only the domain, no protocol or
+    Write the main production domains for this project. Only the domains, no protocol or
     things like that.
 
-    Example: www.example.com
+    The format is a dictionary where the key is the main domain, and the value is a list
+    of alternative domains that will get redirected to it with a 301 redirection, in
+    case there were any.
 
-domain_prod_alternatives:
+    Example: {www.main.com: [main.com], www.shop.com: [shop.main.com, shop.org,
+    shop.com]}
+
+domains_staging:
+  type: yaml
   help: >-
-    Write a list of alternative domains that should produce a 301 redirection to the
-    main domain.
+    Write the staging domains for this project. Only the domains, no protocol or things
+    like that.
 
-    Example: [example.com, www.example.org, example.org]
+    The format is a list of strings.
 
-domain_test:
-  type: str
-  help: >-
-    Write the test domain for this project. Only the domain, no protocol or things like
-    that.
-
-    Example: demo.example.com
+    Example: [demo1.example.com, demo2.example.com]
 
 paths_without_crawlers:
   default:
@@ -220,6 +229,20 @@ odoo_proxy:
     can create performance problems.
 
     Which proxy will you use to deploy odoo?
+
+traefik_cert_resolver:
+  default: letsencrypt
+  type: yaml
+  help: >-
+    💡 This is not used if your proxy is not Traefik 2.
+
+    💡 If your proxy is Traefik, you should launch it with a certificate resolver with
+    this name, that will handle certificate resolution. See
+    https://docs.traefik.io/https/acme/#configuration-examples
+
+    💡 Use `null` if you don't want to use a HTTPS in Traefik.
+
+    What's the name of your Traefik 2 certificate resolver?
 
 postgres_version:
   default: 12
