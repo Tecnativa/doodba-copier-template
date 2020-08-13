@@ -58,7 +58,7 @@ _migrations:
         - --search-root={{ _copier_conf.src_path }}
         - --collection=migrations
         - remove-odoo-auto-folder
-  - version: v2.0.0
+  - version: v2.0.0a0
     before:
       - - invoke
         - --search-root={{ _copier_conf.src_path }}
