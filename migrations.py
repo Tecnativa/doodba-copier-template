@@ -83,8 +83,9 @@ def update_domains_structure(c, dst_path, answers_rel_path):
         "domains_prod",
         {
             answers_yaml.pop("domain_prod", None): answers_yaml.pop(
-                "domain_prod_alternatives", []
+                "domain_prod_alternatives", None
             )
+            or []
         },
     )
     domain_test = answers_yaml.pop("domain_test", None)

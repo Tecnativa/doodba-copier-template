@@ -1,12 +1,14 @@
 from glob import glob
 from pathlib import Path
 
+import pytest
 import yaml
 from copier import copy
 from plumbum import local
 from plumbum.cmd import git, invoke
 
 LATEST_VERSION_WITHOUT_COPIER = "v0.0.0"
+MISSING = object()
 
 
 def test_transtion_to_copier(
@@ -142,10 +144,31 @@ def test_v1_5_3_migration(
         (auto_addons / "sample").touch()
 
 
+@pytest.mark.parametrize("domain_prod", (MISSING, None, "www.example.com"))
+@pytest.mark.parametrize(
+    "domain_prod_alternatives",
+    (MISSING, None, ["example.com", "www.example.org", "example.org"]),
+)
+@pytest.mark.parametrize("domain_test", (MISSING, None, "demo.example.com"))
 def test_v2_0_0_migration(
-    tmp_path: Path, cloned_template: Path, supported_odoo_version: float
+    tmp_path: Path,
+    cloned_template: Path,
+    supported_odoo_version: float,
+    domain_prod,
+    domain_prod_alternatives,
+    domain_test,
 ):
     """Test migration to v2.0.0."""
+    # Construct data dict, removing MISSING values
+    data = {
+        "domain_prod": domain_prod,
+        "domain_prod_alternatives": domain_prod_alternatives,
+        "domain_test": domain_test,
+        "odoo_version": supported_odoo_version,
+    }
+    for key, value in tuple(data.items()):
+        if value is MISSING:
+            data.pop(key, None)
     # This part makes sense only when v2.0.0 is not yet released
     with local.cwd(cloned_template):
         if "v2.0.0" not in git("tag").split():
@@ -158,16 +181,9 @@ def test_v2_0_0_migration(
             vcs_ref="v1.6.0",
             force=True,
             answers_file=".custom.copier-answers.yaml",
-            data={
-                "domain_prod": "www.example.com",
-                "domain_prod_alternatives": [
-                    "example.com",
-                    "www.example.org",
-                    "example.org",
-                ],
-                "domain_test": "demo.example.com",
-            },
+            data=data,
         )
+        git("config", "commit.gpgsign", "false")
         git("add", ".")
         git("commit", "-am", "reformat", retcode=1)
         git("commit", "-am", "copied from template in v1.6.0")
@@ -182,6 +198,8 @@ def test_v2_0_0_migration(
         assert "domain_prod_alternatives" not in answers
         assert "domain_test" not in answers
         assert answers["domains_prod"] == {
-            "www.example.com": ["example.com", "www.example.org", "example.org"]
+            data.get("domain_prod"): data.get("domain_prod_alternatives") or []
         }
-        assert answers["domains_staging"] == ["demo.example.com"]
+        assert answers["domains_staging"] == (
+            [domain_test] if data.get("domain_test") else []
+        )
