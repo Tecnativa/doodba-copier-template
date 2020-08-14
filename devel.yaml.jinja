@@ -56,7 +56,9 @@ services:
     command:
       - odoo
       - --limit-memory-soft=0
+      {%- if odoo_version >= 10 %}
       - --limit-time-real-cron=9999999
+      {%- endif %}
       - --limit-time-real=9999999
       - --workers=0
       {%- if odoo_version == 9 %}
