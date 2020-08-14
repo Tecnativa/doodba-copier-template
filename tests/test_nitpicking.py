@@ -62,6 +62,12 @@ def test_mqt_configs_synced(
         assert good == tested
 
 
+def test_pre_commit():
+    """Make sure linters are happy."""
+    with local.cwd(Path(__file__).parent.parent):
+        invoke("lint")
+
+
 def test_gitlab_badges(tmp_path: Path):
     """Gitlab badges are properly formatted in README."""
     copy(
