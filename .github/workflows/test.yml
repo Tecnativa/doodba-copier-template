@@ -6,7 +6,14 @@ on:
     branches: [master]
 
 env:
+  LANG: "en_US.utf-8"
+  LC_ALL: "en_US.utf-8"
+  PIP_CACHE_DIR: ${{ github.workspace }}/.cache.~/pip
+  PIPX_HOME: ${{ github.workspace }}/.cache.~/pipx
+  POETRY_CACHE_DIR: ${{ github.workspace }}/.cache.~/pypoetry
   POETRY_VIRTUALENVS_IN_PROJECT: "true"
+  PRE_COMMIT_HOME: ${{ github.workspace }}/.cache.~/pre-commit
+  PYTHONIOENCODING: "UTF-8"
 
 jobs:
   test:
@@ -32,40 +39,29 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Generate cache key PY
+      - name: Generate cache key CACHE
         run:
-          echo "::set-env name=PY::${{ runner.os }} $(python -VV | sha256sum | cut -d' '
-          -f1) ${{ hashFiles('pyproject.toml') }} ${{ hashFiles('poetry.lock') }}"
-      - uses: actions/cache@v1
+          echo "::set-env name=CACHE::${{ secrets.CACHE_DATE }} ${{ runner.os }}
+          $(python -VV | sha256sum | cut -d' ' -f1) ${{ hashFiles('pyproject.toml') }}
+          ${{ hashFiles('poetry.lock') }} ${{ hashFiles('.pre-commit-config.yaml') }}"
+      - uses: actions/cache@v2.1.0
         with:
-          path: .venv
-          key: venv ${{ env.PY }}
-      - run: pip install pipx
-      - name: Generate cache key PIPX
-        run: echo "::set-env name=PIPX::$(pipx --version | sha256sum | cut -d' ' -f1)"
-      - uses: actions/cache@v1
-        with:
-          path: ~/.local/pipx/venvs
-          key: pipx ${{ env.PY }} ${{ env.PIPX }}
-      - uses: actions/cache@v1
-        with:
-          path: ~/.local/bin
-          key: local-bin ${{ env.PY }} ${{ env.PIPX }}
+          path: |
+            .cache.~
+            .venv
+            ~/.local/bin
+          key: venv ${{ env.CACHE }}
+      - run: pip install poetry
       - name: Patch $PATH
         run: echo "::set-env name=PATH::$HOME/.local/bin:$PATH"
-      - run: pipx install poetry
       - run: poetry install
-
-      # Specific steps for this action
-      - name: Install Docker
-        uses: docker-practice/actions-setup-docker@0.0.1
       # Precreate shared networks to avoid race conditions
       - run: docker network create inverseproxy_shared
       - run: docker network create globalwhitelist_shared
       # Let tests issue git commits
       - run: git config --global user.name CI
       - run: git config --global user.email CI@GITHUB
-      # Run all tests
+      # Run all tests, which includes linters
       - run: poetry run invoke test --verbose
         env:
           DOCKER_TEST: 1
