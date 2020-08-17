@@ -12,6 +12,8 @@ _envops:
 # Other Copier configurations
 _min_copier_version: "4.1.0"
 _exclude:
+  - _macros
+  - _traefik*_labels.yml
   - /.git
   - /.github
   - /.gitmodules
@@ -117,26 +119,71 @@ gitlab_url:
 
 domains_prod:
   type: yaml
-  help: >-
-    Write the main production domains for this project. Only the domains, no protocol or
-    things like that.
+  help: |
+    Configure the production domains for this project.
 
-    The format is a dictionary where the key is the main domain, and the value is a list
-    of alternative domains that will get redirected to it with a 301 redirection, in
-    case there were any.
+    The format is a list with these keys:
 
-    Example: {www.main.com: [main.com], www.shop.com: [shop.main.com, shop.org,
-    shop.com]}
+    - hosts: The domain names. List of strings.
+    - path_prefixes: The path prefixes (if any) that will match this routing rule.
+      List of strings. Default: [].
+    - redirect_to: Apply a 301 redirection to this other domain.
+      String. Default: null.
+    - cert_resolver: Traefik cert resolver name. String/Boolean. Default: "letsencrypt".
+      Set it to `true` to use a self-signed certificate. Set it to `false` to
+      disable TLS in those domains. If not `false`, it will force using HTTPS.
+    - entrypoints: List of entrypoint names to use when creating this rule. Default: [].
+      Leave empty to apply this rule on all available entrypoints. Those are defined
+      in your Traefik deployment.
 
-domains_staging:
+    Example:
+
+    # Main domains, with TLS and cert resolved with "letsencrypt" resolver
+    - hosts: [www.main.com, shop.main.com]
+    # Alternate domains that redirect to main ones
+    - {hosts: [main.com, old.main.com], redirect_to: www.main.com}
+    - {hosts: [www.shop.main.com, old.shop.main.com], redirect_to: shop.main.com}
+    # VPN-only domain, with self-signed certificate
+    - {hosts: [vpn.main.com], cert_resolver: true}
+
+    ⚠ Remember that you have to write one-line YAML, at least until Copier
+    supports multiline input
+
+    ⚠ Some advanced features are only available if you deploy with Traefik 2.
+
+domains_test:
   type: yaml
-  help: >-
-    Write the staging domains for this project. Only the domains, no protocol or things
-    like that.
+  help: |
+    Configure the test domains for this project.
 
-    The format is a list of strings.
+    The format is the same as for `prod_domains`; a list with these keys:
 
-    Example: [demo1.example.com, demo2.example.com]
+    - hosts: The domain names. List of strings.
+    - path_prefixes: The path prefixes (if any) that will match this routing rule.
+      List of strings. Default: [].
+    - redirect_to: Apply a 301 redirection to this other domain.
+      String. Default: null.
+    - cert_resolver: Traefik cert resolver name. String/Boolean. Default: "letsencrypt".
+      Set it to `true` to use a self-signed certificate. Set it to `false` to
+      disable TLS in those domains. If not `false`, it will force using HTTPS.
+    - entrypoints: List of entrypoint names to use when creating this rule. Default: [].
+      Leave empty to apply this rule on all available entrypoints. Those are defined
+      in your Traefik deployment.
+
+    Example:
+
+    # Main domains, with TLS and cert resolved with "letsencrypt" resolver
+    - hosts: [demo1.main.com, demo2.main.com]
+    # Alternate domains that redirect to main ones
+    - {hosts: [www.demo1.main.com, old.demo1.main.com], redirect_to: demo1.main.com}
+    - {hosts: [www.demo2.main.com, old.demo2.main.com], redirect_to: demo2.main.com}
+    # VPN-only domain, with self-signed certificate
+    - {hosts: [vpn.demo.main.com], cert_resolver: true}
+
+    ⚠ Remember that you have to write one-line YAML, at least until Copier
+    supports multiline input
+
+    ⚠ Some advanced features are only available if you deploy with Traefik 2.
 
 paths_without_crawlers:
   default:
@@ -229,20 +276,6 @@ odoo_proxy:
     can create performance problems.
 
     Which proxy will you use to deploy odoo?
-
-traefik_cert_resolver:
-  default: letsencrypt
-  type: yaml
-  help: >-
-    💡 This is not used if your proxy is not Traefik 2.
-
-    💡 If your proxy is Traefik, you should launch it with a certificate resolver with
-    this name, that will handle certificate resolution. See
-    https://docs.traefik.io/https/acme/#configuration-examples
-
-    💡 Use `null` if you don't want to use a HTTPS in Traefik.
-
-    What's the name of your Traefik 2 certificate resolver?
 
 postgres_version:
   default: 12

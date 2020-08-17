@@ -99,8 +99,8 @@ def test_cidr_whitelist_rules(
             "odoo_version": supported_odoo_version,
             "project_name": "test-cidr-whitelist",
             "cidr_whitelist": ["123.123.123.123/24", "456.456.456.456"],
-            "domains_prod": {"www.example.com": []},
-            "domains_staging": ["demo.example.com"],
+            "domains_prod": [{"hosts": ["www.example.com"]}],
+            "domains_test": [{"hosts": ["demo.example.com"]}],
         },
     )
     # TODO Use Traefik to test this, instead of asserting labels
@@ -118,29 +118,29 @@ def test_cidr_whitelist_rules(
         == "123.123.123.123/24, 456.456.456.456"
     )
     assert f"{key}-prod-whitelist" in prod["services"]["odoo"]["labels"][
-        f"traefik.http.routers.{key}-prod-main.middlewares"
+        f"traefik.http.routers.{key}-prod-main-0.middlewares"
     ].split(", ")
     assert f"{key}-prod-whitelist" in prod["services"]["odoo"]["labels"][
-        f"traefik.http.routers.{key}-prod-longpolling.middlewares"
+        f"traefik.http.routers.{key}-prod-longpolling-0.middlewares"
     ].split(", ")
     assert f"{key}-prod-whitelist" in prod["services"]["odoo"]["labels"][
-        f"traefik.http.routers.{key}-prod-forbidden-crawlers.middlewares"
+        f"traefik.http.routers.{key}-prod-forbiddenCrawlers-0.middlewares"
     ].split(", ")
     # Assert test.yaml
     assert (
-        test["services"]["odoo"]["labels"][
+        test["services"]["smtp"]["labels"][
             f"traefik.http.middlewares.{key}-test-whitelist.IPWhiteList.sourceRange"
         ]
         == "123.123.123.123/24, 456.456.456.456"
     )
     assert f"{key}-test-whitelist" in test["services"]["odoo"]["labels"][
-        f"traefik.http.routers.{key}-test-main.middlewares"
+        f"traefik.http.routers.{key}-test-forbiddenCrawlers-0.middlewares"
     ].split(", ")
     assert f"{key}-test-whitelist" in test["services"]["odoo"]["labels"][
-        f"traefik.http.routers.{key}-test-longpolling.middlewares"
+        f"traefik.http.routers.{key}-test-longpolling-0.middlewares"
     ].split(", ")
     assert f"{key}-test-whitelist" in test["services"]["smtp"]["labels"][
-        f"traefik.http.routers.{key}-test-mailhog.middlewares"
+        f"traefik.http.routers.{key}-test-mailhog-0.middlewares"
     ].split(", ")
 
 

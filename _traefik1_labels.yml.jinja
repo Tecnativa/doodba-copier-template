@@ -1,0 +1,95 @@
+{%- import "_macros.jinja" as macros -%}
+{#
+  Note: indentation of 6 spaces is important because that's the depth level
+  of container labels in a docker-compose file.
+
+  At some point, Traefik v1 will be unsupported and this file will disappear.
+#}
+
+{# Echo all path prefixes in a Traefik rule #}
+{%- macro path_prefix_rule(path_prefixes) -%}
+  Path:
+    {%- for path in path_prefixes %}
+      {%- set sep = "" if path.endswith("/") else "/" %}
+      {{- path }}{anything:({{ sep }}.*)?}
+      {%- if not loop.last %},{% endif %}
+    {%- endfor %}
+{%- endmacro %}
+
+{# Echo all domains of a group, in a Traefik rule #}
+{%- macro domains_rule(hosts, path_prefixes=()) -%}
+  Host:
+    {%- for host in hosts -%}
+      {{ host }}
+      {%- if not loop.last %}, {% endif %}
+    {%- endfor -%}
+  {%- if path_prefixes -%}
+    ;{{ path_prefix_rule(path_prefixes) }}
+  {%- endif %}
+{%- endmacro %}
+
+{#- Basic labels for a single router #}
+{%- macro router(prefix, index0, rule, entrypoints=(), port=none) %}
+      traefik.{{ prefix }}-{{ index0 }}.frontend.rule: {{ rule }}
+      {%- if entrypoints %}
+      traefik.{{ prefix }}-{{ index0 }}.frontend.entrypoints:
+        {{ entrypoints|sort|join(",") }}
+      {%- endif %}
+      {%- if port %}
+      traefik.{{ prefix }}-{{ index0 }}.frontend.port: {{ port }}
+      {%- endif %}
+{%- endmacro %}
+
+{%- macro odoo(domain_groups_list, paths_without_crawlers) %}
+      {%- call(domain_group) macros.domains_loop_grouped(domain_groups_list) %}
+
+      {#- Route redirections #}
+      {%- if domain_group.redirect_to %}
+      traefik.alt-{{ domain_group.loop.index0 }}.frontend.redirect.regex: ^(.*)://([^/]+)/(.*)$$
+      traefik.alt-{{ domain_group.loop.index0 }}.frontend.redirect.replacement: $$1://{{ domain_group.redirect_to }}/$$3
+      {{-
+        router(
+          prefix="alt",
+          index0=domain_group.loop.index0,
+          rule=domains_rule(domain_group.hosts, domain_group.path_prefixes),
+          entrypoints=domain_group.entrypoints,
+        )
+      }}
+      {%- else %}
+
+      {#- Forbidden crawler routers #}
+      {%- if paths_without_crawlers %}
+      traefik.forbiddenCrawlers-{{ domain_group.loop.index0 }}.frontend.headers.customResponseHeaders:
+        "X-Robots-Tag:noindex, nofollow"
+      {{-
+        router(
+          prefix="forbiddenCrawlers",
+          index0=domain_group.loop.index0,
+          rule=domains_rule(domain_group.hosts, paths_without_crawlers),
+          entrypoints=domain_group.entrypoints,
+        )
+      }}
+      {%- endif %}
+
+      {#- Normal routers #}
+      {%- if paths_without_crawlers != ["/"] or domain_group.path_prefixes %}
+      {{-
+        router(
+          prefix="main",
+          index0=domain_group.loop.index0,
+          rule=domains_rule(domain_group.hosts, domain_group.path_prefixes),
+          entrypoints=domain_group.entrypoints,
+        )
+      }}
+      {%- endif %}
+      {{-
+        router(
+          prefix="longpolling",
+          index0=domain_group.loop.index0,
+          rule=domains_rule(domain_group.hosts, ["/longpolling/"]),
+          entrypoints=domain_group.entrypoints,
+        )
+      }}
+      {%- endif %}
+      {%- endcall %}
+{%- endmacro %}

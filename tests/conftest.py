@@ -25,7 +25,7 @@ SELECTED_ODOO_VERSIONS = (
 )
 
 # Traefik versions matrix
-ALL_TRAEFIK_VERSIONS = ("latest", "2.2", "1.7")
+ALL_TRAEFIK_VERSIONS = ("latest", "1.7")
 
 
 @pytest.fixture(params=ALL_ODOO_VERSIONS)
@@ -111,7 +111,9 @@ def traefik_host(docker: LocalCommand, request):
             "2"
         ):
             traefik_container = traefik_run(
-                "--entrypoints.web-main.address=:80",
+                "--accessLog=true",
+                "--entrypoints.web-insecure.address=:80",
+                "--entrypoints.web-main.address=:443",
                 "--log.level=debug",
                 "--providers.docker.exposedByDefault=false",
                 "--providers.docker.network=inverseproxy_shared",
@@ -119,20 +121,33 @@ def traefik_host(docker: LocalCommand, request):
             ).strip()
         else:
             traefik_container = traefik_run(
-                "--logLevel=debug",
-                "--defaultEntryPoints=http",
+                "--defaultEntryPoints=http,https",
                 "--docker.exposedByDefault=false",
                 "--docker.watch",
                 "--docker",
-                "--entryPoints=Name:http Address::80 Compress:on",
+                "--entryPoints=Name:http Address::80 Redirect.EntryPoint:https",
+                "--entryPoints=Name:https Address::443 Compress:on TLS TLS.minVersion:VersionTLS12",
+                "--logLevel=debug",
             ).strip()
         traefik_details = json.loads(docker("container", "inspect", traefik_container))
         assert (
             len(traefik_details) == 1
         ), "Impossible... did you trigger a race condition?"
-        yield traefik_details[0]["NetworkSettings"]["Networks"]["inverseproxy_shared"][
-            "IPAddress"
-        ]
+        interesting_details = {
+            "ip": traefik_details[0]["NetworkSettings"]["Networks"][
+                "inverseproxy_shared"
+            ]["IPAddress"],
+            "traefik_version": traefik_details[0]["Config"]["Labels"][
+                "org.opencontainers.image.version"
+            ],
+            "traefik_image": traefik_details[0]["Image"],
+        }
+        interesting_details["hostname"] = f"{interesting_details['ip']}.sslip.io"
+        yield interesting_details
+        # Make sure there were no errors or warnings in logs
+        traefik_logs = docker("container", "logs", traefik_container)
+        assert " level=error " not in traefik_logs
+        assert " level=warn " not in traefik_logs
     finally:
         docker("container", "rm", "--force", traefik_container)
 

@@ -74,20 +74,37 @@ def update_domains_structure(c, dst_path, answers_rel_path):
 
     In template v2, we support multiple domains:
 
-    - domains_prod is a dict {main: [redirected, ...], ...}
-    - domains_staging is a list of str
+    - domains_prod is a list of dicts
+    - domains_test is a list of dicts
     """
     answers_path = Path(dst_path, answers_rel_path)
     answers_yaml = _load_yaml(answers_path)
-    answers_yaml.setdefault(
-        "domains_prod",
-        {
-            answers_yaml.pop("domain_prod", None): answers_yaml.pop(
-                "domain_prod_alternatives", None
+    traefik_cert_resolver = answers_yaml.pop("traefik_cert_resolver", None)
+    # Update domains_prod
+    domain_prod = answers_yaml.pop("domain_prod", None)
+    domain_prod_alternatives = answers_yaml.pop("domain_prod_alternatives", None)
+    new_domains_prod = []
+    if domain_prod:
+        new_domains_prod.append(
+            {"hosts": [domain_prod], "cert_resolver": traefik_cert_resolver}
+        )
+        if domain_prod_alternatives:
+            new_domains_prod.append(
+                {
+                    "hosts": domain_prod_alternatives,
+                    "cert_resolver": traefik_cert_resolver,
+                    "redirect_to": domain_prod,
+                }
             )
-            or []
-        },
-    )
+    answers_yaml.setdefault("domains_prod", new_domains_prod)
+    # Update domains_test
     domain_test = answers_yaml.pop("domain_test", None)
-    answers_yaml.setdefault("domains_staging", [domain_test] if domain_test else [])
+    new_domains_test = []
+    if domain_test:
+        new_domains_test.append(
+            {"hosts": [domain_test], "cert_resolver": traefik_cert_resolver}
+        )
+    answers_yaml.setdefault("domains_test", new_domains_test)
     answers_path.write_text(yaml.safe_dump(answers_yaml))
+    # Remove .env file
+    Path(dst_path, ".env").unlink()

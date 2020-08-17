@@ -150,6 +150,7 @@ def test_v1_5_3_migration(
     (MISSING, None, ["example.com", "www.example.org", "example.org"]),
 )
 @pytest.mark.parametrize("domain_test", (MISSING, None, "demo.example.com"))
+@pytest.mark.parametrize("traefik_cert_resolver", (MISSING, None, "letsencrypt"))
 def test_v2_0_0_migration(
     tmp_path: Path,
     cloned_template: Path,
@@ -157,14 +158,16 @@ def test_v2_0_0_migration(
     domain_prod,
     domain_prod_alternatives,
     domain_test,
+    traefik_cert_resolver,
 ):
     """Test migration to v2.0.0."""
     # Construct data dict, removing MISSING values
     data = {
-        "domain_prod": domain_prod,
         "domain_prod_alternatives": domain_prod_alternatives,
+        "domain_prod": domain_prod,
         "domain_test": domain_test,
         "odoo_version": supported_odoo_version,
+        "traefik_cert_resolver": traefik_cert_resolver,
     }
     for key, value in tuple(data.items()):
         if value is MISSING:
@@ -192,14 +195,36 @@ def test_v2_0_0_migration(
         git("add", ".")
         git("commit", "-am", "reformat", retcode=1)
         git("commit", "-am", "updated from template in v2.0.0")
+        # Assert .env removal
+        assert not Path(".env").exists()
         # Assert domain structure migration
         answers = yaml.safe_load(Path(".custom.copier-answers.yaml").read_text())
         assert "domain_prod" not in answers
         assert "domain_prod_alternatives" not in answers
         assert "domain_test" not in answers
-        assert answers["domains_prod"] == {
-            data.get("domain_prod"): data.get("domain_prod_alternatives") or []
-        }
-        assert answers["domains_staging"] == (
-            [domain_test] if data.get("domain_test") else []
-        )
+        expected_domains_prod = []
+        if data.get("domain_prod"):
+            expected_domains_prod.append(
+                {
+                    "hosts": [domain_prod],
+                    "cert_resolver": data.get("traefik_cert_resolver"),
+                }
+            )
+        if data.get("domain_prod_alternatives") and expected_domains_prod:
+            expected_domains_prod.append(
+                {
+                    "hosts": domain_prod_alternatives,
+                    "cert_resolver": data.get("traefik_cert_resolver"),
+                    "redirect_to": domain_prod,
+                }
+            )
+        assert answers["domains_prod"] == expected_domains_prod
+        expected_domains_test = []
+        if data.get("domain_test"):
+            expected_domains_test.append(
+                {
+                    "hosts": [domain_test],
+                    "cert_resolver": data.get("traefik_cert_resolver"),
+                }
+            )
+        assert answers["domains_test"] == expected_domains_test

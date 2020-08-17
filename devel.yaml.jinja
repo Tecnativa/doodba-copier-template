@@ -1,3 +1,4 @@
+{%- import "_macros.jinja" as macros -%}
 version: "2.4"
 
 services:
@@ -10,7 +11,7 @@ services:
       public:
     ports:
       - "127.0.0.1:6899:6899"
-      - "127.0.0.1:${ODOO_MAJOR}069:8069"
+      - "127.0.0.1:{{ macros.version_major(odoo_version) }}069:8069"
     environment:
       PORT: "6899 8069"
       TARGET: odoo
@@ -81,7 +82,7 @@ services:
     ports:
       - "127.0.0.1:8081:8081"
     environment:
-      DATABASE_URL: postgres://$DB_USER:odoopassword@db:5432/devel?sslmode=disable
+      DATABASE_URL: postgres://{{ postgres_username }}:odoopassword@db:5432/devel?sslmode=disable
     depends_on:
       - db
 
