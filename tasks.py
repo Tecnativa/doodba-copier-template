@@ -116,10 +116,4 @@ def update_test_samples(c):
                     file_name,
                 )
                 fd.write(c.run(f"diff {own} {mqt}", warn=True).stdout)
-        c.run(
-            "poetry run copier -fr HEAD -x '**' -x '!prod.yaml' "
-            "-d domains_prod='{www.example.com: [old.example.com, example.com, example.org, www.example.org]' "
-            f"copy . {samples / 'alt-domains'}",
-            warn=True,
-        )
         c.run("poetry run pre-commit run -a", warn=True)

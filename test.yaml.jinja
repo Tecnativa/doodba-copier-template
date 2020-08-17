@@ -1,4 +1,7 @@
-{% set _key = '%s-%.1f-test'|format(project_name, odoo_version)|replace('.', '-') -%}
+{%- import "_macros.jinja" as macros -%}
+{%- import "_traefik1_labels.yml.jinja" as traefik1_labels -%}
+{%- import "_traefik2_labels.yml.jinja" as traefik2_labels -%}
+{%- set _key = traefik2_labels.key(project_name, odoo_version, "test") -%}
 version: "2.4"
 
 services:
@@ -22,70 +25,19 @@ services:
     networks:
       default:
       globalwhitelist_shared:
-    {%- if odoo_proxy == "traefik" and domains_staging %}
+    {%- if odoo_proxy == "traefik" and domains_test %}
       inverseproxy_shared:
     labels:
-      traefik.frontend.headers.customResponseHeaders: "X-Robots-Tag:noindex, nofollow"
-      traefik.longpolling.frontend.rule:
-        Host:
-        {%- for main_domain in domains_staging -%}
-          $DOMAIN_STAGING_{{ loop.index0 }}
-          {%- if not loop.last %},{% endif -%}
-        {%- endfor -%};PathPrefix:/longpolling/
-      traefik.www.frontend.rule:
-        Host:
-        {%- for main_domain in domains_staging -%}
-          $DOMAIN_STAGING_{{ loop.index0 }}
-          {%- if not loop.last %},{% endif -%}
-        {%- endfor %}
-      # Forbid crawlers
-      traefik.http.middlewares.{{ _key }}-forbid-crawlers.headers.customResponseHeaders.X-Robots-Tag:
-        noindex, nofollow
-      # Main service
-      traefik.http.middlewares.{{ _key }}-buffering.buffering.retryExpression:
-        IsNetworkError() && Attempts() < 5
-      traefik.http.middlewares.{{ _key }}-compress.compress: "true"
-      {%- if cidr_whitelist %}
-      ? traefik.http.middlewares.{{ _key }}-whitelist.IPWhiteList.sourceRange
-      : {% for cidr in cidr_whitelist -%}
-        {{ cidr }}{% if not loop.last %}, {% endif %}
-        {%- endfor %}
-      {%- endif %}
-      traefik.http.routers.{{ _key }}-main.entrypoints: "web-main"
-      traefik.http.routers.{{ _key }}-main.middlewares:
-        {{ _key }}-buffering,
-        {{ _key }}-compress,
-        {{ _key }}-forbid-crawlers
-        {%- if cidr_whitelist %}, {{ _key }}-whitelist{% endif %}
-      traefik.http.routers.{{ _key }}-main.rule:
-        Host(
-          {%- for main_domain in domains_staging -%}
-            `$DOMAIN_STAGING_{{ loop.index0 }}`
-            {%- if not loop.last %}, {% endif -%}
-          {%- endfor -%}
-        )
-      traefik.http.routers.{{ _key }}-main.service: "{{ _key }}-main"
-      {%- if traefik_cert_resolver %}
-      traefik.http.routers.{{ _key }}-main.tls.certresolver: "{{ traefik_cert_resolver }}"
-      {%- endif %}
-      traefik.http.services.{{ _key }}-main.loadbalancer.server.port: 8069
-      # Longpolling service
-      traefik.http.routers.{{ _key }}-longpolling.entrypoints: "web-main"
-      traefik.http.routers.{{ _key }}-longpolling.middlewares:
-        {{ _key }}-forbid-crawlers
-        {%- if cidr_whitelist %}, {{ _key }}-whitelist{% endif %}
-      traefik.http.routers.{{ _key }}-longpolling.rule:
-        Host(
-          {%- for main_domain in domains_staging -%}
-            `$DOMAIN_STAGING_{{ loop.index0 }}`
-            {%- if not loop.last %}, {% endif -%}
-          {%- endfor -%}
-        ) && PathPrefix(`/longpolling/`)
-      traefik.http.routers.{{ _key }}-longpolling.service: "{{ _key }}-longpolling"
-      {%- if traefik_cert_resolver %}
-      traefik.http.routers.{{ _key }}-longpolling.tls.certresolver: "{{ traefik_cert_resolver }}"
-      {%- endif %}
-      traefik.http.services.{{ _key }}-longpolling.loadbalancer.server.port: 8072
+      traefik.enable: "true"
+      {{- traefik1_labels.odoo(domains_test, ["/"]) }}
+      {{- traefik2_labels.odoo(
+        domains_test,
+        cidr_whitelist,
+        _key,
+        odoo_version,
+        ["/"],
+        project_name,
+      ) }}
     {%- endif %}
     command:
       - odoo
@@ -109,40 +61,56 @@ services:
       default:
         aliases:
           - smtplocal
-    {%- if odoo_proxy == "traefik" and domains_staging %}
+    {%- if odoo_proxy == "traefik" and domains_test %}
       inverseproxy_shared:
     labels:
       traefik.docker.network: "inverseproxy_shared"
       traefik.enable: "true"
+      {#- Traefik v1 labels #}
       traefik.frontend.passHostHeader: "true"
-      traefik.frontend.rule:
-        Host:
-        {%- for main_domain in domains_staging -%}
-          $DOMAIN_STAGING_{{ loop.index0 }}
-          {%- if not loop.last %},{% endif -%}
-        {%- endfor -%};PathPrefixStrip:/smtpfake/
-      traefik.port: "8025"
+      {%- call(domain_group) macros.domains_loop_grouped(domains_test|rejectattr("redirect_to")|rejectattr("path_prefixes")) %}
+      {{-
+        traefik1_labels.router(
+          prefix="mailhog",
+          index0=domain_group.loop.index0,
+          rule="%s;PathPrefixStrip:/smtpfake/"|format(
+            traefik1_labels.domains_rule(domain_group.hosts),
+          ),
+          entrypoints=domain_group.entrypoints,
+          port=8025,
+        )
+      }}
+      {%- endcall %}
+      {#- Traefik v2 labels #}
       # Mailhog service
-      traefik.http.middlewares.{{ _key }}-mailhog-stripprefix.stripPrefix.prefixes: /smtpfake
-      traefik.http.routers.{{ _key }}-mailhog.entrypoints: web-main
-      traefik.http.routers.{{ _key }}-mailhog.middlewares:
-        {{ _key }}-buffering,
-        {{ _key }}-compress,
-        {{ _key }}-forbid-crawlers,
-        {{ _key }}-mailhog-stripprefix
-        {%- if cidr_whitelist %}, {{ _key }}-whitelist{% endif %}
-      traefik.http.routers.{{ _key }}-mailhog.rule:
-        Host(
-          {%- for main_domain in domains_staging -%}
-            `$DOMAIN_STAGING_{{ loop.index0 }}`
-            {%- if not loop.last %}, {% endif -%}
-          {%- endfor -%}
-        ) && PathPrefix(`/smtpfake/`)
-      traefik.http.routers.{{ _key }}-mailhog.service: {{ _key }}-mailhog
-      {%- if traefik_cert_resolver %}
-      traefik.http.routers.{{ _key }}-mailhog.tls.certresolver: "{{ traefik_cert_resolver }}"
-      {%- endif %}
+      traefik.http.middlewares.{{ _key }}-mailhog-stripprefix.stripPrefix.prefixes: /smtpfake/
       traefik.http.services.{{ _key }}-mailhog.loadbalancer.server.port: 8025
+      {{- traefik2_labels.common_middlewares(_key, cidr_whitelist) }}
+      {%- call(domain_group) macros.domains_loop_grouped(domains_test|rejectattr("redirect_to")|rejectattr("path_prefixes")) %}
+      {#- Remember basic middlewares for this domain group #}
+      {% set _ns = namespace(basic_middlewares=[]) -%}
+      {%- if cidr_whitelist %}
+        {%- set _ns.basic_middlewares = _ns.basic_middlewares + ["whitelist"] %}
+      {%- endif %}
+      {%- if domain_group.cert_resolver %}
+        {%- set _ns.basic_middlewares = _ns.basic_middlewares + ["forceSecure"] %}
+      {%- endif %}
+      {{-
+        traefik2_labels.router(
+          domain_group=domain_group,
+          key=_key,
+          suffix="mailhog",
+          rule="%s && PathPrefix(`/smtpfake/`)"|format(traefik2_labels.domains_rule(domain_group)),
+          service="mailhog",
+          middlewares=_ns.basic_middlewares + [
+            "buffering",
+            "compress",
+            "forbid-crawlers",
+            "mailhog-stripprefix",
+          ],
+        )
+      }}
+      {%- endcall %}
     {%- endif %}
     volumes:
       - "smtpconf:/etc/mailhog:ro,z"

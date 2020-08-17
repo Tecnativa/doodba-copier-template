@@ -129,7 +129,8 @@ Once you apply those changes, to use it:
 1. `invoke img-build --pull` to install the new dependencies.
 1. `invoke start` to start all services.
 1. Visit `http://localhost:8070` to see the posbox running.
-1. Visit `http://localhost:${ODOO_MAJOR}069` to see Odoo.
+1. Visit `http://localhost:${ODOO_MAJOR}069` to see Odoo (e.g.: `$ODOO_MAJOR` is `13` if
+   deploying Odoo 13.0).
 1. Install `point_of_sale` in Odoo.
 1. Configure the POS in Odoo to connect to Posbox in `localhost:8070`.
 

@@ -1,23 +1,24 @@
+{% import "_macros.jinja" as macros %}
 version: "2.4"
 
 services:
   odoo:
     {%- if odoo_oci_image %}
-    image: $ODOO_IMAGE:$ODOO_MINOR
+    image: {{ odoo_oci_image }}:{{ macros.version_minor(odoo_version) }}
     {%- endif %}
     build:
       context: ./odoo
       args:
-        ODOO_VERSION: $ODOO_MINOR
+        ODOO_VERSION: "{{ macros.version_minor(odoo_version) }}"
         UID: "${UID:-1000}"
         GID: "${GID:-1000}"
     environment:
-      EMAIL_FROM: "$SMTP_DEFAULT_FROM"
+      EMAIL_FROM: "{{ smtp_default_from|default("", true) }}"
       PGDATABASE: &dbname {{ postgres_dbname }}
-      PGUSER: &dbuser "$DB_USER"
-      DB_FILTER: "$DB_FILTER"
-      PROXY_MODE: "$ODOO_PROXY_MODE"
-    hostname: "$SMTP_REAL_NON_CANONICAL_DEFAULT"
+      PGUSER: &dbuser "{{ postgres_username }}"
+      DB_FILTER: "{{ odoo_dbfilter }}"
+      PROXY_MODE: "{{ (odoo_proxy is not none)|string|lower }}"
+    hostname: "{{ smtp_canonical_default }}"
     tty: true
     volumes:
       - filestore:/var/lib/odoo:z
@@ -25,14 +26,12 @@ services:
     labels:
       traefik.backend.buffering.retryExpression: IsNetworkError() && Attempts() < 5
       traefik.docker.network: "inverseproxy_shared"
-      traefik.enable: "true"
       traefik.frontend.passHostHeader: "true"
-      traefik.longpolling.port: "8072"
       traefik.port: "8069"
     {%- endif %}
 
   db:
-    image: tecnativa/postgres-autoconf:${DB_VERSION}-alpine
+    image: tecnativa/postgres-autoconf:{{ postgres_version }}-alpine
     shm_size: 512mb
     environment:
       POSTGRES_DB: *dbname
@@ -48,7 +47,7 @@ services:
 
   smtpreal:
     image: tvial/docker-mailserver:latest
-    domainname: "$SMTP_REAL_MAILNAME"
+    domainname: "{{ smtp_canonical_default }}"
     stop_grace_period: 1m
     volumes:
       - mailconfig:/tmp/docker-mailserver:z
@@ -59,19 +58,22 @@ services:
     cap_add:
       - SYS_PTRACE
     environment:
-      DEFAULT_RELAY_HOST: "[$SMTP_REAL_RELAY_HOST]:$SMTP_REAL_RELAY_PORT"
+      DEFAULT_RELAY_HOST: "[{{ smtp_relay_host }}]:{{ smtp_relay_port }}"
       DMS_DEBUG: 0
       ENABLE_SRS: 1
       ONE_DIR: 1
       PERMIT_DOCKER: connected-networks
       POSTFIX_INET_PROTOCOLS: ipv4
       POSTFIX_MESSAGE_SIZE_LIMIT: 52428800 # 50 MiB
-      RELAY_HOST: "$SMTP_REAL_RELAY_HOST"
-      RELAY_PORT: "$SMTP_REAL_RELAY_PORT"
-      RELAY_USER: "$SMTP_REAL_RELAY_USER"
+      RELAY_HOST: "{{ smtp_relay_host }}"
+      RELAY_PORT: "{{ smtp_relay_port }}"
+      RELAY_USER: "{{ smtp_relay_user }}"
       SMTP_ONLY: 1
-      SRS_DOMAINNAME: "$SMTP_REAL_NON_CANONICAL_DEFAULT"
-      SRS_EXCLUDE_DOMAINS: "$SMTP_REAL_CANONICAL_DOMAINS"
+      SRS_DOMAINNAME: "{{ smtp_canonical_default }}"
+      SRS_EXCLUDE_DOMAINS: "{{
+          ([smtp_canonical_default] + (smtp_canonical_domains or []))
+          |unique|sort|join(",")
+      }}"
       SRS_SENDER_CLASSES: envelope_sender,header_sender
   {%- endif %}
   {%- if backup_dst %}
@@ -79,13 +81,15 @@ services:
   backup:
     image: tecnativa/duplicity:postgres{% if backup_dst.startswith(('boto3+s3://', 's3://', 's3+http://')) %}-s3{% endif %}
     hostname: backup
-    domainname: "$DOMAIN_PROD_0"
+    {%- call(domain) macros.first_main_domain(domains_prod) %}
+    domainname: {{ domain.host }}
+    {%- endcall %}
     init: true
     environment:
-      DST: "$BACKUP_DST"
+      DST: "{{ backup_dst }}"
       {%- if smtp_relay_host %}
-      EMAIL_FROM: "$BACKUP_EMAIL_FROM"
-      EMAIL_TO: "$BACKUP_EMAIL_TO"
+      EMAIL_FROM: "{{ backup_email_from }}"
+      EMAIL_TO: "{{ backup_email_to }}"
       {%- endif %}
       {%- if backup_deletion %}
       JOB_800_WHAT: dup --force remove-older-than 3M $$DST
@@ -96,7 +100,7 @@ services:
       {%- if smtp_relay_host %}
       SMTP_HOST: smtplocal
       {%- endif %}
-      TZ: "$BACKUP_TZ"
+      TZ: "{{ backup_tz }}"
     volumes:
       - backup_cache:/root:z
       - filestore:/mnt/backup/src/odoo:z
