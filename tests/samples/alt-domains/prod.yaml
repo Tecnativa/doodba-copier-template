@@ -21,6 +21,8 @@ services:
       traefik.longpolling.frontend.rule: "Host:${DOMAIN_PROD};PathPrefix:/longpolling/"
       traefik.www.frontend.rule: "Host:${DOMAIN_PROD}"
       traefik.forbid-crawlers.frontend.rule: "Host:${DOMAIN_PROD};PathPrefix:/web,/web/{anything:.*},/website/info,/website/info/{anything:.*}"
+      traefik.forbid-crawlers.frontend.headers.customResponseHeaders:
+        "X-Robots-Tag:noindex, nofollow"
       traefik.alt-0.frontend.redirect.regex: "^(.*)://${DOMAIN_PROD_ALT_0}/(.*)$$"
       traefik.alt-0.frontend.redirect.replacement: "$$1://${DOMAIN_PROD}/$$2"
       traefik.alt-0.frontend.rule: "Host:${DOMAIN_PROD_ALT_0}"
