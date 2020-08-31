@@ -34,6 +34,8 @@ services:
         {{ path }},{{ path }}/{anything:.*}
         {%- if not loop.last %},{% endif %}
         {%- endfor %}"
+      traefik.forbid-crawlers.frontend.headers.customResponseHeaders:
+        "X-Robots-Tag:noindex, nofollow"
       {%- endif %}
       {%- if domain_prod_alternatives %}
       {%- for domain in domain_prod_alternatives %}

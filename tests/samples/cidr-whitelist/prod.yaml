@@ -21,6 +21,8 @@ services:
       traefik.longpolling.frontend.rule: "Host:${DOMAIN_PROD};PathPrefix:/longpolling/"
       traefik.www.frontend.rule: "Host:${DOMAIN_PROD}"
       traefik.forbid-crawlers.frontend.rule: "Host:${DOMAIN_PROD};PathPrefix:/web,/web/{anything:.*},/website/info,/website/info/{anything:.*}"
+      traefik.forbid-crawlers.frontend.headers.customResponseHeaders:
+        "X-Robots-Tag:noindex, nofollow"
       # Main service
       ? traefik.http.middlewares.myproject-odoo-13-0-prod-buffering.buffering.retryExpression
       : IsNetworkError() && Attempts() < 5
