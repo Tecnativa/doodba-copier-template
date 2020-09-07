@@ -79,20 +79,19 @@ def update_domains_structure(c, dst_path, answers_rel_path):
     """
     answers_path = Path(dst_path, answers_rel_path)
     answers_yaml = _load_yaml(answers_path)
-    traefik_cert_resolver = answers_yaml.pop("traefik_cert_resolver", None)
     # Update domains_prod
     domain_prod = answers_yaml.pop("domain_prod", None)
     domain_prod_alternatives = answers_yaml.pop("domain_prod_alternatives", None)
     new_domains_prod = []
     if domain_prod:
         new_domains_prod.append(
-            {"hosts": [domain_prod], "cert_resolver": traefik_cert_resolver}
+            {"hosts": [domain_prod], "cert_resolver": "letsencrypt"}
         )
         if domain_prod_alternatives:
             new_domains_prod.append(
                 {
                     "hosts": domain_prod_alternatives,
-                    "cert_resolver": traefik_cert_resolver,
+                    "cert_resolver": "letsencrypt",
                     "redirect_to": domain_prod,
                 }
             )
@@ -102,7 +101,7 @@ def update_domains_structure(c, dst_path, answers_rel_path):
     new_domains_test = []
     if domain_test:
         new_domains_test.append(
-            {"hosts": [domain_test], "cert_resolver": traefik_cert_resolver}
+            {"hosts": [domain_test], "cert_resolver": "letsencrypt"}
         )
     answers_yaml.setdefault("domains_test", new_domains_test)
     answers_path.write_text(yaml.safe_dump(answers_yaml))

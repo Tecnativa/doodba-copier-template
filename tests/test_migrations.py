@@ -150,7 +150,6 @@ def test_v1_5_3_migration(
     (MISSING, None, ["example.com", "www.example.org", "example.org"]),
 )
 @pytest.mark.parametrize("domain_test", (MISSING, None, "demo.example.com"))
-@pytest.mark.parametrize("traefik_cert_resolver", (MISSING, None, "letsencrypt"))
 def test_v2_0_0_migration(
     tmp_path: Path,
     cloned_template: Path,
@@ -158,7 +157,6 @@ def test_v2_0_0_migration(
     domain_prod,
     domain_prod_alternatives,
     domain_test,
-    traefik_cert_resolver,
 ):
     """Test migration to v2.0.0."""
     # Construct data dict, removing MISSING values
@@ -167,7 +165,6 @@ def test_v2_0_0_migration(
         "domain_prod": domain_prod,
         "domain_test": domain_test,
         "odoo_version": supported_odoo_version,
-        "traefik_cert_resolver": traefik_cert_resolver,
     }
     for key, value in tuple(data.items()):
         if value is MISSING:
@@ -207,14 +204,14 @@ def test_v2_0_0_migration(
             expected_domains_prod.append(
                 {
                     "hosts": [domain_prod],
-                    "cert_resolver": data.get("traefik_cert_resolver"),
+                    "cert_resolver": "letsencrypt",
                 }
             )
         if data.get("domain_prod_alternatives") and expected_domains_prod:
             expected_domains_prod.append(
                 {
                     "hosts": domain_prod_alternatives,
-                    "cert_resolver": data.get("traefik_cert_resolver"),
+                    "cert_resolver": "letsencrypt",
                     "redirect_to": domain_prod,
                 }
             )
@@ -224,7 +221,7 @@ def test_v2_0_0_migration(
             expected_domains_test.append(
                 {
                     "hosts": [domain_test],
-                    "cert_resolver": data.get("traefik_cert_resolver"),
+                    "cert_resolver": "letsencrypt",
                 }
             )
         assert answers["domains_test"] == expected_domains_test
