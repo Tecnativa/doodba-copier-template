@@ -62,7 +62,12 @@ def test_multiple_domains(
         try:
             dc("build")
             dc(
-                "run", "--rm", "odoo", "--stop-after-init", "-i", "base",
+                "run",
+                "--rm",
+                "odoo",
+                "--stop-after-init",
+                "-i",
+                "base",
             )
             dc("up", "-d")
             time.sleep(10)
@@ -83,7 +88,8 @@ def test_multiple_domains(
                 # main2 serves https on port 80; returns a 404 from Odoo (not from
                 # Traefik) with global HTTPS redirection
                 bad_response = requests.get(
-                    f"http://main2.{base_domain}/insecure/path", verify=False,
+                    f"http://main2.{base_domain}/insecure/path",
+                    verify=False,
                 )
                 assert not bad_response.ok
                 assert bad_response.status_code == 404
@@ -105,7 +111,8 @@ def test_multiple_domains(
                 # main2 serves https on port 80; returns a 404 from Odoo (not from
                 # Traefik) without HTTPS redirection
                 bad_response = requests.get(
-                    f"http://main2.{base_domain}/insecure/path", verify=False,
+                    f"http://main2.{base_domain}/insecure/path",
+                    verify=False,
                 )
                 assert not bad_response.ok
                 assert bad_response.status_code == 404
@@ -123,7 +130,8 @@ def test_multiple_domains(
             # alt0 and alt1, with self-signed TLS
             for alt_num in range(2):
                 response = requests.get(
-                    f"http://alt{alt_num}.main1.{base_path}", verify=False,
+                    f"http://alt{alt_num}.main1.{base_path}",
+                    verify=False,
                 )
                 assert response.ok
                 assert response.url == f"https://main1.{base_path}"

@@ -33,7 +33,7 @@ def test_transtion_to_copier(
         )
         env_contents = env_contents.replace(
             "ODOO_IMAGE=docker.io/myuser/myproject-odoo",
-            f"ODOO_IMAGE=registry.example.com/custom-team/custom-project-odoo",
+            "ODOO_IMAGE=registry.example.com/custom-team/custom-project-odoo",
         )
         env_file.write_text(env_contents)
         addons_file = tmp_path / "odoo" / "custom" / "src" / "addons.yaml"

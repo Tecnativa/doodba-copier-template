@@ -110,7 +110,7 @@ intercepts all mail sent by Odoo and displays a simple interface that lets you s
 debug all that mail comfortably, including headers sent, attachments, etc.
 
 - For [development][], it's in http://localhost:8025
-- For [testing][], it's in http://$DOMAIN_TEST/smtpfake/
+- For [testing][], it's in http://\$DOMAIN_TEST/smtpfake/
 - For [production][], it's not used.
 
 All environments are configured by default to use the bundled SMTP relay. They are
