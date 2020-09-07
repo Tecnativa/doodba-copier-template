@@ -147,7 +147,10 @@ def test_cidr_whitelist_rules(
 def test_code_workspace_file(tmp_path: Path, cloned_template: Path):
     """The file is generated as expected."""
     copy(
-        str(cloned_template), str(tmp_path), vcs_ref="HEAD", force=True,
+        str(cloned_template),
+        str(tmp_path),
+        vcs_ref="HEAD",
+        force=True,
     )
     assert (tmp_path / f"doodba.{tmp_path.name}.code-workspace").is_file()
     (tmp_path / f"doodba.{tmp_path.name}.code-workspace").rename(
@@ -177,7 +180,10 @@ def test_code_workspace_file(tmp_path: Path, cloned_template: Path):
 def test_dotdocker_ignore_content(tmp_path: Path, cloned_template: Path):
     """Everything inside .docker must be ignored."""
     copy(
-        str(cloned_template), str(tmp_path), vcs_ref="HEAD", force=True,
+        str(cloned_template),
+        str(tmp_path),
+        vcs_ref="HEAD",
+        force=True,
     )
     with local.cwd(tmp_path):
         git("add", ".")

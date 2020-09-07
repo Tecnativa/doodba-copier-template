@@ -84,7 +84,8 @@ def git_aggregate(c):
     """
     with c.cd(str(PROJECT_ROOT)):
         c.run(
-            "docker-compose --file setup-devel.yaml run --rm odoo", env=UID_ENV,
+            "docker-compose --file setup-devel.yaml run --rm odoo",
+            env=UID_ENV,
         )
     write_code_workspace_file(c)
     for git_folder in iglob(str(SRC_PATH / "*" / ".git" / "..")):
@@ -166,10 +167,15 @@ def resetdb(c, modules="base", dbname="devel"):
         c.run("docker-compose stop odoo", pty=True)
         _run = "docker-compose run --rm -l traefik.enable=false odoo"
         c.run(
-            f"{_run} click-odoo-dropdb {dbname}", env=UID_ENV, warn=True, pty=True,
+            f"{_run} click-odoo-dropdb {dbname}",
+            env=UID_ENV,
+            warn=True,
+            pty=True,
         )
         c.run(
-            f"{_run} click-odoo-initdb -n {dbname} -m {modules}", env=UID_ENV, pty=True,
+            f"{_run} click-odoo-initdb -n {dbname} -m {modules}",
+            env=UID_ENV,
+            pty=True,
         )
 
 

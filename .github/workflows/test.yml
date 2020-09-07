@@ -3,7 +3,9 @@ name: test
 on:
   pull_request:
   push:
-    branches: [master]
+    branches:
+      - devel
+      - stable
   workflow_dispatch:
     inputs:
       pytest_addopts:
