@@ -150,6 +150,7 @@
       {%- endif %}
 
       {#- Longpolling router #}
+      {%- if not domain_group.path_prefixes %}
       {{-
         router(
           domain_group=domain_group,
@@ -160,6 +161,7 @@
           middlewares=_ns.basic_middlewares,
         )
       }}
+      {%- endif %}
 
       {#- Forbidden crawlers router #}
       {%- if paths_without_crawlers and not domain_group.path_prefixes %}

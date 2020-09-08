@@ -58,7 +58,7 @@
       {%- else %}
 
       {#- Forbidden crawler routers #}
-      {%- if paths_without_crawlers %}
+      {%- if paths_without_crawlers and not domain_group.path_prefixes %}
       traefik.forbiddenCrawlers-{{ domain_group.loop.index0 }}.frontend.headers.customResponseHeaders:
         "X-Robots-Tag:noindex, nofollow"
       {{-
@@ -82,6 +82,7 @@
         )
       }}
       {%- endif %}
+      {%- if not domain_group.path_prefixes %}
       {{-
         router(
           prefix="longpolling",
@@ -91,6 +92,7 @@
           port=8072,
         )
       }}
+      {%- endif %}
       {%- endif %}
       {%- endcall %}
 {%- endmacro %}
