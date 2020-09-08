@@ -88,6 +88,7 @@
           index0=domain_group.loop.index0,
           rule=domains_rule(domain_group.hosts, ["/longpolling/"]),
           entrypoints=domain_group.entrypoints,
+          port=8072,
         )
       }}
       {%- endif %}

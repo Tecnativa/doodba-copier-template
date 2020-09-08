@@ -44,9 +44,10 @@
 
 {# Loop over a domain groups list, call back with the 1st domain found and exit. #}
 {%- macro first_main_domain(domain_groups_list) %}
+    {%- set parent_caller = caller %}
     {%- call(domain) domains_loop_single(domain_groups_list) %}
         {%- if not domain.redirect_to %}
-            {{- caller(domain) }}
+            {{- parent_caller(domain) }}
             {%- set domain.exit = true %}
         {%- endif %}
     {%- endcall %}

@@ -18,7 +18,9 @@ services:
       PGUSER: &dbuser "{{ postgres_username }}"
       DB_FILTER: "{{ odoo_dbfilter }}"
       PROXY_MODE: "{{ (odoo_proxy is not none)|string|lower }}"
+    {%- if smtp_canonical_default %}
     hostname: "{{ smtp_canonical_default }}"
+    {%- endif %}
     tty: true
     volumes:
       - filestore:/var/lib/odoo:z
