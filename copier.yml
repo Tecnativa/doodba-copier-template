@@ -151,6 +151,9 @@ domains_prod:
 
     ⚠ Some advanced features are only available if you deploy with Traefik 2.
 
+    💡 The 1st host from the 1st domain that has no `path_prefixes` will be considered
+    the main one. In the example above, it'd be `www.main.com`.
+
 domains_test:
   type: yaml
   help: |
@@ -184,6 +187,9 @@ domains_test:
     supports multiline input
 
     ⚠ Some advanced features are only available if you deploy with Traefik 2.
+
+    💡 The 1st host from the 1st domain that has no `path_prefixes` will be considered
+    the main one. In the example above, it'd be `demo1.main.com`.
 
 paths_without_crawlers:
   default:

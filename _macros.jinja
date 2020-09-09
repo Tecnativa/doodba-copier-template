@@ -42,12 +42,17 @@
     {%- endcall %}
 {%- endmacro %}
 
-{# Loop over a domain groups list, call back with the 1st domain found and exit. #}
+{# Get the main domain from a domain groups list.
+
+   The main domain is the 1st one found from a routing rule that redirects nowhere
+   and uses no path prefix.
+
+   This macro just prints that hostname.
+#}
 {%- macro first_main_domain(domain_groups_list) %}
-    {%- set parent_caller = caller %}
     {%- call(domain) domains_loop_single(domain_groups_list) %}
-        {%- if not domain.redirect_to %}
-            {{- parent_caller(domain) }}
+        {%- if not domain.group.redirect_to and not domain.group.path_prefixes %}
+            {{- domain.host }}
             {%- set domain.exit = true %}
         {%- endif %}
     {%- endcall %}
