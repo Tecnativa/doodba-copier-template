@@ -23,6 +23,16 @@ repos:
     rev: 20.8b1
     hooks:
       - id: black
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v2.7.2
+    hooks:
+      - id: pyupgrade
+  - repo: https://github.com/timothycrosley/isort
+    rev: 5.5.1
+    hooks:
+      - id: isort
+        name: isort except __init__.py
+        exclude: /__init__\.py$
   - repo: https://github.com/prettier/prettier
     rev: 2.1.1
     hooks:
@@ -35,14 +45,6 @@ repos:
       - <<: *prettier
         name: prettier + plugin-xml
         files: \.xml$
-  - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v7.8.1
-    hooks:
-      - id: eslint
-        verbose: true
-        args:
-          - --color
-          - --fix
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.2.0
     hooks:
@@ -92,13 +94,11 @@ repos:
           - --valid_odoo_versions={{ "%.1f"|format(odoo_version) }}
           - --rcfile=.pylintrc-mandatory
         additional_dependencies: ["pylint-odoo==3.5.0"]
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v2.7.2
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v7.8.1
     hooks:
-      - id: pyupgrade
-  - repo: https://github.com/timothycrosley/isort
-    rev: 5.5.1
-    hooks:
-      - id: isort
-        name: isort except __init__.py
-        exclude: /__init__\.py$
+      - id: eslint
+        verbose: true
+        args:
+          - --color
+          - --fix
