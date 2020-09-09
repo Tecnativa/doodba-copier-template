@@ -1,3 +1,4 @@
+{%- import "_macros.jinja" as macros -%}
 {%- import "_traefik1_labels.yml.jinja" as traefik1_labels -%}
 {%- import "_traefik2_labels.yml.jinja" as traefik2_labels -%}
 {%- set _key = traefik2_labels.key(project_name, odoo_version, "prod") -%}
@@ -27,7 +28,10 @@ services:
       default:
     {%- if odoo_proxy == "traefik" and domains_prod %}
       inverseproxy_shared:
+    {%- endif %}
     labels:
+      doodba.domain.main: {{ macros.first_main_domain(domains_prod)|tojson }}
+      {%- if odoo_proxy == "traefik" and domains_prod %}
       traefik.enable: "true"
       {{- traefik1_labels.odoo(domains_prod, paths_without_crawlers) }}
       {{- traefik2_labels.common_middlewares(_key, cidr_whitelist) }}
@@ -39,7 +43,7 @@ services:
         paths_without_crawlers,
         project_name,
       ) }}
-    {%- endif %}
+      {%- endif %}
 
   db:
     extends:
