@@ -87,13 +87,17 @@ repos:
           - --rcfile=.pylintrc
           - --exit-zero
         verbose: true
-        additional_dependencies: ["pylint-odoo==3.5.0"]
+        additional_dependencies:
+          - isort==4.3.21
+          - pylint-odoo==3.5.0
       - id: pylint
         name: pylint with mandatory checks
         args:
           - --valid_odoo_versions={{ "%.1f"|format(odoo_version) }}
           - --rcfile=.pylintrc-mandatory
-        additional_dependencies: ["pylint-odoo==3.5.0"]
+        additional_dependencies:
+          - isort==4.3.21
+          - pylint-odoo==3.5.0
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: v7.8.1
     hooks:

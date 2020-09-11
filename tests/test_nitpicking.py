@@ -9,6 +9,8 @@ from copier.main import copy
 from plumbum import local
 from plumbum.cmd import diff, docker_compose, git, invoke, pre_commit
 
+from .conftest import build_file_tree
+
 WHITESPACE_PREFIXED_LICENSES = (
     "AGPL-3.0-or-later",
     "Apache-2.0",
@@ -109,7 +111,7 @@ def test_mqt_configs_synced(
         assert good == tested
 
 
-def test_pre_commit():
+def test_pre_commit_in_template():
     """Make sure linters are happy."""
     with local.cwd(Path(__file__).parent.parent):
         invoke("lint")
@@ -251,7 +253,7 @@ def test_template_update_badge(tmp_path: Path, cloned_template: Path):
     assert expected in (tmp_path / "README.md").read_text()
 
 
-def test_pre_commit_config(
+def test_pre_commit_in_subproject(
     tmp_path: Path, cloned_template: Path, supported_odoo_version: float
 ):
     """Test that .pre-commit-config.yaml has some specific settings fine."""
@@ -262,6 +264,7 @@ def test_pre_commit_config(
         force=True,
         data={"odoo_version": supported_odoo_version},
     )
+    # Make sure the template was correctly rendered
     pre_commit_config = yaml.safe_load(
         (tmp_path / ".pre-commit-config.yaml").read_text()
     )
@@ -283,6 +286,89 @@ def test_pre_commit_config(
                 ]
                 assert {"id": "fix-encoding-pragma"} in repo["hooks"]
     assert found == should_find
+    # Make sure it reformats correctly some files
+    with local.cwd(tmp_path / "odoo" / "custom" / "src" / "private"):
+        git("add", "-A")
+        git("commit", "-m", "hello world", retcode=1)
+        git("commit", "-am", "hello world")
+        manifest = "__manifest__" if is_py3 else "__openerp__"
+        build_file_tree(
+            {
+                f"test_module/{manifest}.py": f"""\
+                    {"{"}
+                    'name':'test module','license':'AGPL-3',
+                    'version':'{supported_odoo_version}.1.0.0',
+                    'installable': True,
+                    'auto_install': False
+                    {"}"}
+                """,
+                "test_module/__init__.py": """\
+                    from . import models;
+                """,
+                "test_module/models/__init__.py": """\
+                    from . import res_partner;
+                """,
+                "test_module/models/res_partner.py": """\
+                    from odoo import models;from os.path import join;
+                    from requests import get
+                    from logging import getLogger
+                    import io,sys,odoo
+                    _logger=getLogger(__name__)
+                    class ResPartner(models.Model):
+                        _name='res.partner'
+                        def some_method(self,test):
+                            '''some weird
+                                docstring'''
+                            _logger.info(models,join,get,io,sys,odoo)
+                """,
+            }
+        )
+        git("add", "-A")
+        git("commit", "-m", "added test_module", retcode=1)
+        git("commit", "-am", "added test_module")
+        expected_samples = {
+            f"test_module/{manifest}.py": f"""\
+                {"{"}
+                    "name": "test module",
+                    "license": "AGPL-3",
+                    "version": "{supported_odoo_version}.1.0.0",
+                    "installable": True,
+                    "auto_install": False,
+                {"}"}
+            """,
+            "test_module/__init__.py": """\
+                from . import models
+            """,
+            "test_module/models/__init__.py": """\
+                from . import res_partner
+            """,
+            "test_module/models/res_partner.py": '''\
+                import io
+                import sys
+                from logging import getLogger
+                from os.path import join
+
+                import odoo
+                from odoo import models
+                from requests import get
+
+                _logger = getLogger(__name__)
+
+
+                class ResPartner(models.Model):
+                    _name = "res.partner"
+
+                    def some_method(self, test):
+                        """some weird
+                        docstring"""
+                        _logger.info(models, join, get, io, sys, odoo)
+            ''',
+        }
+        for path, content in expected_samples.items():
+            content = dedent(content)
+            if not is_py3 and path.endswith(".py"):
+                content = f"# -*- coding: utf-8 -*-\n{content}"
+            assert Path(path).read_text() == content
 
 
 def test_no_python_write_bytecode_in_devel(

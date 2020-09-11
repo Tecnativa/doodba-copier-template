@@ -1,6 +1,8 @@
 import json
 import os
+import textwrap
 from pathlib import Path
+from typing import Dict, Union
 
 import pytest
 import yaml
@@ -159,3 +161,15 @@ def teardown_function(function):
     if pre_commit_log.is_file():
         print(pre_commit_log.read_text())
         pre_commit_log.unlink()
+
+
+# Helpers
+def build_file_tree(spec: Dict[Union[str, Path], str], dedent: bool = True):
+    """Builds a file tree based on the received spec."""
+    for path, contents in spec.items():
+        path = Path(path)
+        if dedent:
+            contents = textwrap.dedent(contents)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("w") as fd:
+            fd.write(contents)
