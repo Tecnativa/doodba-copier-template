@@ -109,8 +109,8 @@ We use [MailHog](https://github.com/mailhog/MailHog) to provide a fake SMTP serv
 intercepts all mail sent by Odoo and displays a simple interface that lets you see and
 debug all that mail comfortably, including headers sent, attachments, etc.
 
-- For [development][], it's in http://localhost:8025
-- For [testing][], it's in http://\$DOMAIN_TEST/smtpfake/
+- For [development][], it's in `http://localhost:${ODOO_MAJOR}025`
+- For [testing][], it's in `http://\$DOMAIN_TEST/smtpfake/`
 - For [production][], it's not used.
 
 All environments are configured by default to use the bundled SMTP relay. They are
@@ -161,7 +161,7 @@ wdb.set_trace()
 ```
 
 It's available by default on the [development][] environment, where you can browse
-http://localhost:1984 to use it.
+`http://localhost:${ODOO_MAJOR}984` to use it.
 
 **⚠️ DO NOT USE IT IN PRODUCTION ENVIRONMENTS ⚠️** (I had to say it).
 
@@ -171,7 +171,7 @@ http://localhost:1984 to use it.
 inspect a Postgres database.
 
 We ship it preconfigured in the [development][] environment. Just start it and open
-http://localhost:8081 to use it.
+`http://localhost:${ODOO_MAJOR}081` to use it.
 
 ### Production
 
