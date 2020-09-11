@@ -10,7 +10,10 @@ _envops:
   variable_start_string: "{{"
 
 # Other Copier configurations
+_min_copier_version: "4.1.0"
 _exclude:
+  - _macros
+  - _traefik*_labels.yml
   - /.git
   - /.github
   - /.gitmodules
@@ -57,6 +60,14 @@ _migrations:
         - --search-root={{ _copier_conf.src_path }}
         - --collection=migrations
         - remove-odoo-auto-folder
+  - version: v2.0.0a0
+    before:
+      - - invoke
+        - --search-root={{ _copier_conf.src_path }}
+        - --collection=migrations
+        - update-domains-structure
+        - "{{ _copier_conf.dst_path }}"
+        - "{{ _copier_conf.answers_file }}"
 
 # Questions for the user
 project_author:
@@ -106,28 +117,79 @@ gitlab_url:
 
     Example: `https://gitlab.com/Tecnativa/your-doodba-project`.
 
-domain_prod:
-  type: str
-  help: >-
-    Write the main production domain for this project. Only the domain, no protocol or
-    things like that.
+domains_prod:
+  type: yaml
+  help: |
+    Configure the production domains for this project.
 
-    Example: www.example.com
+    The format is a list with these keys:
 
-domain_prod_alternatives:
-  help: >-
-    Write a list of alternative domains that should produce a 301 redirection to the
-    main domain.
+    - hosts: The domain names. List of strings.
+    - path_prefixes: The path prefixes (if any) that will match this routing rule.
+      List of strings. Default: [].
+    - redirect_to: Apply a 301 redirection to this other domain.
+      String. Default: null.
+    - cert_resolver: Traefik cert resolver name. String/Boolean. Default: "letsencrypt".
+      Set it to `true` to use a self-signed certificate. Set it to `false` to
+      disable TLS in those domains. If not `false`, it will force using HTTPS.
+    - entrypoints: List of entrypoint names to use when creating this rule. Default: [].
+      Leave empty to apply this rule on all available entrypoints. Those are defined
+      in your Traefik deployment.
 
-    Example: [example.com, www.example.org, example.org]
+    Example:
 
-domain_test:
-  type: str
-  help: >-
-    Write the test domain for this project. Only the domain, no protocol or things like
-    that.
+    # Main domains, with TLS and cert resolved with "letsencrypt" resolver
+    - hosts: [www.main.com, shop.main.com]
+    # Alternate domains that redirect to main ones
+    - {hosts: [main.com, old.main.com], redirect_to: www.main.com}
+    - {hosts: [www.shop.main.com, old.shop.main.com], redirect_to: shop.main.com}
+    # VPN-only domain, with self-signed certificate
+    - {hosts: [vpn.main.com], cert_resolver: true}
 
-    Example: demo.example.com
+    ⚠ Remember that you have to write one-line YAML, at least until Copier
+    supports multiline input
+
+    ⚠ Some advanced features are only available if you deploy with Traefik 2.
+
+    💡 The 1st host from the 1st domain that has no `path_prefixes` will be considered
+    the main one. In the example above, it'd be `www.main.com`.
+
+domains_test:
+  type: yaml
+  help: |
+    Configure the test domains for this project.
+
+    The format is the same as for `prod_domains`; a list with these keys:
+
+    - hosts: The domain names. List of strings.
+    - path_prefixes: The path prefixes (if any) that will match this routing rule.
+      List of strings. Default: [].
+    - redirect_to: Apply a 301 redirection to this other domain.
+      String. Default: null.
+    - cert_resolver: Traefik cert resolver name. String/Boolean. Default: "letsencrypt".
+      Set it to `true` to use a self-signed certificate. Set it to `false` to
+      disable TLS in those domains. If not `false`, it will force using HTTPS.
+    - entrypoints: List of entrypoint names to use when creating this rule. Default: [].
+      Leave empty to apply this rule on all available entrypoints. Those are defined
+      in your Traefik deployment.
+
+    Example:
+
+    # Main domains, with TLS and cert resolved with "letsencrypt" resolver
+    - hosts: [demo1.main.com, demo2.main.com]
+    # Alternate domains that redirect to main ones
+    - {hosts: [www.demo1.main.com, old.demo1.main.com], redirect_to: demo1.main.com}
+    - {hosts: [www.demo2.main.com, old.demo2.main.com], redirect_to: demo2.main.com}
+    # VPN-only domain, with self-signed certificate
+    - {hosts: [vpn.demo.main.com], cert_resolver: true}
+
+    ⚠ Remember that you have to write one-line YAML, at least until Copier
+    supports multiline input
+
+    ⚠ Some advanced features are only available if you deploy with Traefik 2.
+
+    💡 The 1st host from the 1st domain that has no `path_prefixes` will be considered
+    the main one. In the example above, it'd be `demo1.main.com`.
 
 paths_without_crawlers:
   default:

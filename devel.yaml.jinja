@@ -1,3 +1,4 @@
+{%- import "_macros.jinja" as macros -%}
 version: "2.4"
 
 services:
@@ -9,8 +10,8 @@ services:
       default:
       public:
     ports:
-      - "127.0.0.1:6899:6899"
-      - "127.0.0.1:${ODOO_MAJOR}069:8069"
+      - "127.0.0.1:{{ macros.version_major(odoo_version) }}899:6899"
+      - "127.0.0.1:{{ macros.version_major(odoo_version) }}069:8069"
     environment:
       PORT: "6899 8069"
       TARGET: odoo
@@ -39,6 +40,7 @@ services:
       PYTHONOPTIMIZE: ""
       PYTHONPATH: /opt/odoo/custom/src/odoo
       SMTP_PORT: "1025"
+      WDB_WEB_PORT: "{{ macros.version_major(odoo_version) }}984"
       # To avoid installing demo data export DOODBA_WITHOUT_DEMO=all
       WITHOUT_DEMO: "${DOODBA_WITHOUT_DEMO-false}"
     volumes:
@@ -56,7 +58,9 @@ services:
     command:
       - odoo
       - --limit-memory-soft=0
+      {%- if odoo_version >= 10 %}
       - --limit-time-real-cron=9999999
+      {%- endif %}
       - --limit-time-real=9999999
       - --workers=0
       {%- if odoo_version == 9 %}
@@ -73,21 +77,31 @@ services:
       POSTGRES_DB: *dbname
       POSTGRES_PASSWORD: odoopassword
 
+  pgweb:
+    image: sosedoff/pgweb
+    networks: *public
+    ports:
+      - "127.0.0.1:{{ macros.version_major(odoo_version) }}081:8081"
+    environment:
+      DATABASE_URL: postgres://{{ postgres_username }}:odoopassword@db:5432/devel?sslmode=disable
+    depends_on:
+      - db
+
   smtp:
     extends:
       file: common.yaml
       service: smtpfake
     networks: *public
     ports:
-      - "127.0.0.1:8025:8025"
+      - "127.0.0.1:{{ macros.version_major(odoo_version) }}025:8025"
 
   wdb:
     image: kozea/wdb
     networks: *public
     ports:
-      - "127.0.0.1:1984:1984"
+      - "127.0.0.1:{{ macros.version_major(odoo_version) }}984:1984"
     # HACK https://github.com/Kozea/wdb/issues/136
-    stop_signal: KILL
+    init: true
 
   # Whitelist outgoing traffic for tests, reports, etc.
   cdnjs_cloudflare_proxy:

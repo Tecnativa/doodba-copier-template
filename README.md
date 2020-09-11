@@ -36,18 +36,21 @@ This project lets you maintain [Odoo][] deployments based on [Doodba][] using
 
 This project itself is just the template, but you need to install these tools to use it:
 
-- [copier][] v3.0.6 or newer
+- [copier][]
+- [docker-compose](https://docs.docker.com/compose/install/)
 - [git](https://git-scm.com/) 2.24 or newer
 - [invoke](https://www.pyinvoke.org/) installed in Python 3.6+ (and the binary must be
   called `invoke` — beware if your distro installs it as `invoke3` or similar).
 - [pre-commit](https://pre-commit.com/)
 - [python](https://www.python.org/) 3.6+
+- [venv](https://docs.python.org/3/library/venv.html)
 
 Install non-python apps with your distro's recommended package manager. The recommended
 way to install Python CLI apps is [pipx](https://pipxproject.github.io/pipx/):
 
 ```bash
 python3 -m pip install --user pipx
+pipx install docker-compose
 pipx install copier
 pipx install invoke
 pipx install pre-commit

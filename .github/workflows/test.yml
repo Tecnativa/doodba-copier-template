@@ -2,16 +2,20 @@ name: test
 
 on:
   pull_request:
-    paths-ignore:
-      - README.md
-      - CONTRIBUTING.md
-      - docs/**.md
   push:
     branches:
       - devel
       - stable
+  workflow_dispatch:
+    inputs:
+      pytest_addopts:
+        description:
+          Extra options for pytest; use -vv for full details; see
+          https://docs.pytest.org/en/latest/example/simple.html#how-to-change-command-line-options-defaults
+        required: false
 
 env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   LANG: "en_US.utf-8"
   LC_ALL: "en_US.utf-8"
   PIP_CACHE_DIR: ${{ github.workspace }}/.cache.~/pip
@@ -19,6 +23,7 @@ env:
   POETRY_CACHE_DIR: ${{ github.workspace }}/.cache.~/pypoetry
   POETRY_VIRTUALENVS_IN_PROJECT: "true"
   PRE_COMMIT_HOME: ${{ github.workspace }}/.cache.~/pre-commit
+  PYTEST_ADDOPTS: ${{ github.event.inputs.pytest_addopts }}
   PYTHONIOENCODING: "UTF-8"
 
 jobs:
@@ -68,7 +73,7 @@ jobs:
       - run: git config --global user.name CI
       - run: git config --global user.email CI@GITHUB
       # Run all tests, which includes linters
-      - run: poetry run invoke test --verbose
+      - run: poetry run invoke test
         env:
           DOCKER_TEST: 1
           SELECTED_ODOO_VERSIONS: ${{ matrix.odoo-version }}

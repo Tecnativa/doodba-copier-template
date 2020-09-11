@@ -30,7 +30,9 @@ def test_default_settings(
         git("commit", "-am", "Hello World")
 
 
-def test_pre_commit_autoinstall(tmp_path: Path, supported_odoo_version: float):
+def test_pre_commit_autoinstall(
+    cloned_template: Path, tmp_path: Path, supported_odoo_version: float
+):
     """Test that pre-commit is automatically (un)installed in alien repos.
 
     This test is slower because it has to download and build OCI images and
@@ -42,7 +44,7 @@ def test_pre_commit_autoinstall(tmp_path: Path, supported_odoo_version: float):
     if supported_odoo_version not in {10.0, 13.0}:
         pytest.skip("this test is only tested with other odoo versions")
     copy(
-        ".",
+        str(cloned_template),
         str(tmp_path),
         vcs_ref="HEAD",
         force=True,

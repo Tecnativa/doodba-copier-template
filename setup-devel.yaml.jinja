@@ -1,3 +1,4 @@
+{% import "_macros.jinja" as macros -%}
 # Use this environment to download all repositories from `repos.yaml` file:
 #
 #   export UID="$(id -u $USER)" GID="$(id -g $USER)" UMASK="$(umask)"
@@ -12,14 +13,14 @@ version: "2.4"
 services:
   odoo:
     {%- if odoo_oci_image %}
-    image: $ODOO_IMAGE:$ODOO_MINOR
+    image: {{ odoo_oci_image }}:{{ macros.version_minor(odoo_version) }}
     {%- endif %}
     build:
       context: ./odoo
       args:
         AGGREGATE: "false"
         DEPTH_DEFAULT: 100
-        ODOO_VERSION: $ODOO_MINOR
+        ODOO_VERSION: "{{ macros.version_minor(odoo_version) }}"
         PYTHONOPTIMIZE: ""
         PIP_INSTALL_ODOO: "false"
         CLEAN: "false"

@@ -15,6 +15,7 @@ it now? You'll learn that here.
     - [MailHog](#mailhog)
     - [Network isolation](#network-isolation)
     - [wdb](#wdb)
+    - [pgweb](#pgweb)
   - [Production](#production)
     - [Prebuilding images](#prebuilding-images)
     - [Adding secrets](#adding-secrets)
@@ -108,8 +109,8 @@ We use [MailHog](https://github.com/mailhog/MailHog) to provide a fake SMTP serv
 intercepts all mail sent by Odoo and displays a simple interface that lets you see and
 debug all that mail comfortably, including headers sent, attachments, etc.
 
-- For [development][], it's in http://localhost:8025
-- For [testing][], it's in http://$DOMAIN_TEST/smtpfake/
+- For [development][], it's in `http://localhost:${ODOO_MAJOR}025`
+- For [testing][], it's in `http://\$DOMAIN_TEST/smtpfake/`
 - For [production][], it's not used.
 
 All environments are configured by default to use the bundled SMTP relay. They are
@@ -160,9 +161,17 @@ wdb.set_trace()
 ```
 
 It's available by default on the [development][] environment, where you can browse
-http://localhost:1984 to use it.
+`http://localhost:${ODOO_MAJOR}984` to use it.
 
 **⚠️ DO NOT USE IT IN PRODUCTION ENVIRONMENTS ⚠️** (I had to say it).
+
+#### pgweb
+
+[Pgweb](http://sosedoff.github.io/pgweb/) is a small, beautiful and quick tool to
+inspect a Postgres database.
+
+We ship it preconfigured in the [development][] environment. Just start it and open
+`http://localhost:${ODOO_MAJOR}081` to use it.
 
 ### Production
 
@@ -397,11 +406,11 @@ In development mode odoo restarts by itself thanks to `--dev=reload` option.
 ```bash
 modules=addon1,addon2
 # Install their dependencies first
-docker-compose run --rm odoo addons init --dependencies $modules
+docker-compose run --rm odoo addons init --dependencies --with $modules
 # Test them at install
-docker-compose run --rm odoo addons init --test $modules
+docker-compose run --rm odoo addons init --test --with $modules
 # Test them again at update
-docker-compose run --rm odoo addons update --test $modules
+docker-compose run --rm odoo addons update --test --with $modules
 ```
 
 \* Note: This replaces the old deprecated `unittest` script.

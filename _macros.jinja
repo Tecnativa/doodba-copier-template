@@ -1,0 +1,59 @@
+{# Odoo version formatted without dot #}
+{%- macro version_major(odoo_version) %}
+    {{- "%.0f"|format(odoo_version) }}
+{%- endmacro %}
+
+{# Odoo version formatted with one single dot #}
+{%- macro version_minor(odoo_version) %}
+    {{- "%.1f"|format(odoo_version) }}
+{%- endmacro %}
+
+{# Loop over domain group lists, and call back with the domain_group variable. #}
+{%- macro domains_loop_grouped(domain_groups_list) %}
+    {%- set domain_group = namespace(exit=false) %}
+    {%- for _domain_group in domain_groups_list|default([], true) %}
+        {%- if not domain_group.exit %}
+            {%- set domain_group.cert_resolver = _domain_group.cert_resolver|default("letsencrypt") %}
+            {%- set domain_group.entrypoints = _domain_group.entrypoints|default([], true) %}
+            {%- set domain_group.hosts = _domain_group.hosts|default([], true) %}
+            {%- set domain_group.path_prefixes = _domain_group.path_prefixes|default([], true) %}
+            {%- set domain_group.redirect_to = _domain_group.redirect_to|default(none) %}
+            {%- set domain_group.loop = loop %}
+            {{- caller(domain_group) }}
+        {%- endif %}
+    {%- endfor %}
+{%- endmacro %}
+
+{# Loop over domain group lists and call back with a single domain. #}
+{%- macro domains_loop_single(domain_groups_list) %}
+    {%- set domain = namespace(exit=false, index0=0, index=1) %}
+    {%- set parent_caller = caller %}
+    {%- call(domain_group) domains_loop_grouped(domain_groups_list) %}
+        {%- set domain.group = domain_group %}
+        {%- for host in domain_group.hosts|default([], true) %}
+            {%- if not domain.exit %}
+                {%- set domain.host = host %}
+                {%- set domain.loop = loop %}
+                {{- parent_caller(domain) }}
+                {%- set domain.index = domain.index + 1 %}
+                {%- set domain.index0 = domain.index0 + 1 %}
+            {%- endif %}
+        {%- endfor %}
+    {%- endcall %}
+{%- endmacro %}
+
+{# Get the main domain from a domain groups list.
+
+   The main domain is the 1st one found from a routing rule that redirects nowhere
+   and uses no path prefix.
+
+   This macro just prints that hostname.
+#}
+{%- macro first_main_domain(domain_groups_list) %}
+    {%- call(domain) domains_loop_single(domain_groups_list) %}
+        {%- if not domain.group.redirect_to and not domain.group.path_prefixes %}
+            {{- domain.host }}
+            {%- set domain.exit = true %}
+        {%- endif %}
+    {%- endcall %}
+{%- endmacro %}
