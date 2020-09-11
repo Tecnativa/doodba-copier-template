@@ -1,3 +1,4 @@
+{%- import "_macros.jinja" as macros -%}
 {
   "version": "0.2.0",
   "configurations": [
@@ -13,7 +14,7 @@
           "remoteRoot": "/opt/odoo"
         }
       ],
-      "port": 6899,
+      "port": {{ macros.version_major(odoo_version) }}899,
       "host": "localhost"
     },
     {
@@ -26,7 +27,7 @@
           "remoteRoot": "/opt/odoo"
         }
       ],
-      "port": 6899,
+      "port": {{ macros.version_major(odoo_version) }}899,
       "host": "localhost"
     }
   ]
