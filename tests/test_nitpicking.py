@@ -348,9 +348,10 @@ def test_pre_commit_in_subproject(
                 from logging import getLogger
                 from os.path import join
 
+                from requests import get
+
                 import odoo
                 from odoo import models
-                from requests import get
 
                 _logger = getLogger(__name__)
 
