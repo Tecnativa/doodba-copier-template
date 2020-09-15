@@ -36,7 +36,7 @@
         {{ entrypoints|sort|join(",") }}
       {%- endif %}
       {%- if port %}
-      traefik.{{ prefix }}-{{ index0 }}.frontend.port: {{ port }}
+      traefik.{{ prefix }}-{{ index0 }}.port: {{ port }}
       {%- endif %}
 {%- endmacro %}
 
