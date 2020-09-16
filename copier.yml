@@ -27,7 +27,6 @@ _exclude:
   - /poetry.lock
   - /pyproject.toml
   - /scripts
-  - /tasks_downstream.py
   - /tests
   - /vendor
 
