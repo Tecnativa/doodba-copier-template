@@ -17,6 +17,7 @@ _exclude:
   - /.git
   - /.github
   - /.gitmodules
+  - /.vscode/launch.json
   - /**.pyc
   - /**.pyo
   - /CONTRIBUTING.md

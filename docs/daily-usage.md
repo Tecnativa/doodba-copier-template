@@ -23,6 +23,10 @@ it now? You'll learn that here.
     - [Backups](#backups)
   - [Testing](#testing)
     - [Global whitelist](#global-whitelist)
+- [Visual Studio Code Integration](#visual-studio-code-integration)
+  - [Debugging Python code](#debugging-python-code)
+  - [Debugging JS code](#debugging-js-code)
+  - [Debugging Python + JS code 🤯](#debugging-python--js-code-)
 - [Other usage scenarios](#other-usage-scenarios)
   - [Inspect the database](#inspect-the-database)
   - [Restart Odoo](#restart-odoo)
@@ -66,7 +70,8 @@ for what it's for.
 ### Development
 
 File used: `devel.yaml`. We recommend using [VSCode](https://code.visualstudio.com/) to
-develop, and some special features for it are supplied.
+develop, and some [special features](#visual-studio-code-integration) for it are
+supplied.
 
 Get Odoo and addons code with:
 
@@ -164,6 +169,9 @@ It's available by default on the [development][] environment, where you can brow
 `http://localhost:${ODOO_MAJOR}984` to use it.
 
 **⚠️ DO NOT USE IT IN PRODUCTION ENVIRONMENTS ⚠️** (I had to say it).
+
+**Note:** Remember that you can instead
+[use the integrated debugger in Visual Studio Code](#debugging-python-code)
 
 #### pgweb
 
@@ -375,6 +383,57 @@ services:
 ```
 
 </details>
+
+## Visual Studio Code Integration
+
+Generated projects have out-of-the-box integration with
+[Visual Studio Code](https://code.visualstudio.com/) to provide you with a better and
+easier-to-use experience through:
+
+- Suggested extensions
+- Launch configurations
+- Workspace definition
+- Integration with invoke
+- Debugger integration
+
+**Note**: As the configurations are defined per project and depending on the Odoo addons
+you are working on, you might need to update your configuration frequently with
+`invoke write-code-workspace-file` (done automatically when you invoke other tasks).
+
+### Debugging Python code
+
+In order to debug Python code, you need to:
+
+1. Install suggested extensions, as mentioned above
+1. Run `invoke develop`
+1. Go to the "Run" tab in VSCode, select "Start Odoo and debug Python", and click "Run".
+   The program will stop in any breakpoint you have and you will be able to analyze your
+   Python environment.
+
+### Debugging JS code
+
+In order to debug JavaScript code, you need to:
+
+1. Install suggested extensions, as mentioned above
+1. Run `invoke develop`
+1. Go to the "Run" tab in VSCode, select "Start Odoo and debug JS in [Firefox/Chrome]",
+   and click "Run". The program will stop in any breakpoint you have and you will be
+   able to analyze your JS environment.
+
+If you face some problems while debugging in Firefox or Chrome, see our [FAQ](faq.md) or
+the corresponding extensions documentation before opening an issue here.
+
+### Debugging Python + JS code 🤯
+
+In order to debug Python and JavaScript code at the same time, you need to:
+
+1. Install suggested extensions, as mentioned above
+1. Go to the "Run" tab in VSCode, select "Start Odoo and debug Python + JS in
+   [Firefox/Chrome]", and click "Run". The program will stop in any breakpoint you have
+   and you will be able to analyze your Python and JS environment. You will just need to
+   switch between both environments running at the same time in the VSCode debugger.
+
+   ![Switching debugger](res/vscode_py_js_debug.gif)
 
 ## Other usage scenarios
 

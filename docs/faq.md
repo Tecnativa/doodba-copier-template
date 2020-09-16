@@ -23,6 +23,11 @@ Maybe not so frequent, but interesting anyway. 🤷
 - [Why pre-commit fails each time I copy or update the template?](#why-pre-commit-fails-each-time-i-copy-or-update-the-template)
 - [Why XML is broken after running pre-commit?](#why-xml-is-broken-after-running-pre-commit)
 - [Why is Odoo saying that its database is not initialized?](#why-is-odoo-saying-that-its-database-is-not-initialized)
+- [Why do I get a "Connection Refused" error when trying to lauch the VSCode Firefox JS Debugger?](#why-do-i-get-a-connection-refused-error-when-trying-to-lauch-the-vscode-firefox-js-debugger)
+- [Why don't I see my Firefox extensions while debugging?](#why-dont-i-see-my-firefox-extensions-while-debugging)
+- [Why do I get a "Connection Refused" error when trying to lauch the VSCode Chrome JS Debugger?](#why-do-i-get-a-connection-refused-error-when-trying-to-lauch-the-vscode-chrome-js-debugger)
+- [Why can't Firefox load the page after I start a debugging session?](#why-cant-firefox-load-the-page-after-i-start-a-debugging-session)
+- [Why won't my program stop on the specified breakpoints when using Firefox?](#why-wont-my-program-stop-on-the-specified-breakpoints-when-using-firefox)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 <!-- prettier-ignore-end -->
@@ -465,3 +470,73 @@ This is just a helper over these tools, which you might want to use directly ins
 
 - [`click-odoo-dropdb`](https://github.com/acsone/click-odoo-contrib#click-odoo-dropdb-stable)
 - [`click-odoo-initdb`](https://github.com/acsone/click-odoo-contrib#click-odoo-initdb-stable)
+
+## Why do I get a "Connection Refused" error when trying to lauch the VSCode Firefox JS Debugger?
+
+When using Firefox as the debugging browser, this may be happening because the path for
+its executable is misconfigured.
+
+To fix this, change the `firefoxExecutable` variable for the
+[VS Code Debugger for Firefox](https://github.com/firefox-devtools/vscode-firefox-debug)
+extension under Settings to your Firefox executable path. To find it, you can run:
+
+```bash
+which firefox
+```
+
+Then, add the following to your **global** `settings.json` file:
+
+```json
+{
+  // ...
+  "firefox.executable": "/usr/bin/firefox"
+  // ...
+}
+```
+
+## Why don't I see my Firefox extensions while debugging?
+
+Firefox may load a different user profile than your personal one.
+
+To fix that, add the following to your **global** `settings.json` file:
+
+```json
+{
+  // ...
+  "firefox.profile": "default-release"
+  // ...
+}
+```
+
+_Notes:_
+
+- Your profile might be named differently. You can visit `about:profiles` from firefox
+  to list them.
+- The extension is in reality using a temporary copy of that profile, so any changes you
+  do to it won't be saved unless you configure it with
+  `"firefox.keepProfileChanges": true`. If you enable that option, you may prefer using
+  a profile named differently than your default one, so you can have 2 Firefox instances
+  running in parallel and don't need to stop Firefox to restart it again in debug mode.
+
+## Why do I get a "Connection Refused" error when trying to lauch the VSCode Chrome JS Debugger?
+
+When using Chrome as the debugging browser, this may be happening because the path for
+its executable is misconfigured.
+
+To fix this, you must have either **Chrome** or **Chromium** installed in your system.
+
+The Chrome executable will be selected by default and, if not installed, Chromium will
+be selected. Make sure you have the respective executable in your `$PATH`.
+
+## Why can't Firefox load the page after I start a debugging session?
+
+It is possible that the page is not ready yet. Wait a couple of seconds and reload.
+
+## Why won't my program stop on the specified breakpoints when using Firefox?
+
+When debugging, you must have `debug=assets` in your Odoo URL. By default, when you
+launch a debugging session, VSCode will open you browser in a new window with the
+correct URL. However, if you need to log in, you loose that URL. To avoid that, make
+sure you are not losing your cookies each time you reload a debugging session. (See
+[Why don't I see my Firefox extensions while debugging?](#Why-don't-I-see-my-Firefox-extensions-while-debugging?)
+for how to set up your Firefox debugging profile)
