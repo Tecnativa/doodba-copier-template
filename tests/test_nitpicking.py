@@ -246,7 +246,7 @@ def test_template_update_badge(tmp_path: Path, cloned_template: Path):
     """Test that the template update badge is properly formatted."""
     tag = "v99999.0.0-99999-bye-bye"
     with local.cwd(cloned_template):
-        git("tag", "--delete", "test")
+        git("commit", "--allow-empty", "-m", "dumb commit")
         git("tag", "--force", tag)
     copy(str(cloned_template), str(tmp_path), vcs_ref=tag, force=True)
     expected = "[![Last template update](https://img.shields.io/badge/last%20template%20update-v99999.0.0--99999--bye--bye-informational)](https://github.com/Tecnativa/doodba-copier-template/tree/v99999.0.0-99999-bye-bye)"
