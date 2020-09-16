@@ -193,18 +193,41 @@ def test_cidr_whitelist_rules(
     ].split(", ")
 
 
-def test_code_workspace_file(tmp_path: Path, cloned_template: Path):
+def test_code_workspace_file(
+    tmp_path: Path, cloned_template: Path, supported_odoo_version: float
+):
     """The file is generated as expected."""
     copy(
         str(cloned_template),
         str(tmp_path),
         vcs_ref="HEAD",
         force=True,
+        data={"odoo_version": supported_odoo_version},
     )
     assert (tmp_path / f"doodba.{tmp_path.name}.code-workspace").is_file()
     (tmp_path / f"doodba.{tmp_path.name}.code-workspace").rename(
         tmp_path / "doodba.other1.code-workspace"
     )
+    with local.cwd(tmp_path / "odoo" / "custom" / "src" / "private"):
+        # Generate generic addon path
+        is_py3 = supported_odoo_version >= 11
+        manifest = "__manifest__" if is_py3 else "__openerp__"
+        build_file_tree(
+            {
+                f"test_module_static/{manifest}.py": f"""\
+                    {"{"}
+                    'name':'test module','license':'AGPL-3',
+                    'version':'{supported_odoo_version}.1.0.0',
+                    'installable': True,
+                    'auto_install': False
+                    {"}"}
+                """,
+                "test_module_static/static/index.html": """\
+                    <html>
+                    </html>
+                """,
+            }
+        )
     with local.cwd(tmp_path):
         invoke("write-code-workspace-file")
         assert (tmp_path / "doodba.other1.code-workspace").is_file()
@@ -217,13 +240,27 @@ def test_code_workspace_file(tmp_path: Path, cloned_template: Path):
         assert (tmp_path / "doodba.other2.code-workspace").is_file()
         with (tmp_path / "doodba.other2.code-workspace").open() as fp:
             workspace_definition = json.load(fp)
-        assert workspace_definition == {
-            "folders": [
-                {"path": "odoo/custom/src/zzz"},
-                {"path": "odoo/custom/src/private"},
-                {"path": "."},
-            ]
-        }
+        assert workspace_definition["folders"] == [
+            {"path": "odoo/custom/src/zzz"},
+            {"path": "odoo/custom/src/private"},
+            {"name": f"doodba.{tmp_path.name}", "path": "."},
+        ]
+        # Firefox debugger configuration
+        url = f"http://localhost:{supported_odoo_version:.0f}069/test_module_static/static/"
+        path = "${workspaceRoot:private}/test_module_static/static/"
+        firefox_configuration = next(
+            conf
+            for conf in workspace_definition["launch"]["configurations"]
+            if conf["type"] == "firefox"
+        )
+        assert {"url": url, "path": path} in firefox_configuration["pathMappings"]
+        # Chrome debugger configuration
+        chrome_configuration = next(
+            conf
+            for conf in workspace_definition["launch"]["configurations"]
+            if conf["type"] == "chrome"
+        )
+        assert chrome_configuration["pathMapping"][url] == path
 
 
 def test_dotdocker_ignore_content(tmp_path: Path, cloned_template: Path):
