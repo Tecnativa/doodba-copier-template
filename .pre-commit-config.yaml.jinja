@@ -35,17 +35,14 @@ repos:
         args: [--settings, .]
         exclude: /__init__\.py$
   - repo: https://github.com/prettier/prettier
-    rev: 2.1.1
+    rev: 2.1.2
     hooks:
-      - &prettier
-        id: prettier
+      - id: prettier
+        name: prettier + plugin-xml
         additional_dependencies:
-          - "@prettier/plugin-xml@0.7.2"
+          - "@prettier/plugin-xml@0.12.0"
         args:
           - --plugin=@prettier/plugin-xml
-      - <<: *prettier
-        name: prettier + plugin-xml
-        files: \.xml$
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.2.0
     hooks:
