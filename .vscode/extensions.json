@@ -4,9 +4,11 @@
     "dchanco.vsc-invoke",
     "EditorConfig.editorconfig",
     "esbenp.prettier-vscode",
+    "firefox-devtools.vscode-firefox-debug",
     "mrorz.language-gettext",
     "ms-azuretools.vscode-docker",
     "ms-python.python",
+    "msjsdiag.debugger-for-chrome",
     "redhat.vscode-xml",
     "samuelcolvin.jinjahtml",
     "syler.sass-indented"

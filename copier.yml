@@ -17,6 +17,7 @@ _exclude:
   - /.git
   - /.github
   - /.gitmodules
+  - /.vscode/launch.json
   - /**.pyc
   - /**.pyo
   - /CONTRIBUTING.md
@@ -27,7 +28,6 @@ _exclude:
   - /poetry.lock
   - /pyproject.toml
   - /scripts
-  - /tasks_downstream.py
   - /tests
   - /vendor
 
