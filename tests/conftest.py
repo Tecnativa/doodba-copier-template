@@ -123,12 +123,12 @@ def traefik_host(docker: LocalCommand, request):
             ).strip()
         else:
             traefik_container = traefik_run(
-                "--defaultEntryPoints=http,https",
+                "--defaultEntryPoints=web-insecure,web-main",
                 "--docker.exposedByDefault=false",
                 "--docker.watch",
                 "--docker",
-                "--entryPoints=Name:http Address::80 Redirect.EntryPoint:https",
-                "--entryPoints=Name:https Address::443 Compress:on TLS TLS.minVersion:VersionTLS12",
+                "--entryPoints=Name:web-insecure Address::80 Redirect.EntryPoint:web-main",
+                "--entryPoints=Name:web-main Address::443 Compress:on TLS TLS.minVersion:VersionTLS12",
                 "--logLevel=debug",
             ).strip()
         traefik_details = json.loads(docker("container", "inspect", traefik_container))

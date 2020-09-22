@@ -32,7 +32,7 @@
 {%- macro router(prefix, index0, rule, entrypoints=(), port=none) %}
       traefik.{{ prefix }}-{{ index0 }}.frontend.rule: {{ rule }}
       {%- if entrypoints %}
-      traefik.{{ prefix }}-{{ index0 }}.frontend.entrypoints:
+      traefik.{{ prefix }}-{{ index0 }}.frontend.entryPoints:
         {{ entrypoints|sort|join(",") }}
       {%- endif %}
       {%- if port %}
