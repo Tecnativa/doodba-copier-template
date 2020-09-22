@@ -148,8 +148,9 @@ def write_code_workspace_file(c, cw_path=None):
                 addon / "__openerp__.py"
             ).is_file():
                 url = f"http://localhost:{ODOO_VERSION:.0f}069/{addon.name}/static/"
-                path = "${workspaceRoot:%s}/%s/static/" % (
-                    subrepo.name, addon.relative_to(subrepo)
+                path = "${{ '{{' }}workspaceRoot:{}{{ '}}' }}/{}/static/".format(
+                    subrepo.name,
+                    addon.relative_to(subrepo),
                 )
                 firefox_configuration["pathMappings"].append({"url": url, "path": path})
                 chrome_configuration["pathMapping"][url] = path
