@@ -48,6 +48,13 @@ def test_multiple_domains(
                 "entrypoints": ["web-insecure"],
                 "cert_resolver": False,
             },
+            # main3 only serves certain routes in web-alt entrypoint
+            {
+                "hosts": [f"main3.{base_domain}"],
+                "path_prefixes": ["/alt/"],
+                "entrypoints": ["web-alt"],
+                "cert_resolver": False,
+            },
         ],
     }
     dc = docker_compose["-f", f"{environment}.yaml"]
@@ -85,15 +92,15 @@ def test_multiple_domains(
                     )
                     assert response.ok
                     assert response.url == f"https://main0.{base_path}"
-                # main2 serves https on port 80; returns a 404 from Odoo (not from
-                # Traefik) with global HTTPS redirection
+                # main2 serves https on port 80; returns a 404 from Traefik (not from
+                # Odoo) with global HTTPS redirection
                 bad_response = requests.get(
                     f"http://main2.{base_domain}/insecure/path",
                     verify=False,
                 )
                 assert not bad_response.ok
                 assert bad_response.status_code == 404
-                assert "Werkzeug" in bad_response.headers.get("Server")
+                assert "Server" not in bad_response.headers  # 404 comes from Traefik
                 assert (
                     bad_response.url == f"https://main2.{base_domain}:443/insecure/path"
                 )
@@ -118,6 +125,22 @@ def test_multiple_domains(
                 assert bad_response.status_code == 404
                 assert "Werkzeug" in bad_response.headers.get("Server")
                 assert bad_response.url == f"http://main2.{base_domain}/insecure/path"
+            # main3 cannot find /web on port 8080; no HTTPS redirection
+            bad_response = requests.get(
+                f"http://main3.{base_domain}:8080/web",
+            )
+            assert not bad_response.ok
+            assert bad_response.status_code == 404
+            assert "Server" not in bad_response.headers  # 404 comes from Traefik
+            assert bad_response.url == f"http://main3.{base_domain}:8080/web"
+            # main3 will route to odoo in /alt/foo but fail with 404 from there, no HTTPS
+            bad_response = requests.get(
+                f"http://main3.{base_domain}:8080/alt/foo",
+            )
+            assert not bad_response.ok
+            assert bad_response.status_code == 404
+            assert "Werkzeug" in bad_response.headers.get("Server")
+            assert bad_response.url == f"http://main3.{base_domain}:8080/alt/foo"
             # main1, with self-signed TLS
             response = requests.get(f"http://main1.{base_path}", verify=False)
             assert response.ok

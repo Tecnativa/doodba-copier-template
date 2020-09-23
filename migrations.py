@@ -63,6 +63,18 @@ def remove_odoo_auto_folder(c):
 
 
 @task
+def remove_vscode_launch_and_tasks(c, dst_path):
+    """Remove .vscode/{launch,tasks}.json file.
+
+    Launch configurations are now generated in the doodba.*.code-workspace file.
+    """
+    for fname in ("launch", "tasks"):
+        garbage = Path(dst_path, ".vscode", f"{fname}.json")
+        if garbage.is_file():
+            garbage.unlink()
+
+
+@task
 def update_domains_structure(c, dst_path, answers_rel_path):
     """Migrates from v1 to v2 domain structure.
 

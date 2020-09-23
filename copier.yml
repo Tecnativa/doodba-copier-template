@@ -68,6 +68,13 @@ _migrations:
         - update-domains-structure
         - "{{ _copier_conf.dst_path }}"
         - "{{ _copier_conf.answers_file }}"
+  - version: v2.1.1a0
+    after:
+      - - invoke
+        - --search-root={{ _copier_conf.src_path }}
+        - --collection=migrations
+        - remove-vscode-launch-and-tasks
+        - "{{ _copier_conf.dst_path }}"
 
 # Questions for the user
 project_author:
