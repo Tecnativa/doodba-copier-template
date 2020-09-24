@@ -133,7 +133,7 @@ def write_code_workspace_file(c, cw_path=None):
     for subrepo in SRC_PATH.glob("*"):
         if not subrepo.is_dir():
             continue
-        if (subrepo / ".git").exists():
+        if (subrepo / ".git").exists() and subrepo.name != "odoo":
             cw_config["folders"].append(
                 {"path": str(subrepo.relative_to(PROJECT_ROOT))}
             )
@@ -204,6 +204,12 @@ def write_code_workspace_file(c, cw_path=None):
             },
         ],
     }
+    # Sort project folders
+    cw_config["folders"].sort(key=lambda x: x["path"])
+    # Put Odoo folder just before private and top folder
+    odoo = SRC_PATH / "odoo"
+    if odoo.is_dir():
+        cw_config["folders"].append({"path": str(odoo.relative_to(PROJECT_ROOT))})
     # HACK https://github.com/microsoft/vscode/issues/95963 put private second to last
     private = SRC_PATH / "private"
     if private.is_dir():
