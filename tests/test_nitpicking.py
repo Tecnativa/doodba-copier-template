@@ -234,14 +234,22 @@ def test_code_workspace_file(
         assert not (tmp_path / f"doodba.{tmp_path.name}.code-workspace").is_file()
         # Do a stupid and dirty git clone to check it's sorted fine
         git("clone", cloned_template, Path("odoo", "custom", "src", "zzz"))
+        # "Clone" a couple more repos, including odoo to check order
+        git("clone", cloned_template, Path("odoo", "custom", "src", "aaa"))
+        git("clone", cloned_template, Path("odoo", "custom", "src", "bbb"))
+        git("clone", cloned_template, Path("odoo", "custom", "src", "odoo"))
         invoke("write-code-workspace-file", "-c", "doodba.other2.code-workspace")
         assert not (tmp_path / f"doodba.{tmp_path.name}.code-workspace").is_file()
         assert (tmp_path / "doodba.other1.code-workspace").is_file()
         assert (tmp_path / "doodba.other2.code-workspace").is_file()
         with (tmp_path / "doodba.other2.code-workspace").open() as fp:
             workspace_definition = json.load(fp)
+        # Check workspace folder definition and order
         assert workspace_definition["folders"] == [
+            {"path": "odoo/custom/src/aaa"},
+            {"path": "odoo/custom/src/bbb"},
             {"path": "odoo/custom/src/zzz"},
+            {"path": "odoo/custom/src/odoo"},
             {"path": "odoo/custom/src/private"},
             {"name": f"doodba.{tmp_path.name}", "path": "."},
         ]
