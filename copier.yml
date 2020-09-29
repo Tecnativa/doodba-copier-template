@@ -77,6 +77,75 @@ _migrations:
         - "{{ _copier_conf.dst_path }}"
 
 # Questions for the user
+odoo_version:
+  help: On which odoo version is it based?
+  type: float
+  default: 13.0
+  choices:
+    - 7.0
+    - 8.0
+    - 9.0
+    - 10.0
+    - 11.0
+    - 12.0
+    - 13.0
+
+odoo_dbfilter:
+  default: ".*"
+  type: str
+  help: >-
+    Set your Odoo db filter. It must be a regexp that matches the domain name being
+    visited. It is useful if you use Odoo in SaaS mode.
+
+odoo_proxy:
+  default: traefik
+  choices:
+    No proxy (dangerous for production): null
+    Traefik: traefik
+    Other proxy (it's up to you!): other
+  help: >-
+    ⚠️ Using a misconfigured proxy for production can create a security hole. Using none
+    can create performance problems.
+
+    Which proxy will you use to deploy odoo?
+
+odoo_initial_lang:
+  default: en_US
+  type: str
+  help: >-
+    If you want to initialize Odoo automatically in a specific language, write it here.
+    The format must be ll_CC where ll is the language code and CC is the country code.
+
+    Examples: en_US, es_ES, es_VE...
+
+odoo_admin_password:
+  secret: true
+  default: example-admin-password
+  type: str
+  help: >-
+    💡 To auto-generate strong passwords, see https://ddg.gg/?q=password+64+strong
+
+    ⚠️ This password is critical for security, especially if you set odoo_listdb to
+    true, so keep it safe.
+
+    What will be your odoo admin password?
+
+odoo_listdb:
+  default: false
+  type: bool
+  help: >-
+    Do you want to list databases publicly?
+
+odoo_oci_image:
+  type: str
+  help: >-
+    If you are using an OCI/Docker image registry (such as the Docker Hub, Quay or
+    Gitlab registry) to publish the Odoo images that will be built with this Doodba
+    project, specify here the path to the odoo image built with it. Leave it empty if
+    you are not using a registry.
+
+    Example: docker.io/myteam/example-odoo
+
 project_author:
   type: str
   help: >-
@@ -220,75 +289,6 @@ cidr_whitelist:
     instance, set that here please.
 
     ⚠️ It must be a list. And this is only supported if you deploy with Traefik 2+.
-
-odoo_version:
-  help: On which odoo version is it based?
-  type: float
-  default: 13.0
-  choices:
-    - 7.0
-    - 8.0
-    - 9.0
-    - 10.0
-    - 11.0
-    - 12.0
-    - 13.0
-
-odoo_initial_lang:
-  default: en_US
-  type: str
-  help: >-
-    If you want to initialize Odoo automatically in a specific language, write it here.
-    The format must be ll_CC where ll is the language code and CC is the country code.
-
-    Examples: en_US, es_ES, es_VE...
-
-odoo_oci_image:
-  type: str
-  help: >-
-    If you are using an OCI/Docker image registry (such as the Docker Hub, Quay or
-    Gitlab registry) to publish the Odoo images that will be built with this Doodba
-    project, specify here the path to the odoo image built with it. Leave it empty if
-    you are not using a registry.
-
-    Example: docker.io/myteam/example-odoo
-
-odoo_listdb:
-  default: false
-  type: bool
-  help: >-
-    Do you want to list databases publicly?
-
-odoo_admin_password:
-  secret: true
-  default: example-admin-password
-  type: str
-  help: >-
-    💡 To auto-generate strong passwords, see https://ddg.gg/?q=password+64+strong
-
-    ⚠️ This password is critical for security, especially if you have set odoo_listdb to
-    true, so keep it safe.
-
-    What will be your odoo admin password?
-
-odoo_dbfilter:
-  default: ".*"
-  type: str
-  help: >-
-    Set your Odoo db filter. It must be a regexp that matches the domain name being
-    visited. It is useful if you use Odoo in SaaS mode.
-
-odoo_proxy:
-  default: traefik
-  choices:
-    No proxy (dangerous for production): null
-    Traefik: traefik
-    Other proxy (it's up to you!): other
-  help: >-
-    ⚠️ Using a misconfigured proxy for production can create a security hole. Using none
-    can create performance problems.
-
-    Which proxy will you use to deploy odoo?
 
 postgres_version:
   default: 12
