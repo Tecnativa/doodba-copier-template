@@ -56,7 +56,7 @@ def write_code_workspace_file(c, cw_path=None):
     except (FileNotFoundError, json.decoder.JSONDecodeError):
         pass  # Nevermind, we start with a new config
     # Launch configurations
-    ptvsd_configuration = {
+    debugpy_configuration = {
         "name": "Attach Python debugger to running container",
         "type": "python",
         "request": "attach",
@@ -123,7 +123,7 @@ def write_code_workspace_file(c, cw_path=None):
             },
         ],
         "configurations": [
-            ptvsd_configuration,
+            debugpy_configuration,
             firefox_configuration,
             chrome_configuration,
         ],
@@ -137,7 +137,7 @@ def write_code_workspace_file(c, cw_path=None):
             cw_config["folders"].append(
                 {"path": str(subrepo.relative_to(PROJECT_ROOT))}
             )
-        ptvsd_configuration["pathMappings"].append(
+        debugpy_configuration["pathMappings"].append(
             {
                 "localRoot": "${workspaceRoot:%s}" % subrepo.name,
                 "remoteRoot": f"/opt/odoo/custom/src/{subrepo.name}",
@@ -176,7 +176,7 @@ def write_code_workspace_file(c, cw_path=None):
                 "label": "Start Odoo in debug mode",
                 "type": "process",
                 "command": "invoke",
-                "args": ["start", "--detach", "--ptvsd"],
+                "args": ["start", "--detach", "--debugpy"],
                 "presentation": {
                     "echo": True,
                     "reveal": "silent",
@@ -277,13 +277,13 @@ def lint(c, verbose=False):
 
 
 @task(develop)
-def start(c, detach=True, ptvsd=False):
+def start(c, detach=True, debugpy=False):
     """Start environment."""
     cmd = "docker-compose up"
     if detach:
         cmd += " --detach"
     with c.cd(str(PROJECT_ROOT)):
-        c.run(cmd, env=dict(UID_ENV, DOODBA_PTVSD_ENABLE=str(int(ptvsd))))
+        c.run(cmd, env=dict(UID_ENV, DOODBA_DEBUGPY_ENABLE=str(int(debugpy))))
 
 
 @task(
