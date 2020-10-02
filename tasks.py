@@ -97,23 +97,25 @@ def update_test_samples(c):
             print("git repo is dirty; clean it and repeat")
             raise
         copier_conf = _load_copier_conf()
-        default_odoo_version = copier_conf["odoo_version"]["default"]
+        odoo_versions = copier_conf["odoo_version"]["choices"]
         samples = Path("tests", "samples")
-        for file_name in (".pylintrc", ".pylintrc-mandatory"):
-            with (samples / "mqt-diffs" / f"{file_name}.diff").open(
-                "w"
-            ) as fd, tempfile.mkdtemp(prefix="dct-samples") as copy_path:
+        for odoo_version in odoo_versions:
+            with tempfile.TemporaryDirectory(prefix="dct-samples") as copy_path:
                 c.run(
-                    "poetry run copier -fr HEAD -x '**' -x '!.pylintrc*' "
-                    f"copy . {copy_path}"
+                    "poetry run copier -fr HEAD -x '**' -x '!.pylintrc*' -x '!tasks.py' "
+                    f"-d odoo_version={odoo_version} copy . {copy_path}"
                 )
-                own = Path(copy_path, f"v{default_odoo_version}", file_name)
-                mqt = Path(
-                    "vendor",
-                    "maintainer-quality-tools",
-                    "sample_files",
-                    f"pre-commit-{default_odoo_version}",
-                    file_name,
-                )
-                fd.write(c.run(f"diff {own} {mqt}", warn=True).stdout)
+                for file_name in (".pylintrc", ".pylintrc-mandatory"):
+                    with open(
+                        samples / "mqt-diffs" / f"v{odoo_version}-{file_name}.diff", "w"
+                    ) as fd:
+                        copied = Path(copy_path, file_name)
+                        mqt = Path(
+                            "vendor",
+                            "maintainer-quality-tools",
+                            "sample_files",
+                            "pre-commit-13.0",
+                            file_name,
+                        )
+                        fd.write(c.run(f"diff {copied} {mqt}", warn=True).stdout)
         c.run("poetry run pre-commit run -a", warn=True)
