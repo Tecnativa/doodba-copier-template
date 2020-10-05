@@ -33,7 +33,7 @@ services:
     {%- endif %}
 
   db:
-    image: tecnativa/postgres-autoconf:{{ postgres_version }}-alpine
+    image: ghcr.io/tecnativa/postgres-autoconf:{{ postgres_version }}-alpine
     shm_size: 512mb
     environment:
       POSTGRES_DB: *dbname
