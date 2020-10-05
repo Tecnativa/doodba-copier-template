@@ -9,7 +9,7 @@ from copier.main import copy
 from plumbum import local
 from plumbum.cmd import diff, docker_compose, git, invoke, pre_commit
 
-from .conftest import build_file_tree
+from .conftest import LAST_ODOO_VERSION, build_file_tree
 
 WHITESPACE_PREFIXED_LICENSES = (
     "AGPL-3.0-or-later",
@@ -93,7 +93,7 @@ def test_no_vscode_in_private(cloned_template: Path, tmp_path: Path):
 
 
 def test_mqt_configs_synced(
-    tmp_path: Path, cloned_template: Path, supported_odoo_version: float
+    tmp_path: Path, cloned_template: Path, any_odoo_version: float
 ):
     """Make sure configs from MQT are in sync."""
     copy(
@@ -101,12 +101,12 @@ def test_mqt_configs_synced(
         str(tmp_path),
         vcs_ref="test",
         force=True,
-        data={"odoo_version": supported_odoo_version},
+        data={"odoo_version": any_odoo_version},
     )
     mqt = Path("vendor", "maintainer-quality-tools", "sample_files", "pre-commit-13.0")
     good_diffs = Path("tests", "samples", "mqt-diffs")
     for conf in (".pylintrc", ".pylintrc-mandatory"):
-        good = (good_diffs / f"{conf}.diff").read_text()
+        good = (good_diffs / f"v{any_odoo_version}-{conf}.diff").read_text()
         tested = diff(tmp_path / conf, mqt / conf, retcode=1)
         assert good == tested
 
@@ -127,9 +127,9 @@ def test_gitlab_badges(cloned_template: Path, tmp_path: Path):
         data={"gitlab_url": "https://gitlab.example.com/Tecnativa/my-badged-odoo"},
     )
     expected_badges = dedent(
-        """
-        [![pipeline status](https://gitlab.example.com/Tecnativa/my-badged-odoo/badges/13.0/pipeline.svg)](https://gitlab.example.com/Tecnativa/my-badged-odoo/commits/13.0)
-        [![coverage report](https://gitlab.example.com/Tecnativa/my-badged-odoo/badges/13.0/coverage.svg)](https://gitlab.example.com/Tecnativa/my-badged-odoo/commits/13.0)
+        f"""
+        [![pipeline status](https://gitlab.example.com/Tecnativa/my-badged-odoo/badges/{LAST_ODOO_VERSION}/pipeline.svg)](https://gitlab.example.com/Tecnativa/my-badged-odoo/commits/{LAST_ODOO_VERSION})
+        [![coverage report](https://gitlab.example.com/Tecnativa/my-badged-odoo/badges/{LAST_ODOO_VERSION}/coverage.svg)](https://gitlab.example.com/Tecnativa/my-badged-odoo/commits/{LAST_ODOO_VERSION})
         """
     )
     assert expected_badges.strip() in (tmp_path / "README.md").read_text()

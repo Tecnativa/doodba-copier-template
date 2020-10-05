@@ -1,0 +1,13 @@
+6a7
+> manifest_required_authors=Odoo Community Association (OCA)
+8,9c9,11
+< manifest_deprecated_keys=active
+< valid_odoo_versions=7.0
+---
+> manifest_deprecated_keys=description,active
+> license_allowed=AGPL-3,GPL-2,GPL-2 or any later version,GPL-3,GPL-3 or any later version,LGPL-3
+> valid_odoo_versions=13.0
+28a31
+>     license-allowed,
+30a34
+>     manifest-required-author,
