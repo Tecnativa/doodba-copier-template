@@ -292,7 +292,7 @@ cidr_whitelist:
     ⚠️ It must be a list. And this is only supported if you deploy with Traefik 2+.
 
 postgres_version:
-  default: 12
+  default: 13
   help: >-
     Which PostgreSQL version do you want to deploy?
   choices:
@@ -301,6 +301,7 @@ postgres_version:
     "10": 10
     "11": 11
     "12": 12
+    "13": 13
 
 postgres_username:
   type: str
