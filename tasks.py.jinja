@@ -9,6 +9,9 @@ Contains common helpers to develop using this child project.
 """
 import json
 import os
+import time
+import subprocess
+from logging import getLogger
 from itertools import chain
 from pathlib import Path
 from shutil import which
@@ -20,6 +23,7 @@ PROJECT_ROOT = Path(__file__).parent.absolute()
 SRC_PATH = PROJECT_ROOT / "odoo" / "custom" / "src"
 UID_ENV = {"GID": str(os.getgid()), "UID": str(os.getuid()), "UMASK": "27"}
 
+_logger = getLogger(__name__)
 
 @task
 def write_code_workspace_file(c, cw_path=None):
@@ -181,7 +185,7 @@ def write_code_workspace_file(c, cw_path=None):
                 "label": "Start Odoo in debug mode",
                 "type": "process",
                 "command": "invoke",
-                "args": ["start", "--detach", "--debugpy"],
+                "args": ["start", "--detach", "--debugpy", "--sleep", "10"],
                 "presentation": {
                     "echo": True,
                     "reveal": "silent",
@@ -294,13 +298,27 @@ def lint(c, verbose=False):
 
 
 @task(develop)
-def start(c, detach=True, debugpy=False):
+def start(c, detach=True, debugpy=False, wait=None):
     """Start environment."""
     cmd = "docker-compose up"
     if detach:
         cmd += " --detach"
     with c.cd(str(PROJECT_ROOT)):
         c.run(cmd, env=dict(UID_ENV, DOODBA_DEBUGPY_ENABLE=str(int(debugpy))))
+    if wait:
+        _logger.info("Waiting for services to spin up...")
+        curl_stdout = None
+        # Odoo
+        while(not curl_stdout):
+            curl_cmd = "curl 127.0.0.1:12069"
+            curl_stdout = subprocess.run(curl_cmd.split(' '), stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout
+        _logger.info("Odoo started.")
+        # Debugpy
+        if debugpy:
+            while(not curl_stdout or "(52) Empty reply from server" in curl_stdout):
+                curl_cmd = "curl 127.0.0.1:12899"
+                curl_stdout = subprocess.run(curl_cmd.split(' '), stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout
+            _logger.info("Debugpy started.")
 
 
 @task(
