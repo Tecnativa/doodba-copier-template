@@ -27,3 +27,7 @@
 
 # Project-specific docker configurations
 /.docker/
+
+
+# automatically generated pycharm debugger yaml
+pycharm_debugger.yaml
