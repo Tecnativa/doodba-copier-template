@@ -94,6 +94,8 @@ services:
       EMAIL_TO: "{{ backup_email_to }}"
       {%- endif %}
       {%- if backup_deletion %}
+      JOB_500_WHAT: dup full $$SRC $$DST
+      JOB_500_WHEN: weekly
       JOB_800_WHAT: dup --force remove-older-than 3M $$DST
       JOB_800_WHEN: weekly
       {%- endif %}
