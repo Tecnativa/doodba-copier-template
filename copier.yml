@@ -234,6 +234,8 @@ domains_prod:
       Leave empty to apply this rule on all available entrypoints. Those are defined
       in your Traefik deployment.
 
+    See https://www.tecnativa.com/r/Anu for an example.
+
     ⚠ Remember that you have to write one-line YAML, at least until Copier
     supports multiline input
 
@@ -281,6 +283,8 @@ domains_test:
     - entrypoints: List of entrypoint names to use when creating this rule. Default: [].
       Leave empty to apply this rule on all available entrypoints. Those are defined
       in your Traefik deployment.
+
+    See https://www.tecnativa.com/r/Y0v for an example.
 
     ⚠ Remember that you have to write one-line YAML, at least until Copier
     supports multiline input
