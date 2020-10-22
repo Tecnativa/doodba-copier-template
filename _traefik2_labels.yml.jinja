@@ -72,13 +72,19 @@
         {{ domain_group.cert_resolver }}
       {%- endif %}
 
+      {#- Give higher priority #}
+      traefik.http.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.priority: 20
+
       {#- Create TLS-only router;
          HACK https://github.com/containous/traefik/issues/7235 #}
       {%- else %}
       {{- router(domain_group, key, "%s-secure" % suffix, rule, service, middlewares) }}
+      {#- Give higher priority #}
+      traefik.http.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.priority: 10
       {%- endif %}
 
       {%- endif %}
+
 {%- endmacro %}
 
 {%- macro common_middlewares(key, cidr_whitelist) %}
