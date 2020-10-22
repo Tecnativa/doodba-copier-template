@@ -69,7 +69,7 @@ services:
       - --dev=reload,qweb,werkzeug,xml
       {%- endif %}
 
-  {%- if postgres_version is not none %}
+  {%- if postgres_version %}
   db:
     extends:
       file: common.yaml
