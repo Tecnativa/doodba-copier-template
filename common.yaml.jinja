@@ -32,6 +32,7 @@ services:
       traefik.port: "8069"
     {%- endif %}
 
+  {%- if postgres_version is not none %}
   db:
     image: ghcr.io/tecnativa/postgres-autoconf:{{ postgres_version }}-alpine
     shm_size: 512mb
@@ -42,6 +43,7 @@ services:
         work_mem = 512MB
     volumes:
       - db:/var/lib/postgresql/data:z
+  {%- endif %}
 
   smtpfake:
     image: mailhog/mailhog

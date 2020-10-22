@@ -45,6 +45,7 @@ services:
       ) }}
       {%- endif %}
 
+  {%- if postgres_version is not none %}
   db:
     extends:
       file: common.yaml
@@ -52,6 +53,7 @@ services:
     env_file:
       - .docker/db-creation.env
     restart: unless-stopped
+  {%- endif %}
   {%- if smtp_relay_host %}
 
   smtp:
