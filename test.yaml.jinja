@@ -47,7 +47,7 @@ services:
       - --workers=2
       - --max-cron-threads=1
 
-  {%- if postgres_version is not none %}
+  {%- if postgres_version %}
   db:
     extends:
       file: common.yaml
