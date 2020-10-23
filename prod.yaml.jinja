@@ -45,7 +45,7 @@ services:
       ) }}
       {%- endif %}
 
-  {%- if postgres_version %}
+  {% if postgres_version -%}
   db:
     extends:
       file: common.yaml
