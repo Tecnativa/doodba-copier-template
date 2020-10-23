@@ -32,7 +32,7 @@ services:
       traefik.port: "8069"
     {%- endif %}
 
-  {%- if postgres_version %}
+  {% if postgres_version -%}
   db:
     image: ghcr.io/tecnativa/postgres-autoconf:{{ postgres_version }}-alpine
     shm_size: 512mb
