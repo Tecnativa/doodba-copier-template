@@ -34,18 +34,14 @@ repos:
         name: isort except __init__.py
         args: [--settings, .]
         exclude: /__init__\.py$
-  - repo: https://github.com/prettier/pre-commit
-    rev: v2.1.2
+  - repo: https://github.com/prettier/prettier
+    rev: 2.1.2
     hooks:
       - id: prettier
         name: prettier + plugin-xml
         additional_dependencies:
-          - prettier@2.1.2
           - "@prettier/plugin-xml@0.12.0"
         args:
-          - --write
-          - --list-different
-          - --ignore-unknown
           - --plugin=@prettier/plugin-xml
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.2.0
