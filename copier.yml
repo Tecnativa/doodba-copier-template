@@ -196,6 +196,27 @@ gitlab_url:
 
 domains_prod:
   type: yaml
+  multiline: true
+  placeholder: |
+    # Main domains, with TLS and cert resolved with "letsencrypt" resolver
+    - hosts:
+        - www.main.com
+        - shop.main.com
+
+    # Alternate domains that redirect to main ones
+    - hosts:
+        - main.com
+        - old.main.com
+      redirect_to: www.main.com
+    - hosts:
+        - www.shop.main.com
+        - old.shop.main.com
+      redirect_to: shop.main.com
+
+    # VPN-only domain, with self-signed certificate
+    - hosts:
+        - vpn.main.com
+      cert_resolver: true
   help: |
     Configure the production domains for this project.
 
@@ -213,15 +234,7 @@ domains_prod:
       Leave empty to apply this rule on all available entrypoints. Those are defined
       in your Traefik deployment.
 
-    Example:
-
-    # Main domains, with TLS and cert resolved with "letsencrypt" resolver
-    - hosts: [www.main.com, shop.main.com]
-    # Alternate domains that redirect to main ones
-    - {hosts: [main.com, old.main.com], redirect_to: www.main.com}
-    - {hosts: [www.shop.main.com, old.shop.main.com], redirect_to: shop.main.com}
-    # VPN-only domain, with self-signed certificate
-    - {hosts: [vpn.main.com], cert_resolver: true}
+    See https://www.tecnativa.com/r/Anu for an example.
 
     ⚠ Remember that you have to write one-line YAML, at least until Copier
     supports multiline input
@@ -233,6 +246,27 @@ domains_prod:
 
 domains_test:
   type: yaml
+  multiline: true
+  placeholder: |
+    # Main domains, with TLS and cert resolved with "letsencrypt" resolver
+    - hosts:
+        - demo1.main.com
+        - demo2.main.com
+
+    # Alternate domains that redirect to main ones
+    - hosts:
+        - www.demo1.main.com
+        - old.demo1.main.com
+      redirect_to: demo1.main.com
+    - hosts:
+        - www.demo2.main.com
+        - old.demo2.main.com
+      redirect_to: demo2.main.com
+
+    # VPN-only domain, with self-signed certificate
+    - hosts:
+        - vpn.demo.main.com
+      cert_resolver: true
   help: |
     Configure the test domains for this project.
 
@@ -250,15 +284,7 @@ domains_test:
       Leave empty to apply this rule on all available entrypoints. Those are defined
       in your Traefik deployment.
 
-    Example:
-
-    # Main domains, with TLS and cert resolved with "letsencrypt" resolver
-    - hosts: [demo1.main.com, demo2.main.com]
-    # Alternate domains that redirect to main ones
-    - {hosts: [www.demo1.main.com, old.demo1.main.com], redirect_to: demo1.main.com}
-    - {hosts: [www.demo2.main.com, old.demo2.main.com], redirect_to: demo2.main.com}
-    # VPN-only domain, with self-signed certificate
-    - {hosts: [vpn.demo.main.com], cert_resolver: true}
+    See https://www.tecnativa.com/r/Y0v for an example.
 
     ⚠ Remember that you have to write one-line YAML, at least until Copier
     supports multiline input
@@ -269,6 +295,7 @@ domains_test:
     the main one. In the example above, it'd be `demo1.main.com`.
 
 paths_without_crawlers:
+  multiline: true
   default:
     - /web
     - /website/info
@@ -284,6 +311,7 @@ paths_without_crawlers:
     https://docs.traefik.io/routing/routers/#rule
 
 cidr_whitelist:
+  multiline: true
   default: null
   help: >-
     If you need to whitelist certain CIDR to allow only them to access your Odoo
@@ -292,7 +320,7 @@ cidr_whitelist:
     ⚠️ It must be a list. And this is only supported if you deploy with Traefik 2+.
 
 postgres_version:
-  default: 12
+  default: 13
   help: >-
     Which PostgreSQL version do you want to deploy?
   choices:
@@ -301,6 +329,7 @@ postgres_version:
     "10": 10
     "11": 11
     "12": 12
+    "13": 13
 
 postgres_username:
   type: str
@@ -351,6 +380,7 @@ smtp_relay_host:
 smtp_relay_port:
   type: int
   default: 587
+  when: &has_smtp "{{ smtp_relay_host is string and smtp_relay_host != '' }}"
   help: >-
     Indicate the port to connect in the SMTP server you just defined.
 
@@ -358,6 +388,7 @@ smtp_relay_port:
 
 smtp_relay_user:
   type: str
+  when: *has_smtp
   help: >-
     Indicate the user to connect in the SMTP server you just defined.
 
@@ -367,11 +398,13 @@ smtp_relay_password:
   secret: true
   type: str
   default: example-smtp-password
+  when: *has_smtp
   help: >-
     What is your SMTP password?
 
 smtp_canonical_default:
   type: str
+  when: *has_smtp
   help: >-
     Usually, if you send mails like "user@example.com", the canonical domain would be
     "example.com".
@@ -386,6 +419,7 @@ smtp_canonical_default:
     What's your canonical domain?
 
 smtp_canonical_domains:
+  when: *has_smtp
   help: >-
     Supply a list of other domains authorized to send email from this Odoo instance and
     SMTP host. They will not be affected by SRS. They also must have valid SPF, DKIM and
@@ -445,6 +479,7 @@ backup_aws_access_key_id:
   secret: true
   type: str
   default: null
+  when: &backup_aws "{{ 's3:' in backup_dst }}"
   help: >-
     If you're using AWS S3 to store backups, provide here your access key ID.
 
@@ -452,6 +487,7 @@ backup_aws_secret_access_key:
   secret: true
   type: str
   default: null
+  when: *backup_aws
   help: >-
     If you're using AWS S3 to store backups, provide here your secret access key.
 
