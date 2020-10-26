@@ -41,6 +41,7 @@
 {%- endmacro %}
 
 {%- macro odoo(domain_groups_list, paths_without_crawlers) %}
+      traefik.domain: {{ macros.first_main_domain(domains_test)|tojson }}
       {%- call(domain_group) macros.domains_loop_grouped(domain_groups_list) %}
 
       {#- Route redirections #}
