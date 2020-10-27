@@ -63,6 +63,18 @@ def test_doodba_main_domain_label(cloned_template: Path, tmp_path: Path):
             test_config["services"]["odoo"]["labels"]["doodba.domain.main"]
             == "yes.test.example.com"
         )
+        # These labels must be present to avoid that Traefik 1 builds its own
+        # main domain assumption and tries to download its Let's Encrypt certs,
+        # which would possibly fail and hit LE's rate limits
+        # TODO Remove asserts when dropping Traefik 1 support
+        assert (
+            prod_config["services"]["odoo"]["labels"]["traefik.domain"]
+            == "yes.prod.example.com"
+        )
+        assert (
+            test_config["services"]["odoo"]["labels"]["traefik.domain"]
+            == "yes.test.example.com"
+        )
 
 
 @pytest.mark.parametrize("project_license", WHITESPACE_PREFIXED_LICENSES)
