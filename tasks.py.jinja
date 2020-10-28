@@ -11,11 +11,13 @@ import json
 import os
 import time
 from logging import getLogger
+import tempfile
 from itertools import chain
 from pathlib import Path
 from shutil import which
 
 from invoke import task
+from invoke.util import yaml
 
 ODOO_VERSION = {{ odoo_version }}
 PROJECT_ROOT = Path(__file__).parent.absolute()
@@ -101,6 +103,12 @@ def write_code_workspace_file(c, cw_path=None):
                 "preLaunchTask": "Start Odoo in debug mode",
             },
             {
+                "name": "Run and debug Odoo tests",
+                "configurations": ["Attach Python debugger to running container"],
+                "preLaunchTask": "Run Odoo Tests in debug mode",
+                "internalConsoleOptions": "openOnSessionStart",
+            },
+            {
                 "name": "Start Odoo and debug JS in Firefox",
                 "configurations": ["Connect to firefox debugger"],
                 "preLaunchTask": "Start Odoo",
@@ -181,6 +189,42 @@ def write_code_workspace_file(c, cw_path=None):
                     "color": "#065535"
                     }
                 },
+            },
+            {
+                "label": "Run Odoo Tests for current module",
+                "type": "process",
+                "command": "invoke",
+                "args": ["test", "--cur-file", "${file}"],
+                "presentation": {
+                    "echo": True,
+                    "reveal": "always",
+                    "focus": True,
+                    "panel": "shared",
+                    "showReuseMessage": True,
+                    "clear": False,
+                },
+                "problemMatcher": [],
+            },
+            {
+                "label": "Run Odoo Tests in debug mode for current module",
+                "type": "process",
+                "command": "invoke",
+                "args": [
+                    "test",
+                    "--cur-file",
+                    "${file}",
+                    "--debugpy",
+                    "--no-logs",
+                ],
+                "presentation": {
+                    "echo": True,
+                    "reveal": "silent",
+                    "focus": False,
+                    "panel": "shared",
+                    "showReuseMessage": True,
+                    "clear": False,
+                },
+                "problemMatcher": [],
             },
             {
                 "label": "Start Odoo in debug mode",
@@ -308,6 +352,106 @@ def start(c, detach=True, debugpy=False):
         c.run(cmd, env=dict(UID_ENV, DOODBA_DEBUGPY_ENABLE=str(int(debugpy))))
     _logger.info("Waiting for services to spin up...")
     time.sleep(SERVICES_WAIT_TIME)
+
+@task(
+    develop,
+    help={
+        "modules": "Comma-separated list of modules to test. Default: 'base'.",
+    },
+)
+def install(c, modules=None, core=False, extra=False, private=False):
+    """Install Odoo addons"""
+    cmd = "docker-compose run --rm addons init"
+    if core:
+        cmd += " --core"
+    if extra:
+        cmd += " --extra"
+    if private:
+        cmd += " --private"
+    if modules:
+        cmd += f" -w {modules}"
+    with c.cd(str(PROJECT_ROOT)):
+        c.run(
+            cmd,
+            env=dict(
+                UID_ENV,
+            ),
+        )
+
+
+def _get_cwd_addon(file=None):
+    if not file:
+        cwd = Path.cwd()
+    else:
+        cwd = Path.parent(file)
+    manifest_file = False
+    while not manifest_file:
+        manifest_file = (
+            Path(cwd / "__manifest__.py").exists()
+            or Path(cwd / "__openerp__.py").exists()
+        )
+        if manifest_file:
+            return cwd.stem
+        cwd = cwd.parent
+        if cwd == PROJECT_ROOT:
+            return None
+
+
+@task(
+    develop,
+    help={
+        "debugpy": "Whether or not to run tests in a VSCode debugging session. "
+        "Default: False",
+        "modules": "Comma-separated list of modules to test. Default: 'base'.",
+        "logs": "Whether or not to follow Odoo logs during testing. " "Default: True",
+    },
+)
+def test(c, modules=None, debugpy=False, logs=True, cur_file=None):
+    """Run Odoo tests
+    NOTE: Odoo must be restarted manually after this to go back to normal mode
+    """
+    if not modules:
+        cur_module = _get_cwd_addon(file=cur_file)
+        modules = cur_module if cur_module is not None else "base"
+    tmp_docker_compose_file = tempfile.NamedTemporaryFile(
+        dir=PROJECT_ROOT, mode="w", suffix=".yaml"
+    )
+    cmd = (
+        "docker-compose -f docker-compose.yml "
+        f"-f {tmp_docker_compose_file.name} up -d"
+    )
+    odoo_command = f"addons init -tw {modules}"
+    _override_docker_command(c, "odoo", odoo_command, file=tmp_docker_compose_file)
+    with c.cd(str(PROJECT_ROOT)):
+        c.run(
+            cmd,
+            env=dict(
+                UID_ENV,
+                DOODBA_DEBUGPY_ENABLE=str(int(debugpy)),
+            ),
+        )
+        if logs:
+            c.run(
+                "docker-compose logs -f odoo",
+                env=dict(
+                    UID_ENV,
+                ),
+            )
+            start(c) # If without logs, Odoo must be restarted manually
+    tmp_docker_compose_file.close()
+
+
+def _override_docker_command(c, service, command, file=None):
+    docker_config = {
+        "version": "2.4",  # TODO: Update this if main file is updated
+        "services": {service: {"command": command.split(" ")}},
+    }
+    docker_config_yaml = yaml.dump(docker_config)
+    if file:
+        file.write(docker_config_yaml)
+        file.flush()
+    return docker_config_yaml
+
 
 @task(
     develop,
