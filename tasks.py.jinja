@@ -171,6 +171,11 @@ def write_code_workspace_file(c, cw_path=None):
                     "clear": False,
                 },
                 "problemMatcher": [],
+                "options": {"statusbar": {
+                    "label": "$(play-circle)",
+                    "color": "#065535"
+                    }
+                },
             },
             {
                 "label": "Start Odoo in debug mode",
@@ -186,6 +191,7 @@ def write_code_workspace_file(c, cw_path=None):
                     "clear": False,
                 },
                 "problemMatcher": [],
+                "options": {"statusbar": {"hide": True}},
             },
             {
                 "label": "Stop Odoo",
@@ -201,6 +207,11 @@ def write_code_workspace_file(c, cw_path=None):
                     "clear": False,
                 },
                 "problemMatcher": [],
+                "options": {"statusbar": {
+                    "label": "$(stop-circle)",
+                    "color": "#9A0000"
+                    }
+                },
             },
         ],
     }
