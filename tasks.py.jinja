@@ -17,6 +17,7 @@ from pathlib import Path
 from shutil import which
 
 from invoke import task
+from invoke import exceptions
 from invoke.util import yaml
 
 ODOO_VERSION = {{ odoo_version }}
@@ -357,10 +358,18 @@ def start(c, detach=True, debugpy=False):
     develop,
     help={
         "modules": "Comma-separated list of modules to test. Default: 'base'.",
+        "core": "Install all core addons. Default: False",
+        "extra": "Install all extra addons. Default: False",
+        "private": "Install all private addons. Default: False",
     },
 )
 def install(c, modules=None, core=False, extra=False, private=False):
     """Install Odoo addons"""
+    if not (modules or core or extra or private):
+        raise exceptions.ParseError(
+            message="You must provide at least one option. "
+            "See --help for details."
+        )
     cmd = "docker-compose run --rm addons init"
     if core:
         cmd += " --core"
@@ -379,40 +388,20 @@ def install(c, modules=None, core=False, extra=False, private=False):
         )
 
 
-def _get_cwd_addon(file=None):
-    if not file:
-        cwd = Path.cwd()
-    else:
-        cwd = Path.parent(file)
-    manifest_file = False
-    while not manifest_file:
-        manifest_file = (
-            Path(cwd / "__manifest__.py").exists()
-            or Path(cwd / "__openerp__.py").exists()
-        )
-        if manifest_file:
-            return cwd.stem
-        cwd = cwd.parent
-        if cwd == PROJECT_ROOT:
-            return None
-
-
 @task(
     develop,
     help={
-        "debugpy": "Whether or not to run tests in a VSCode debugging session. "
-        "Default: False",
+        "debugpy": "Whether or not to run tests in a VSCode debugging session. " \
+            "Default: False",
         "modules": "Comma-separated list of modules to test. Default: 'base'.",
-        "logs": "Whether or not to follow Odoo logs during testing. " "Default: True",
+        "logs": "Whether or not to follow Odoo logs during testing. " \
+            "Default: True",
     },
 )
-def test(c, modules=None, debugpy=False, logs=True, cur_file=None):
+def test(c, modules="base", debugpy=False, logs=True):
     """Run Odoo tests
     NOTE: Odoo must be restarted manually after this to go back to normal mode
     """
-    if not modules:
-        cur_module = _get_cwd_addon(file=cur_file)
-        modules = cur_module if cur_module is not None else "base"
     tmp_docker_compose_file = tempfile.NamedTemporaryFile(
         dir=PROJECT_ROOT, mode="w", suffix=".yaml"
     )
@@ -437,7 +426,8 @@ def test(c, modules=None, debugpy=False, logs=True, cur_file=None):
                     UID_ENV,
                 ),
             )
-            start(c) # If without logs, Odoo must be restarted manually
+    _logger.info("Waiting for services to spin up...")
+    time.sleep(SERVICES_WAIT_TIME)
     tmp_docker_compose_file.close()
 
 
