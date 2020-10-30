@@ -1,5 +1,6 @@
 {
   "recommendations": [
+    "actboy168.tasks",
     "dbaeumer.vscode-eslint",
     "dchanco.vsc-invoke",
     "EditorConfig.editorconfig",
@@ -11,7 +12,6 @@
     "msjsdiag.debugger-for-chrome",
     "redhat.vscode-xml",
     "samuelcolvin.jinjahtml",
-    "actboy168.tasks",
     "syler.sass-indented"
   ]
 }
