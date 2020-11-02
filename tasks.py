@@ -69,7 +69,7 @@ def lint(c, verbose=False):
 @task(develop)
 def test(c, verbose=False):
     """Test project."""
-    flags = ["--color=yes"]
+    flags = ["-n", "auto", "--dist", "loadscope", "--color=yes"]
     if verbose:
         flags.append("-vv")
     flags = " ".join(flags)
