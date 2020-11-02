@@ -91,6 +91,7 @@ def test_resetdb(
             invoke("stop", "--purge")
 
 
+@pytest.mark.sequential
 def test_start(
     cloned_template: Path,
     docker: LocalCommand,
