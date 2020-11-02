@@ -1,4 +1,3 @@
-import socket
 from pathlib import Path
 
 import pytest
@@ -6,6 +5,8 @@ from copier import copy
 from plumbum import ProcessExecutionError, local
 from plumbum.cmd import docker_compose, invoke
 from plumbum.machines.local import LocalCommand
+
+from .conftest import socket_is_open
 
 
 def _install_status(module, dbname="devel"):
@@ -131,10 +132,3 @@ def test_start(
         # Imagine the user is in the odoo subrepo for this command
         with local.cwd(tmp_path / "odoo" / "custom" / "src" / "odoo"):
             invoke("stop", "--purge")
-
-
-def socket_is_open(host, port):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    if sock.connect_ex((host, port)) == 0:
-        return True
-    return False
