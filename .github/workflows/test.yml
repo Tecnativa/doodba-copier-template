@@ -74,7 +74,13 @@ jobs:
       - run: git config --global user.name CI
       - run: git config --global user.email CI@GITHUB
       # Run all tests, which includes linters
+      # Non concurrent first (in parallel)
       - run: poetry run invoke test
+        env:
+          DOCKER_TEST: 1
+          SELECTED_ODOO_VERSIONS: ${{ matrix.odoo-version }}
+      # Concurrent tests (isolated)
+      - run: poetry run invoke test --sequential
         env:
           DOCKER_TEST: 1
           SELECTED_ODOO_VERSIONS: ${{ matrix.odoo-version }}

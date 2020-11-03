@@ -6,6 +6,8 @@ from plumbum import ProcessExecutionError, local
 from plumbum.cmd import docker_compose, invoke
 from plumbum.machines.local import LocalCommand
 
+from .conftest import socket_is_open
+
 
 def _install_status(module, dbname="devel"):
     return docker_compose(
@@ -84,6 +86,48 @@ def test_resetdb(
             assert _install_status("base") == "installed"
             assert _install_status("purchase") == "uninstalled"
             assert _install_status("sale") == "installed"
+    finally:
+        # Imagine the user is in the odoo subrepo for this command
+        with local.cwd(tmp_path / "odoo" / "custom" / "src" / "odoo"):
+            invoke("stop", "--purge")
+
+
+@pytest.mark.sequential
+def test_start(
+    cloned_template: Path,
+    docker: LocalCommand,
+    supported_odoo_version: float,
+    tmp_path: Path,
+):
+    """Test the start task.
+
+    On this test flow, other downsream tasks are also tested:
+
+    - img-build
+    - git-aggregate
+    - stop --purge
+    """
+    try:
+        with local.cwd(tmp_path):
+            copy(
+                src_path=str(cloned_template),
+                vcs_ref="HEAD",
+                force=True,
+                data={"odoo_version": supported_odoo_version},
+            )
+            # Imagine the user is in the src subfolder for these tasks
+            with local.cwd(tmp_path / "odoo" / "custom" / "src"):
+                invoke("img-build")
+                invoke("git-aggregate")
+            # Test normal call
+            stdout = invoke("start")
+            print(stdout)
+            assert "Reinitialized existing Git repository" in stdout
+            assert "pre-commit installed" in stdout
+            # Test "--debugpy and wait time call
+            invoke("stop")
+            stdout = invoke("start", "--debugpy")
+            assert socket_is_open("127.0.0.1", int(supported_odoo_version) * 1000 + 899)
     finally:
         # Imagine the user is in the odoo subrepo for this command
         with local.cwd(tmp_path / "odoo" / "custom" / "src" / "odoo"):

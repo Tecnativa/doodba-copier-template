@@ -9,6 +9,8 @@ Contains common helpers to develop using this child project.
 """
 import json
 import os
+import time
+from logging import getLogger
 from itertools import chain
 from pathlib import Path
 from shutil import which
@@ -19,6 +21,9 @@ ODOO_VERSION = {{ odoo_version }}
 PROJECT_ROOT = Path(__file__).parent.absolute()
 SRC_PATH = PROJECT_ROOT / "odoo" / "custom" / "src"
 UID_ENV = {"GID": str(os.getgid()), "UID": str(os.getuid()), "UMASK": "27"}
+SERVICES_WAIT_TIME = int(os.environ.get("SERVICES_WAIT_TIME", 3))
+
+_logger = getLogger(__name__)
 
 
 @task
@@ -301,7 +306,8 @@ def start(c, detach=True, debugpy=False):
         cmd += " --detach"
     with c.cd(str(PROJECT_ROOT)):
         c.run(cmd, env=dict(UID_ENV, DOODBA_DEBUGPY_ENABLE=str(int(debugpy))))
-
+    _logger.info("Waiting for services to spin up...")
+    time.sleep(SERVICES_WAIT_TIME)
 
 @task(
     develop,
