@@ -25,6 +25,7 @@ This project lets you maintain [Odoo][] deployments based on [Doodba][] using
 - [Getting help](#getting-help)
 - [Contributing](#contributing)
 - [Credits](#credits)
+- [Footnotes](#footnotes)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 <!-- prettier-ignore-end -->
@@ -36,6 +37,7 @@ This project lets you maintain [Odoo][] deployments based on [Doodba][] using
 
 This project itself is just the template, but you need to install these tools to use it:
 
+- Linux<sup>1</sup>
 - [copier][]
 - [docker-compose](https://docs.docker.com/compose/install/)
 - [git](https://git-scm.com/) 2.24 or newer
@@ -109,6 +111,14 @@ This project is maintained by:
 
 Also, special thanks to
 [our dear community contributors](https://github.com/Tecnativa/doodba-copier-template/graphs/contributors).
+
+# Footnotes
+
+<sup>1</sup> Any modern distro should work. Ubuntu and Fedora are officially supported.
+Other systems are not tested. If you're on Windows, you'll probably need WSL or a Linux
+VM to work with doodba without problems. If you use other systems and find a way to make
+these tools work, please consider [opening a PR](#contributing) to add some docs that
+might help others with your situation.
 
 [copier]: https://github.com/pykong/copier
 [doodba]: https://github.com/Tecnativa/doodba
