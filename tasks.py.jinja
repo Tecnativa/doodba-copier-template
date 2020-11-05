@@ -388,6 +388,20 @@ def lint(c, verbose=False):
 def start(c, detach=True, debugpy=False):
     """Start environment."""
     cmd = "docker-compose up"
+    if debugpy:
+        # Remove auto-reload
+        tmp_docker_compose_file = tempfile.NamedTemporaryFile(
+            mode="w",
+            suffix=".yaml",
+        )
+        cmd = (
+            "docker-compose -f docker-compose.yml "
+            f"-f {tmp_docker_compose_file.name} up"
+        )
+        _remove_auto_reload(
+            tmp_docker_compose_file,
+            orig_file=Path(str(PROJECT_ROOT), "docker-compose.yml"),
+        )
     if detach:
         cmd += " --detach"
     with c.cd(str(PROJECT_ROOT)):
@@ -485,7 +499,6 @@ def test(c, modules=None, debugpy=False, cur_file=None, mode="init"):
         )
     odoo_command.extend([modules, "--stop-after-init", "--workers=0"])
     _override_docker_command(
-        c,
         "odoo",
         odoo_command,
         file=tmp_docker_compose_file,
