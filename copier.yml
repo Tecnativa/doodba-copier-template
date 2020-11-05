@@ -154,7 +154,7 @@ project_author:
     Tell me who you are.
 
     If private modules do not include this author, pylint will warn you.
-  default: Tecnativa
+  default: Comunitea
 
 project_name:
   type: str
