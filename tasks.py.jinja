@@ -33,7 +33,7 @@ def _override_docker_command(service, command, file, orig_file=None):
     # Read config from main file
     if orig_file:
         with open(orig_file, "r") as fd:
-            orig_docker_config = yaml.load(fd.read())
+            orig_docker_config = yaml.safe_load(fd.read())
             docker_compose_file_version = orig_docker_config.get("version")
     else:
         docker_compose_file_version = "2.4"
@@ -48,10 +48,14 @@ def _override_docker_command(service, command, file, orig_file=None):
 
 def _remove_auto_reload(file, orig_file):
     with open(orig_file, "r") as fd:
-        orig_docker_config = yaml.load(fd.read())
+        orig_docker_config = yaml.safe_load(fd.read())
     odoo_command = orig_docker_config["services"]["odoo"]["command"]
-    odoo_command[-1] = odoo_command[-1].replace("reload,", "")
-    _override_docker_command("odoo", odoo_command, file, orig_file=orig_file)
+    new_odoo_command = []
+    for flag in odoo_command:
+        if flag.startswith("--dev"):
+            flag = flag.replace("reload,", "")
+        new_odoo_command.append(flag)
+    _override_docker_command("odoo", new_odoo_command, file, orig_file=orig_file)
 
 
 def _get_cwd_addon(file):
@@ -388,26 +392,26 @@ def lint(c, verbose=False):
 def start(c, detach=True, debugpy=False):
     """Start environment."""
     cmd = "docker-compose up"
-    if debugpy:
-        # Remove auto-reload
-        tmp_docker_compose_file = tempfile.NamedTemporaryFile(
-            mode="w",
-            suffix=".yaml",
-        )
-        cmd = (
-            "docker-compose -f docker-compose.yml "
-            f"-f {tmp_docker_compose_file.name} up"
-        )
-        _remove_auto_reload(
-            tmp_docker_compose_file,
-            orig_file=Path(str(PROJECT_ROOT), "docker-compose.yml"),
-        )
-    if detach:
-        cmd += " --detach"
-    with c.cd(str(PROJECT_ROOT)):
-        c.run(cmd, env=dict(UID_ENV, DOODBA_DEBUGPY_ENABLE=str(int(debugpy))))
-    _logger.info("Waiting for services to spin up...")
-    time.sleep(SERVICES_WAIT_TIME)
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix=".yaml",
+    ) as  tmp_docker_compose_file:
+        if debugpy:
+            # Remove auto-reload
+            cmd = (
+                "docker-compose -f docker-compose.yml "
+                f"-f {tmp_docker_compose_file.name} up"
+            )
+            _remove_auto_reload(
+                tmp_docker_compose_file,
+                orig_file=PROJECT_ROOT / "docker-compose.yml",
+            )
+        if detach:
+            cmd += " --detach"
+        with c.cd(str(PROJECT_ROOT)):
+            c.run(cmd, env=dict(UID_ENV, DOODBA_DEBUGPY_ENABLE=str(int(debugpy))))
+        _logger.info("Waiting for services to spin up...")
+        time.sleep(SERVICES_WAIT_TIME)
 
 
 @task(
@@ -480,41 +484,46 @@ def test(c, modules=None, debugpy=False, cur_file=None, mode="init"):
             )
         else:
             modules = cur_module
-    tmp_docker_compose_file = tempfile.NamedTemporaryFile(
+    with tempfile.NamedTemporaryFile(
         mode="w",
-        suffix=".yaml",
-    )
-    cmd = (
-        "docker-compose -f docker-compose.yml "
-        f"-f {tmp_docker_compose_file.name} up -d"
-    )
-    odoo_command = ["odoo", "--test-enable"]
-    if mode == "init":
-        odoo_command.append("-i")
-    elif mode == "update":
-        odoo_command.append("-u")
-    else:
-        raise exceptions.ParseError(
-            message="Available modes are 'init' or 'update'. See --help for details."
+        suffix=".yaml"
+    ) as tmp_docker_compose_file:
+        cmd = (
+            "docker-compose -f docker-compose.yml "
+            f"-f {tmp_docker_compose_file.name} up -d"
         )
-    odoo_command.extend([modules, "--stop-after-init", "--workers=0"])
-    _override_docker_command(
-        "odoo",
-        odoo_command,
-        file=tmp_docker_compose_file,
-        orig_file=Path(str(PROJECT_ROOT), "docker-compose.yml"),
-    )
-    with c.cd(str(PROJECT_ROOT)):
-        c.run(
-            cmd,
-            env=dict(
-                UID_ENV,
-                DOODBA_DEBUGPY_ENABLE=str(int(debugpy)),
-            ),
+        odoo_command = [
+            "odoo",
+            "--test-enable",
+            "--stop-after-init",
+            "--workers=0"
+        ]
+        if mode == "init":
+            odoo_command.append("-i")
+        elif mode == "update":
+            odoo_command.append("-u")
+        else:
+            raise exceptions.ParseError(
+                message="Available modes are 'init' or 'update'."
+                " See --help for details."
+            )
+        odoo_command.append(modules)
+        _override_docker_command(
+            "odoo",
+            odoo_command,
+            file=tmp_docker_compose_file,
+            orig_file=Path(str(PROJECT_ROOT), "docker-compose.yml"),
         )
-    _logger.info("Waiting for services to spin up...")
-    time.sleep(SERVICES_WAIT_TIME)
-    tmp_docker_compose_file.close()
+        with c.cd(str(PROJECT_ROOT)):
+            c.run(
+                cmd,
+                env=dict(
+                    UID_ENV,
+                    DOODBA_DEBUGPY_ENABLE=str(int(debugpy)),
+                ),
+            )
+        _logger.info("Waiting for services to spin up...")
+        time.sleep(SERVICES_WAIT_TIME)
 
 
 @task(
