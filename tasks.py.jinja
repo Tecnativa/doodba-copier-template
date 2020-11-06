@@ -582,9 +582,11 @@ def restart(c, quick=True):
 
 
 @task(develop)
-def logs(c, tail=10):
+def logs(c, tail=10, follow=True):
     """Obtain last logs of current environment."""
-    cmd = "docker-compose logs -f"
+    cmd = "docker-compose logs"
+    if follow:
+        cmd += " -f"
     if tail:
         cmd += f" --tail {tail}"
     with c.cd(str(PROJECT_ROOT)):
