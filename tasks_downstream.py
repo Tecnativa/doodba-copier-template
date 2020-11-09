@@ -428,7 +428,7 @@ def install(c, modules=None, core=False, extra=False, private=False):
         cur_module = _get_cwd_addon(Path.cwd())
         if not cur_module:
             raise exceptions.ParseError(
-                message="You must provide at least one option for modules"
+                msg="You must provide at least one option for modules"
                 " or be in a subdirectory of one."
                 " See --help for details."
             )
@@ -474,7 +474,7 @@ def test(c, modules=None, debugpy=False, cur_file=None, mode="init"):
         cur_module = _get_cwd_addon(cur_file or Path.cwd())
         if not cur_module:
             raise exceptions.ParseError(
-                message="You must provide at least one option for modules/file. "
+                msg="You must provide at least one option for modules/file. "
                 "See --help for details."
             )
         else:
@@ -493,8 +493,7 @@ def test(c, modules=None, debugpy=False, cur_file=None, mode="init"):
             odoo_command.append("-u")
         else:
             raise exceptions.ParseError(
-                message="Available modes are 'init' or 'update'."
-                " See --help for details."
+                msg="Available modes are 'init' or 'update'." " See --help for details."
             )
         odoo_command.append(modules)
         _override_docker_command(
