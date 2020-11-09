@@ -28,6 +28,8 @@ repos:
     rev: v2.7.2
     hooks:
       - id: pyupgrade
+        args:
+          - --keep-percent-format
   - repo: https://github.com/timothycrosley/isort
     rev: 5.5.1
     hooks:
