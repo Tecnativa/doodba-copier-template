@@ -106,6 +106,9 @@ def write_code_workspace_file(c, cw_path=None):
             cw_config = json.load(cw_fd)
     except (FileNotFoundError, json.decoder.JSONDecodeError):
         pass  # Nevermind, we start with a new config
+    # Static settings
+    cw_config.setdefault("settings", {})
+    cw_config["settings"].update({"search.followSymlinks": False})
     # Launch configurations
     debugpy_configuration = {
         "name": "Attach Python debugger to running container",
