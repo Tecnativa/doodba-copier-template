@@ -231,7 +231,7 @@ def write_code_workspace_file(c, cw_path=None):
                     "clear": False,
                 },
                 "problemMatcher": [],
-                "options": {"statusbar": {"label": "$(play-circle)"}},
+                "options": {"statusbar": {"label": "$(play-circle) Start Odoo"}},
             },
             {
                 "label": "Run Odoo Tests for current module",
@@ -300,7 +300,7 @@ def write_code_workspace_file(c, cw_path=None):
                     "clear": False,
                 },
                 "problemMatcher": [],
-                "options": {"statusbar": {"label": "$(stop-circle)"}},
+                "options": {"statusbar": {"label": "$(stop-circle) Stop Odoo"}},
             },
         ],
     }
