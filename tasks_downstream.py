@@ -231,9 +231,7 @@ def write_code_workspace_file(c, cw_path=None):
                     "clear": False,
                 },
                 "problemMatcher": [],
-                "options": {
-                    "statusbar": {"label": "$(play-circle)", "color": "#065535"}
-                },
+                "options": {"statusbar": {"label": "$(play-circle)"}},
             },
             {
                 "label": "Run Odoo Tests for current module",
@@ -302,9 +300,7 @@ def write_code_workspace_file(c, cw_path=None):
                     "clear": False,
                 },
                 "problemMatcher": [],
-                "options": {
-                    "statusbar": {"label": "$(stop-circle)", "color": "#9A0000"}
-                },
+                "options": {"statusbar": {"label": "$(stop-circle)"}},
             },
         ],
     }
