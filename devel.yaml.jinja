@@ -1,4 +1,12 @@
 {%- import "_macros.jinja" as macros -%}
+{% set whitelisted_hosts = (
+  "cdnjs.cloudflare.com",
+  "fonts.googleapis.com",
+  "fonts.gstatic.com",
+  "www.google.com",
+  "www.googleapis.com",
+  "www.gravatar.com",
+) -%}
 version: "2.4"
 
 services:
@@ -47,12 +55,10 @@ services:
       - ./odoo/custom:/opt/odoo/custom:ro,z
       - ./odoo/auto:/opt/odoo/auto:rw,z
     depends_on:
-      - cdnjs_cloudflare_proxy
       - db
-      - fonts_googleapis_proxy
-      - fonts_gstatic_proxy
-      - google_proxy
-      - gravatar_proxy
+      {% for host in whitelisted_hosts -%}
+      - proxy_{{ host|replace(".", "_") }}
+      {% endfor -%}
       - smtp
       - wdb
     command:
@@ -106,61 +112,18 @@ services:
     init: true
 
   # Whitelist outgoing traffic for tests, reports, etc.
-  cdnjs_cloudflare_proxy:
+{%- for host in whitelisted_hosts %}
+  proxy_{{ host|replace(".", "_") }}:
     image: tecnativa/whitelist
     networks:
       default:
         aliases:
-          - cdnjs.cloudflare.com
+          - {{ host }}
       public:
     environment:
-      TARGET: cdnjs.cloudflare.com
+      TARGET: {{ host }}
       PRE_RESOLVE: 1
-
-  fonts_googleapis_proxy:
-    image: tecnativa/whitelist
-    networks:
-      default:
-        aliases:
-          - fonts.googleapis.com
-      public:
-    environment:
-      TARGET: fonts.googleapis.com
-      PRE_RESOLVE: 1
-
-  fonts_gstatic_proxy:
-    image: tecnativa/whitelist
-    networks:
-      default:
-        aliases:
-          - fonts.gstatic.com
-      public:
-    environment:
-      TARGET: fonts.gstatic.com
-      PRE_RESOLVE: 1
-
-  google_proxy:
-    image: tecnativa/whitelist
-    networks:
-      default:
-        aliases:
-          - www.google.com
-      public:
-    environment:
-      TARGET: www.google.com
-      PRE_RESOLVE: 1
-
-  gravatar_proxy:
-    image: tecnativa/whitelist
-    networks:
-      default:
-        aliases:
-          - www.gravatar.com
-      public:
-    environment:
-      TARGET: www.gravatar.com
-      PRE_RESOLVE: 1
-
+{% endfor %}
 networks:
   default:
     internal: true
