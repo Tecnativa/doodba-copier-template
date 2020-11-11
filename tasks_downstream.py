@@ -150,7 +150,7 @@ def write_code_workspace_file(c, cw_path=None):
                 "preLaunchTask": "Start Odoo in debug mode",
             },
             {
-                "name": "Run and debug Odoo tests",
+                "name": "Test and debug current module",
                 "configurations": ["Attach Python debugger to running container"],
                 "preLaunchTask": "Run Odoo Tests in debug mode for current module",
                 "internalConsoleOptions": "openOnSessionStart",
@@ -440,7 +440,8 @@ def install(c, modules=None, core=False, extra=False, private=False):
         cur_module = _get_cwd_addon(Path.cwd())
         if not cur_module:
             raise exceptions.ParseError(
-                msg="You must provide at least one option for modules"
+                msg="Odoo addon to install not found. "
+                "You must provide at least one option for modules"
                 " or be in a subdirectory of one."
                 " See --help for details."
             )
@@ -457,64 +458,9 @@ def install(c, modules=None, core=False, extra=False, private=False):
     with c.cd(str(PROJECT_ROOT)):
         c.run(
             cmd,
-            env=dict(
-                UID_ENV,
-            ),
+            env=UID_ENV,
             pty=True,
         )
-
-
-@task(
-    develop,
-    help={
-        "modules": "Comma-separated list of modules to test.",
-        "debugpy": "Whether or not to run tests in a VSCode debugging session. "
-        "Default: False",
-        "cur-file": "Path to the current file."
-        " Addon name will be obtained from there to run tests",
-        "mode": "Mode in which tests run. Options: ['init'(default), 'update']",
-    },
-)
-def test(c, modules=None, debugpy=False, cur_file=None, mode="init"):
-    """Run Odoo tests
-
-    By default, tests addon from directory being worked on,
-    unless other options are specified.
-
-    NOTE: Odoo must be restarted manually after this to go back to normal mode
-    """
-    if not modules:
-        cur_module = _get_cwd_addon(cur_file or Path.cwd())
-        if not cur_module:
-            raise exceptions.ParseError(
-                msg="You must provide at least one option for modules/file. "
-                "See --help for details."
-            )
-        else:
-            modules = cur_module
-    odoo_command = ["odoo", "--test-enable", "--stop-after-init", "--workers=0"]
-    if mode == "init":
-        odoo_command.append("-i")
-    elif mode == "update":
-        odoo_command.append("-u")
-    else:
-        raise exceptions.ParseError(
-            msg="Available modes are 'init' or 'update'." " See --help for details."
-        )
-    odoo_command.append(modules)
-    if debugpy:
-        _test_in_debug_mode(c, odoo_command)
-    else:
-        cmd = ["docker-compose", "run", "--rm", "odoo"]
-        cmd.extend(odoo_command)
-        with c.cd(str(PROJECT_ROOT)):
-            c.run(
-                " ".join(cmd),
-                env=dict(
-                    UID_ENV,
-                ),
-                pty=True,
-            )
 
 
 def _test_in_debug_mode(c, odoo_command):
@@ -541,6 +487,59 @@ def _test_in_debug_mode(c, odoo_command):
             )
         _logger.info("Waiting for services to spin up...")
         time.sleep(SERVICES_WAIT_TIME)
+
+
+@task(
+    develop,
+    help={
+        "modules": "Comma-separated list of modules to test.",
+        "debugpy": "Whether or not to run tests in a VSCode debugging session. "
+        "Default: False",
+        "cur-file": "Path to the current file."
+        " Addon name will be obtained from there to run tests",
+        "mode": "Mode in which tests run. Options: ['init'(default), 'update']",
+    },
+)
+def test(c, modules=None, debugpy=False, cur_file=None, mode="init"):
+    """Run Odoo tests
+
+    By default, tests addon from directory being worked on,
+    unless other options are specified.
+
+    NOTE: Odoo must be restarted manually after this to go back to normal mode
+    """
+    if not modules:
+        cur_module = _get_cwd_addon(cur_file or Path.cwd())
+        if not cur_module:
+            raise exceptions.ParseError(
+                msg="Odoo addon to test not found. "
+                "You must provide at least one option for modules/file "
+                "or be in a subdirectory of one. "
+                "See --help for details."
+            )
+        else:
+            modules = cur_module
+    odoo_command = ["odoo", "--test-enable", "--stop-after-init", "--workers=0"]
+    if mode == "init":
+        odoo_command.append("-i")
+    elif mode == "update":
+        odoo_command.append("-u")
+    else:
+        raise exceptions.ParseError(
+            msg="Available modes are 'init' or 'update'. See --help for details."
+        )
+    odoo_command.append(modules)
+    if debugpy:
+        _test_in_debug_mode(c, odoo_command)
+    else:
+        cmd = ["docker-compose", "run", "--rm", "odoo"]
+        cmd.extend(odoo_command)
+        with c.cd(str(PROJECT_ROOT)):
+            c.run(
+                " ".join(cmd),
+                env=UID_ENV,
+                pty=True,
+            )
 
 
 @task(
