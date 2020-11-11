@@ -460,6 +460,7 @@ def install(c, modules=None, core=False, extra=False, private=False):
             env=dict(
                 UID_ENV,
             ),
+            pty=True,
         )
 
 
@@ -491,6 +492,32 @@ def test(c, modules=None, debugpy=False, cur_file=None, mode="init"):
             )
         else:
             modules = cur_module
+    odoo_command = ["odoo", "--test-enable", "--stop-after-init", "--workers=0"]
+    if mode == "init":
+        odoo_command.append("-i")
+    elif mode == "update":
+        odoo_command.append("-u")
+    else:
+        raise exceptions.ParseError(
+            msg="Available modes are 'init' or 'update'." " See --help for details."
+        )
+    odoo_command.append(modules)
+    if debugpy:
+        _test_in_debug_mode(c, odoo_command)
+    else:
+        cmd = ["docker-compose", "run", "--rm", "odoo"]
+        cmd.extend(odoo_command)
+        with c.cd(str(PROJECT_ROOT)):
+            c.run(
+                " ".join(cmd),
+                env=dict(
+                    UID_ENV,
+                ),
+                pty=True,
+            )
+
+
+def _test_in_debug_mode(c, odoo_command):
     with tempfile.NamedTemporaryFile(
         mode="w", suffix=".yaml"
     ) as tmp_docker_compose_file:
@@ -498,16 +525,6 @@ def test(c, modules=None, debugpy=False, cur_file=None, mode="init"):
             "docker-compose -f docker-compose.yml "
             f"-f {tmp_docker_compose_file.name} up -d"
         )
-        odoo_command = ["odoo", "--test-enable", "--stop-after-init", "--workers=0"]
-        if mode == "init":
-            odoo_command.append("-i")
-        elif mode == "update":
-            odoo_command.append("-u")
-        else:
-            raise exceptions.ParseError(
-                msg="Available modes are 'init' or 'update'." " See --help for details."
-            )
-        odoo_command.append(modules)
         _override_docker_command(
             "odoo",
             odoo_command,
@@ -519,7 +536,7 @@ def test(c, modules=None, debugpy=False, cur_file=None, mode="init"):
                 cmd,
                 env=dict(
                     UID_ENV,
-                    DOODBA_DEBUGPY_ENABLE=str(int(debugpy)),
+                    DOODBA_DEBUGPY_ENABLE="1",
                 ),
             )
         _logger.info("Waiting for services to spin up...")
