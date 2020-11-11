@@ -114,7 +114,7 @@ def write_code_workspace_file(c, cw_path=None):
         "name": "Attach Python debugger to running container",
         "type": "python",
         "request": "attach",
-        "pathMappings": [{"localRoot": f"{root_var}/odoo", "remoteRoot": "/opt/odoo"}],
+        "pathMappings": [],
         "port": int(ODOO_VERSION) * 1000 + 899,
         "host": "localhost",
     }
@@ -188,7 +188,13 @@ def write_code_workspace_file(c, cw_path=None):
             chrome_configuration,
         ],
     }
-    # Configure folders
+    # Configure folders and debuggers
+    debugpy_configuration["pathMappings"].append(
+        {
+            "localRoot": "${workspaceRoot:odoo}/",
+            "remoteRoot": "/opt/odoo/custom/src/odoo",
+        }
+    )
     cw_config["folders"] = []
     for subrepo in SRC_PATH.glob("*"):
         if not subrepo.is_dir():
@@ -197,16 +203,23 @@ def write_code_workspace_file(c, cw_path=None):
             cw_config["folders"].append(
                 {"path": str(subrepo.relative_to(PROJECT_ROOT))}
             )
-        debugpy_configuration["pathMappings"].append(
-            {
-                "localRoot": "${workspaceRoot:%s}" % subrepo.name,
-                "remoteRoot": f"/opt/odoo/custom/src/{subrepo.name}",
-            }
-        )
         for addon in chain(subrepo.glob("*"), subrepo.glob("addons/*")):
             if (addon / "__manifest__.py").is_file() or (
                 addon / "__openerp__.py"
             ).is_file():
+                if subrepo.name == "odoo":
+                    local_path = "${workspaceRoot:%s}/addons/%s/" % (
+                        subrepo.name,
+                        addon.name,
+                    )
+                else:
+                    local_path = "${workspaceRoot:%s}/%s" % (subrepo.name, addon.name)
+                debugpy_configuration["pathMappings"].append(
+                    {
+                        "localRoot": local_path,
+                        "remoteRoot": f"/opt/odoo/auto/addons/{addon.name}/",
+                    }
+                )
                 url = f"http://localhost:{ODOO_VERSION:.0f}069/{addon.name}/static/"
                 path = "${workspaceRoot:%s}/%s/static/" % (
                     subrepo.name,
@@ -306,7 +319,7 @@ def write_code_workspace_file(c, cw_path=None):
     }
     # Sort project folders
     cw_config["folders"].sort(key=lambda x: x["path"])
-    # Put Odoo folder just before private and top folder
+    # Put Odoo folder just before private and top folder and map to debugpy
     odoo = SRC_PATH / "odoo"
     if odoo.is_dir():
         cw_config["folders"].append({"path": str(odoo.relative_to(PROJECT_ROOT))})
