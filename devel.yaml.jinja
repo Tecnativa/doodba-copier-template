@@ -10,8 +10,8 @@ services:
       default:
       public:
     ports:
-      - "127.0.0.1:{{ macros.version_major(odoo_version) }}899:6899"
-      - "127.0.0.1:{{ macros.version_major(odoo_version) }}069:8069"
+      - "{{ macros.version_major(odoo_version) }}899:6899"
+      - "{{ macros.version_major(odoo_version) }}069:8069"
     environment:
       PORT: "6899 8069"
       TARGET: odoo
@@ -83,7 +83,7 @@ services:
     image: sosedoff/pgweb
     networks: *public
     ports:
-      - "127.0.0.1:{{ macros.version_major(odoo_version) }}081:8081"
+      - "{{ macros.version_major(odoo_version) }}081:8081"
     environment:
       DATABASE_URL: postgres://{{ postgres_username }}:odoopassword@db:5432/devel?sslmode=disable
     depends_on:
@@ -95,13 +95,13 @@ services:
       service: smtpfake
     networks: *public
     ports:
-      - "127.0.0.1:{{ macros.version_major(odoo_version) }}025:8025"
+      - "{{ macros.version_major(odoo_version) }}025:8025"
 
   wdb:
     image: kozea/wdb
     networks: *public
     ports:
-      - "127.0.0.1:{{ macros.version_major(odoo_version) }}984:1984"
+      - "{{ macros.version_major(odoo_version) }}984:1984"
     # HACK https://github.com/Kozea/wdb/issues/136
     init: true
 
