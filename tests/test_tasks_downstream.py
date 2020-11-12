@@ -178,8 +178,8 @@ def test_install(
                 invoke("git-aggregate")
                 invoke("resetdb")
             # Install "purchase"
-            ret_code, stdout, stderr = invoke.run(("install", "-m", "purchase"))
-            assert "Executing odoo --stop-after-init --init purchase" in stderr
+            stdout = invoke("install", "-m", "purchase")
+            assert "Executing odoo --stop-after-init --init purchase" in stdout
             assert _install_status("purchase") == "installed"
             assert _install_status("sale") == "uninstalled"
             # Change to "sale" subfolder and install
@@ -187,8 +187,8 @@ def test_install(
                 tmp_path / "odoo" / "custom" / "src" / "odoo" / "addons" / "sale"
             ):
                 # Install "sale"
-                ret_code, stdout, stderr = invoke.run("install")
-                assert "Executing odoo --stop-after-init --init sale" in stderr
+                stdout = invoke("install")
+                assert "Executing odoo --stop-after-init --init sale" in stdout
                 assert _install_status("purchase") == "installed"
                 assert _install_status("sale") == "installed"
     finally:
@@ -226,8 +226,7 @@ def test_test(
                 invoke("git-aggregate")
                 invoke("resetdb")
             # This should test just "purchase"
-            invoke("test", "-m", "purchase")
-            stdout = _wait_for_test_to_start()
+            stdout = invoke("test", "-m", "purchase", retcode=None)
             assert (
                 "Executing odoo --test-enable --stop-after-init --workers=0 -i purchase"
                 in stdout
@@ -237,15 +236,14 @@ def test_test(
                 tmp_path / "odoo" / "custom" / "src" / "odoo" / "addons" / "sale"
             ):
                 # Test "sale"
-                invoke("test")
-                stdout = _wait_for_test_to_start()
+                stdout = invoke("test", retcode=None)
                 assert (
                     "Executing odoo --test-enable --stop-after-init --workers=0 -i sale"
                     in stdout
                 )
             # Test "--debugpy and wait time call
             invoke("stop")
-            invoke("test", "-m", "sale", "--debugpy")
+            invoke("test", "-m", "sale", "--debugpy", retcode=None)
             assert socket_is_open("127.0.0.1", int(supported_odoo_version) * 1000 + 899)
             stdout = _wait_for_test_to_start()
             assert "python -m debugpy" in stdout
