@@ -149,13 +149,13 @@ def test_start(
 
 
 @pytest.mark.sequential
-def test_install(
+def test_install_install(
     cloned_template: Path,
     docker: LocalCommand,
     supported_odoo_version: float,
     tmp_path: Path,
 ):
-    """Test the install task.
+    """Test the install and test tasks.
 
     On this test flow, other downsream tasks are also tested:
 
@@ -177,73 +177,54 @@ def test_install(
                 invoke("img-build")
                 invoke("git-aggregate")
                 invoke("resetdb")
-            # Install "purchase"
-            stdout = invoke("install", "-m", "purchase")
-            assert "Executing odoo --stop-after-init --init purchase" in stdout
-            assert _install_status("purchase") == "installed"
-            assert _install_status("sale") == "uninstalled"
-            # Change to "sale" subfolder and install
-            with local.cwd(
-                tmp_path / "odoo" / "custom" / "src" / "odoo" / "addons" / "sale"
-            ):
-                # Install "sale"
-                stdout = invoke("install")
-                assert "Executing odoo --stop-after-init --init sale" in stdout
-                assert _install_status("purchase") == "installed"
-                assert _install_status("sale") == "installed"
-    finally:
-        # Imagine the user is in the odoo subrepo for this command
-        with local.cwd(tmp_path / "odoo" / "custom" / "src" / "odoo"):
-            invoke("stop", "--purge")
-
-
-@pytest.mark.sequential
-def test_test(
-    cloned_template: Path,
-    docker: LocalCommand,
-    supported_odoo_version: float,
-    tmp_path: Path,
-):
-    """Test the test task.
-
-    On this test flow, other downsream tasks are also tested:
-
-    - img-build
-    - git-aggregate
-    - stop --purge
-    """
-    try:
-        with local.cwd(tmp_path):
-            copy(
-                src_path=str(cloned_template),
-                vcs_ref="HEAD",
-                force=True,
-                data={"odoo_version": supported_odoo_version},
-            )
-            # Imagine the user is in the src subfolder for these tasks
-            with local.cwd(tmp_path / "odoo" / "custom" / "src"):
-                invoke("img-build")
-                invoke("git-aggregate")
-                invoke("resetdb")
-            # This should test just "purchase"
-            stdout = invoke("test", "-m", "purchase", retcode=None)
+            # Install "mail"
+            stdout = invoke("install", "-m", "mail")
+            assert "Executing odoo --stop-after-init --init mail" in stdout
+            assert _install_status("mail") == "installed"
+            if supported_odoo_version > 8:
+                assert _install_status("utm") == "uninstalled"
+            assert _install_status("note") == "uninstalled"
+            if supported_odoo_version > 8:
+                # Change to "utm" subfolder and install
+                with local.cwd(
+                    tmp_path / "odoo" / "custom" / "src" / "odoo" / "addons" / "utm"
+                ):
+                    # Install "utm" based on current folder
+                    stdout = invoke("install")
+                    assert "Executing odoo --stop-after-init --init utm" in stdout
+                    assert _install_status("mail") == "installed"
+                    assert _install_status("utm") == "installed"
+                    assert _install_status("note") == "uninstalled"
+            # Test "note" simple call in init mode (default)
+            stdout = invoke("test", "-m", "note", "--mode", "init", retcode=None)
             assert (
-                "Executing odoo --test-enable --stop-after-init --workers=0 -i purchase"
+                "Executing odoo --test-enable --stop-after-init --workers=0 -i note"
                 in stdout
             )
-            # Change to "sale" subfolder and test
-            with local.cwd(
-                tmp_path / "odoo" / "custom" / "src" / "odoo" / "addons" / "sale"
-            ):
-                # Test "sale"
-                stdout = invoke("test", retcode=None)
-                assert (
-                    "Executing odoo --test-enable --stop-after-init --workers=0 -i sale"
-                    in stdout
-                )
-            # Test "--debugpy and wait time call
+            assert "devel odoo.modules.loading: All post-tested" in stdout
+            assert _install_status("note") == "installed"
+            # Test "note" simple call in update mode
+            stdout = invoke("test", "-m", "note", "--mode", "update", retcode=None)
+            assert (
+                "Executing odoo --test-enable --stop-after-init --workers=0 -u note"
+                in stdout
+            )
+            assert "devel odoo.modules.loading: All post-tested" in stdout
+            if supported_odoo_version > 8:
+                # Change to "utm" subfolder and test
+                with local.cwd(
+                    tmp_path / "odoo" / "custom" / "src" / "odoo" / "addons" / "utm"
+                ):
+                    # Test "utm" based on current folder
+                    stdout = invoke("test", retcode=None)
+                    assert (
+                        "Executing odoo --test-enable --stop-after-init --workers=0 -i utm"
+                        in stdout
+                    )
+                    assert "devel odoo.modules.loading: All post-tested" in stdout
+            # Test --debugpy and wait time call with
             invoke("stop")
-            invoke("test", "-m", "sale", "--debugpy", retcode=None)
+            invoke("test", "-m", "mail", "--debugpy", retcode=None)
             assert socket_is_open("127.0.0.1", int(supported_odoo_version) * 1000 + 899)
             stdout = _wait_for_test_to_start()
             assert "python -m debugpy" in stdout
