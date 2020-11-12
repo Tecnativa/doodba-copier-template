@@ -1,3 +1,4 @@
+import re
 import time
 from pathlib import Path
 
@@ -33,6 +34,28 @@ def _wait_for_test_to_start():
         if "Executing odoo --test-enable" in stdout:
             break
     return stdout
+
+
+def _tests_ran(stdout, odoo_version, addon_name, mode="-i"):
+    if (
+        f"Executing odoo --test-enable --stop-after-init --workers=0 {mode} {addon_name}"
+        not in stdout
+    ):
+        return False
+    if odoo_version > 13.0:
+        match_str = re.compile(r"devel\sodoo\.service\.server:\s.*\spost-tests\sin")
+        if not match_str.search(stdout):
+            return False
+    elif odoo_version > 10.0:
+        if "devel odoo.service.server: All post-tested" not in stdout:
+            return False
+    elif odoo_version > 9.0:
+        if "devel odoo.modules.loading: All post-tested" not in stdout:
+            return False
+    else:
+        if "devel openerp.modules.loading: All post-tested" not in stdout:
+            return False
+    return True
 
 
 def test_resetdb(
@@ -149,7 +172,7 @@ def test_start(
 
 
 @pytest.mark.sequential
-def test_install_install(
+def test_install_test(
     cloned_template: Path,
     docker: LocalCommand,
     supported_odoo_version: float,
@@ -197,19 +220,12 @@ def test_install_install(
                     assert _install_status("note") == "uninstalled"
             # Test "note" simple call in init mode (default)
             stdout = invoke("test", "-m", "note", "--mode", "init", retcode=None)
-            assert (
-                "Executing odoo --test-enable --stop-after-init --workers=0 -i note"
-                in stdout
-            )
-            assert "devel odoo.modules.loading: All post-tested" in stdout
+            # Ensure "note" was installed and tests ran
             assert _install_status("note") == "installed"
+            assert _tests_ran(stdout, supported_odoo_version, "note")
             # Test "note" simple call in update mode
             stdout = invoke("test", "-m", "note", "--mode", "update", retcode=None)
-            assert (
-                "Executing odoo --test-enable --stop-after-init --workers=0 -u note"
-                in stdout
-            )
-            assert "devel odoo.modules.loading: All post-tested" in stdout
+            assert _tests_ran(stdout, supported_odoo_version, "note", mode="-u")
             if supported_odoo_version > 8:
                 # Change to "utm" subfolder and test
                 with local.cwd(
@@ -217,11 +233,7 @@ def test_install_install(
                 ):
                     # Test "utm" based on current folder
                     stdout = invoke("test", retcode=None)
-                    assert (
-                        "Executing odoo --test-enable --stop-after-init --workers=0 -i utm"
-                        in stdout
-                    )
-                    assert "devel odoo.modules.loading: All post-tested" in stdout
+                    assert _tests_ran(stdout, supported_odoo_version, "utm")
             # Test --debugpy and wait time call with
             invoke("stop")
             invoke("test", "-m", "mail", "--debugpy", retcode=None)
