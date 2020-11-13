@@ -260,11 +260,7 @@ def write_code_workspace_file(c, cw_path=None):
                     "clear": False,
                 },
                 "problemMatcher": [],
-                "options": {
-                    "statusbar": {
-                        "label": "$(beaker) Run Odoo tests for current module"
-                    }
-                },
+                "options": {"statusbar": {"label": "$(beaker) Test module"}},
             },
             {
                 "label": "Run Odoo Tests in debug mode for current module",
