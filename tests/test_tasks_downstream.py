@@ -36,26 +36,20 @@ def _wait_for_test_to_start():
     return stdout
 
 
-def _tests_ran(stdout, odoo_version, addon_name, mode="-i"):
-    if (
-        f"Executing odoo --test-enable --stop-after-init --workers=0 {mode} {addon_name}"
-        not in stdout
-    ):
-        return False
-    if odoo_version > 13.0:
-        match_str = re.compile(r"devel\sodoo\.service\.server:\s.*\spost-tests\sin")
-        if not match_str.search(stdout):
-            return False
-    elif odoo_version > 10.0:
-        if "devel odoo.service.server: All post-tested" not in stdout:
-            return False
-    elif odoo_version > 9.0:
-        if "devel odoo.modules.loading: All post-tested" not in stdout:
-            return False
-    else:
-        if "devel openerp.modules.loading: All post-tested" not in stdout:
-            return False
-    return True
+def _tests_ran(stdout, odoo_version, addon_name):
+    # Ensure the addon was installed/updated, and not independent ones
+    assert f"module {addon_name}: creating or updating database tables" in stdout
+    # Ensure the addon was tested
+    main_pkg, suffix = "odoo", r"\:\sStarting"
+    if odoo_version < 13.0:
+        suffix = r"\srunning tests."
+    if odoo_version < 10.0:
+        main_pkg = "openerp"
+    assert re.search(fr"{main_pkg}\.addons\.{addon_name}\.tests\.\w+{suffix}", stdout)
+    # Check no alien addons are installed, updated or tested
+    if addon_name != "base":
+        assert "module base: creating or updating database tables" not in stdout
+        assert not re.search(fr"{main_pkg}\.addons\.base\.tests\.\w+{suffix}", stdout)
 
 
 def test_resetdb(
@@ -201,42 +195,38 @@ def test_install_test(
                 invoke("git-aggregate")
                 invoke("resetdb")
             # Install "mail"
+            assert _install_status("mail") == "uninstalled"
             stdout = invoke("install", "-m", "mail")
-            assert "Executing odoo --stop-after-init --init mail" in stdout
             assert _install_status("mail") == "installed"
             if supported_odoo_version > 8:
                 assert _install_status("utm") == "uninstalled"
-            assert _install_status("note") == "uninstalled"
-            if supported_odoo_version > 8:
                 # Change to "utm" subfolder and install
                 with local.cwd(
                     tmp_path / "odoo" / "custom" / "src" / "odoo" / "addons" / "utm"
                 ):
                     # Install "utm" based on current folder
                     stdout = invoke("install")
-                    assert "Executing odoo --stop-after-init --init utm" in stdout
-                    assert _install_status("mail") == "installed"
-                    assert _install_status("utm") == "installed"
-                    assert _install_status("note") == "uninstalled"
+                assert _install_status("mail") == "installed"
+                assert _install_status("utm") == "installed"
             # Test "note" simple call in init mode (default)
+            assert _install_status("note") == "uninstalled"
             stdout = invoke("test", "-m", "note", "--mode", "init", retcode=None)
             # Ensure "note" was installed and tests ran
             assert _install_status("note") == "installed"
-            assert _tests_ran(stdout, supported_odoo_version, "note")
+            _tests_ran(stdout, supported_odoo_version, "note")
             # Test "note" simple call in update mode
             stdout = invoke("test", "-m", "note", "--mode", "update", retcode=None)
-            assert _tests_ran(stdout, supported_odoo_version, "note", mode="-u")
-            if supported_odoo_version > 8:
-                # Change to "utm" subfolder and test
-                with local.cwd(
-                    tmp_path / "odoo" / "custom" / "src" / "odoo" / "addons" / "utm"
-                ):
-                    # Test "utm" based on current folder
-                    stdout = invoke("test", retcode=None)
-                    assert _tests_ran(stdout, supported_odoo_version, "utm")
+            _tests_ran(stdout, supported_odoo_version, "note")
+            # Change to "note" subfolder and test
+            with local.cwd(
+                tmp_path / "odoo" / "custom" / "src" / "odoo" / "addons" / "note"
+            ):
+                # Test "note" based on current folder
+                stdout = invoke("test", retcode=None)
+                _tests_ran(stdout, supported_odoo_version, "note")
             # Test --debugpy and wait time call with
             invoke("stop")
-            invoke("test", "-m", "mail", "--debugpy", retcode=None)
+            invoke("test", "-m", "note", "--debugpy", retcode=None)
             assert socket_is_open("127.0.0.1", int(supported_odoo_version) * 1000 + 899)
             stdout = _wait_for_test_to_start()
             assert "python -m debugpy" in stdout
