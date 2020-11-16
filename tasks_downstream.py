@@ -289,6 +289,22 @@ def write_code_workspace_file(c, cw_path=None):
                 "problemMatcher": [],
                 "options": {"statusbar": {"label": "$(stop-circle) Stop Odoo"}},
             },
+            {
+                "label": "Restart Odoo",
+                "type": "process",
+                "command": "invoke",
+                "args": ["restart"],
+                "presentation": {
+                    "echo": True,
+                    "reveal": "silent",
+                    "focus": False,
+                    "panel": "shared",
+                    "showReuseMessage": True,
+                    "clear": False,
+                },
+                "problemMatcher": [],
+                "options": {"statusbar": {"label": "$(history) Restart Odoo"}},
+            },
         ],
     }
     # Sort project folders
@@ -390,7 +406,16 @@ def start(c, detach=True, debugpy=False):
         if detach:
             cmd += " --detach"
         with c.cd(str(PROJECT_ROOT)):
-            c.run(cmd, env=dict(UID_ENV, DOODBA_DEBUGPY_ENABLE=str(int(debugpy))))
+            result = c.run(
+                cmd,
+                pty=True,
+                env=dict(
+                    UID_ENV,
+                    DOODBA_DEBUGPY_ENABLE=str(int(debugpy)),
+                ),
+            )
+            if not ("Recreating" in result.stdout or "Starting" in result.stdout):
+                restart(c)
         _logger.info("Waiting for services to spin up...")
         time.sleep(SERVICES_WAIT_TIME)
 
