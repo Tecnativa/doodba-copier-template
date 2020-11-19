@@ -571,13 +571,22 @@ def restart(c, quick=True):
         c.run(cmd, env=UID_ENV)
 
 
-@task(develop)
-def logs(c, tail=10, follow=True):
+@task(
+    develop,
+    help={
+        "container": "Names of the containers from which logs will be obtained."
+        " You can specify a single one, or several comma-separated names."
+        " Default: None (show logs for all containers)"
+    },
+)
+def logs(c, tail=10, follow=True, container=None):
     """Obtain last logs of current environment."""
     cmd = "docker-compose logs"
     if follow:
         cmd += " -f"
     if tail:
         cmd += f" --tail {tail}"
+    if container:
+        cmd += f" {container.replace(',', ' ')}"
     with c.cd(str(PROJECT_ROOT)):
         c.run(cmd)
