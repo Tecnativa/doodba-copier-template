@@ -66,7 +66,7 @@ jobs:
           key: venv ${{ env.CACHE }}
       - run: pip install poetry
       - name: Patch $PATH
-        run: echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
       - run: poetry install
       # Precreate shared networks to avoid race conditions
       - run: docker network create inverseproxy_shared
