@@ -53,9 +53,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Generate cache key CACHE
         run:
-          echo "::set-env name=CACHE::${{ secrets.CACHE_DATE }} ${{ runner.os }}
-          $(python -VV | sha256sum | cut -d' ' -f1) ${{ hashFiles('pyproject.toml') }}
-          ${{ hashFiles('poetry.lock') }} ${{ hashFiles('.pre-commit-config.yaml') }}"
+          echo "CACHE=${{ secrets.CACHE_DATE }} ${{ runner.os }} $(python -VV |
+          sha256sum | cut -d' ' -f1) ${{ hashFiles('pyproject.toml') }} ${{
+          hashFiles('poetry.lock') }} ${{ hashFiles('.pre-commit-config.yaml') }}" >>
+          $GITHUB_ENV
       - uses: actions/cache@v2.1.0
         with:
           path: |
@@ -65,7 +66,7 @@ jobs:
           key: venv ${{ env.CACHE }}
       - run: pip install poetry
       - name: Patch $PATH
-        run: echo "::set-env name=PATH::$HOME/.local/bin:$PATH"
+        run: echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
       - run: poetry install
       # Precreate shared networks to avoid race conditions
       - run: docker network create inverseproxy_shared
