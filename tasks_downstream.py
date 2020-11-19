@@ -155,32 +155,6 @@ def write_code_workspace_file(c, cw_path=None):
                 "preLaunchTask": "Run Odoo Tests in debug mode for current module",
                 "internalConsoleOptions": "openOnSessionStart",
             },
-            {
-                "name": "Start Odoo and debug JS in Firefox",
-                "configurations": ["Connect to firefox debugger"],
-                "preLaunchTask": "Start Odoo",
-            },
-            {
-                "name": "Start Odoo and debug JS in Chrome",
-                "configurations": ["Connect to chrome debugger"],
-                "preLaunchTask": "Start Odoo",
-            },
-            {
-                "name": "Start Odoo and debug Python + JS in Firefox",
-                "configurations": [
-                    "Attach Python debugger to running container",
-                    "Connect to firefox debugger",
-                ],
-                "preLaunchTask": "Start Odoo in debug mode",
-            },
-            {
-                "name": "Start Odoo and debug Python + JS in Chrome",
-                "configurations": [
-                    "Attach Python debugger to running container",
-                    "Connect to chrome debugger",
-                ],
-                "preLaunchTask": "Start Odoo in debug mode",
-            },
         ],
         "configurations": [
             debugpy_configuration,
