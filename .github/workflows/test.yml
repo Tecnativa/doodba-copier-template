@@ -68,12 +68,6 @@ jobs:
       - name: Patch $PATH
         run: echo "$HOME/.local/bin" >> $GITHUB_PATH
       - run: poetry install
-      - name: Login to GitHub packages container registry
-        uses: docker/login-action@v1
-        with:
-          registry: docker.pkg.github.com
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
       # Precreate shared networks to avoid race conditions
       - run: docker network create inverseproxy_shared
       - run: docker network create globalwhitelist_shared
