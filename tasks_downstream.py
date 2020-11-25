@@ -92,7 +92,7 @@ def write_code_workspace_file(c, cw_path=None):
     Example: `--cw-path doodba.my-custom-name.code-workspace`
     """
     root_name = f"doodba.{PROJECT_ROOT.name}"
-    root_var = "${workspaceRoot:%s}" % root_name
+    root_var = "${workspaceFolder:%s}" % root_name
     if not cw_path:
         try:
             cw_path = next(PROJECT_ROOT.glob("doodba.*.code-workspace"))
@@ -165,7 +165,7 @@ def write_code_workspace_file(c, cw_path=None):
     # Configure folders and debuggers
     debugpy_configuration["pathMappings"].append(
         {
-            "localRoot": "${workspaceRoot:odoo}/",
+            "localRoot": "${workspaceFolder:odoo}/",
             "remoteRoot": "/opt/odoo/custom/src/odoo",
         }
     )
@@ -182,12 +182,12 @@ def write_code_workspace_file(c, cw_path=None):
                 addon / "__openerp__.py"
             ).is_file():
                 if subrepo.name == "odoo":
-                    local_path = "${workspaceRoot:%s}/addons/%s/" % (
+                    local_path = "${workspaceFolder:%s}/addons/%s/" % (
                         subrepo.name,
                         addon.name,
                     )
                 else:
-                    local_path = "${workspaceRoot:%s}/%s" % (subrepo.name, addon.name)
+                    local_path = "${workspaceFolder:%s}/%s" % (subrepo.name, addon.name)
                 debugpy_configuration["pathMappings"].append(
                     {
                         "localRoot": local_path,
@@ -195,7 +195,7 @@ def write_code_workspace_file(c, cw_path=None):
                     }
                 )
                 url = f"http://localhost:{ODOO_VERSION:.0f}069/{addon.name}/static/"
-                path = "${workspaceRoot:%s}/%s/static/" % (
+                path = "${workspaceFolder:%s}/%s/static/" % (
                     subrepo.name,
                     addon.relative_to(subrepo),
                 )
