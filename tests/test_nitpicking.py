@@ -267,7 +267,7 @@ def test_code_workspace_file(
         ]
         # Firefox debugger configuration
         url = f"http://localhost:{supported_odoo_version:.0f}069/test_module_static/static/"
-        path = "${workspaceRoot:private}/test_module_static/static/"
+        path = "${workspaceFolder:private}/test_module_static/static/"
         firefox_configuration = next(
             conf
             for conf in workspace_definition["launch"]["configurations"]
