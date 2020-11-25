@@ -116,7 +116,8 @@ def write_code_workspace_file(c, cw_path=None):
         "request": "attach",
         "pathMappings": [],
         "port": int(ODOO_VERSION) * 1000 + 899,
-        "host": "localhost",
+        # HACK https://github.com/microsoft/vscode-python/issues/14820
+        "host": "0.0.0.0",
     }
     firefox_configuration = {
         "type": "firefox",
