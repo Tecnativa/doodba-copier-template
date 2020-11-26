@@ -53,9 +53,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Generate cache key CACHE
         run:
-          echo "::set-env name=CACHE::${{ secrets.CACHE_DATE }} ${{ runner.os }}
-          $(python -VV | sha256sum | cut -d' ' -f1) ${{ hashFiles('pyproject.toml') }}
-          ${{ hashFiles('poetry.lock') }} ${{ hashFiles('.pre-commit-config.yaml') }}"
+          echo "CACHE=${{ secrets.CACHE_DATE }} ${{ runner.os }} $(python -VV |
+          sha256sum | cut -d' ' -f1) ${{ hashFiles('pyproject.toml') }} ${{
+          hashFiles('poetry.lock') }} ${{ hashFiles('.pre-commit-config.yaml') }}" >>
+          $GITHUB_ENV
       - uses: actions/cache@v2.1.0
         with:
           path: |
@@ -65,7 +66,7 @@ jobs:
           key: venv ${{ env.CACHE }}
       - run: pip install poetry
       - name: Patch $PATH
-        run: echo "::set-env name=PATH::$HOME/.local/bin:$PATH"
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
       - run: poetry install
       # Precreate shared networks to avoid race conditions
       - run: docker network create inverseproxy_shared
@@ -74,7 +75,13 @@ jobs:
       - run: git config --global user.name CI
       - run: git config --global user.email CI@GITHUB
       # Run all tests, which includes linters
+      # Non concurrent first (in parallel)
       - run: poetry run invoke test
+        env:
+          DOCKER_TEST: 1
+          SELECTED_ODOO_VERSIONS: ${{ matrix.odoo-version }}
+      # Concurrent tests (isolated)
+      - run: poetry run invoke test --sequential
         env:
           DOCKER_TEST: 1
           SELECTED_ODOO_VERSIONS: ${{ matrix.odoo-version }}

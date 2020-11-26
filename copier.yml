@@ -28,6 +28,7 @@ _exclude:
   - /poetry.lock
   - /pyproject.toml
   - /scripts
+  - /tasks_downstream.py
   - /tests
   - /vendor
 
@@ -380,7 +381,7 @@ smtp_relay_host:
 smtp_relay_port:
   type: int
   default: 587
-  when: &has_smtp "{{ smtp_relay_host is string and smtp_relay_host != '' }}"
+  when: &has_smtp "{{ smtp_relay_host and true }}"
   help: >-
     Indicate the port to connect in the SMTP server you just defined.
 
@@ -445,6 +446,7 @@ backup_dst:
 
 backup_email_from:
   type: str
+  when: &backup_present "{{ backup_dst and true }}"
   help: >-
     The backup container will send email reports if the SMTP relay is properly
     configured.
@@ -453,12 +455,14 @@ backup_email_from:
 
 backup_email_to:
   type: str
+  when: *backup_present
   help: >-
     Where to send those backup reports?
 
 backup_deletion:
   default: false
   type: bool
+  when: *backup_present
   help: >-
     If you're using S3, you probably want to delete outdated backups using bucket
     lifecycle rules. If you use other storage backend, then you probably want to enable
@@ -469,6 +473,7 @@ backup_deletion:
 backup_tz:
   type: str
   default: UTC
+  when: *backup_present
   help: >-
     Set the timezone used by the backup cron for reports.
 
@@ -479,7 +484,7 @@ backup_aws_access_key_id:
   secret: true
   type: str
   default: null
-  when: &backup_aws "{{ 's3:' in backup_dst }}"
+  when: &backup_aws "{{ 's3:' in backup_dst|string }}"
   help: >-
     If you're using AWS S3 to store backups, provide here your access key ID.
 
@@ -495,6 +500,7 @@ backup_passphrase:
   secret: true
   type: str
   default: example-backup-passphrase
+  when: *backup_present
   help: >-
     ⚠️ This passphrase is critical for security, so keep it safe. You will need it to
     restore backups.

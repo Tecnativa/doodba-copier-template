@@ -27,7 +27,11 @@ else here: issues and pull requests.
 
 ## General Discussion
 
-Follow the same instructions as for [issues](#issues).
+Please make use of [Doodba discussions](https://github.com/Tecnativa/doodba/discussions)
+to share knowledge, ideas or make questions.
+
+There's one concrete
+[channel for stuff specifically related to this template](https://github.com/Tecnativa/doodba/discussions?discussions_q=category%3A%22Doodba+-+The+template%22).
 
 ## Issues
 

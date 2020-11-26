@@ -67,14 +67,22 @@ def lint(c, verbose=False):
 
 
 @task(develop)
-def test(c, verbose=False):
-    """Test project."""
-    flags = ["-n", "auto", "--color=yes"]
+def test(c, verbose=False, sequential=False):
+    """Test project.
+
+    Add --sequential to run only sequential tests, with parallelization disabled.
+    """
+    flags = ["--color=yes"]
     if verbose:
         flags.append("-vv")
+    if sequential:
+        flags.extend(["-m", "sequential"])
+    else:
+        flags.extend(["-n", "auto", "-m", '"not sequential"'])
     flags = " ".join(flags)
+    cmd = f"poetry run pytest {flags} tests"
     with c.cd(str(TEMPLATE_ROOT)):
-        c.run(f"poetry run pytest {flags} tests")
+        c.run(cmd)
 
 
 @task(develop)

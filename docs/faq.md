@@ -28,6 +28,7 @@ Maybe not so frequent, but interesting anyway. 🤷
 - [Why do I get a "Connection Refused" error when trying to lauch the VSCode Chrome JS Debugger?](#why-do-i-get-a-connection-refused-error-when-trying-to-lauch-the-vscode-chrome-js-debugger)
 - [Why can't Firefox load the page after I start a debugging session?](#why-cant-firefox-load-the-page-after-i-start-a-debugging-session)
 - [Why won't my program stop on the specified breakpoints when using Firefox?](#why-wont-my-program-stop-on-the-specified-breakpoints-when-using-firefox)
+- [When upgrading from an old template, prettier fails badly. How to update?](#when-upgrading-from-an-old-template-prettier-fails-badly-how-to-update)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 <!-- prettier-ignore-end -->
@@ -540,3 +541,38 @@ correct URL. However, if you need to log in, you loose that URL. To avoid that, 
 sure you are not losing your cookies each time you reload a debugging session. (See
 [Why don't I see my Firefox extensions while debugging?](#Why-don't-I-see-my-Firefox-extensions-while-debugging?)
 for how to set up your Firefox debugging profile)
+
+## When upgrading from an old template, prettier fails badly. How to update?
+
+Whether it was prettier, npm, nodejs or whoever else, the fact is that
+[recently there happened a prettiermageddon](https://github.com/prettier/prettier/issues/9459).
+
+When you're updating from an older template to a newer, Copier will try to produce a
+vanilla project with the old template before updating it, to be able to extract a smart
+diff and apply the required changes to your subproject.
+
+Since old versions of the template are broken due to this prettier problem, you cannot
+update anymore. Well, here's the workaround:
+
+1.  Indicate to [nodeenv](http://ekalinin.github.io/nodeenv/) that your default nodejs
+    version is 14.14.0 by creating a file in `~/.nodeenvrc` with the following contents.
+    This will avoid the problem of prettier being unable to install:
+
+    ```ini
+    [nodeenv]
+    node = 14.14.0
+    ```
+
+1.  Update to latest template
+    [skipping `prettier` hook](https://pre-commit.com/#temporarily-disabling-hooks).
+    This will avoid the problem of prettier + plugin-xml being unable to execute, even
+    if properly installed:
+
+    ```bash
+    env SKIP=prettier copier update
+    ```
+
+Once all your doodba subprojects are on template v2.5.0 or later, you won't need the
+`~/.nodeenvrc` anymore (hopefully) and you can safely delete it, as node version is
+pinned there and we install prettier from
+[their new specific pre-commit repo](https://github.com/prettier/pre-commit).

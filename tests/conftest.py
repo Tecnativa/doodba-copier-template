@@ -1,5 +1,6 @@
 import json
 import os
+import socket
 import textwrap
 from pathlib import Path
 from typing import Dict, Union
@@ -175,3 +176,10 @@ def build_file_tree(spec: Dict[Union[str, Path], str], dedent: bool = True):
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("w") as fd:
             fd.write(contents)
+
+
+def socket_is_open(host, port):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    if sock.connect_ex((host, port)) == 0:
+        return True
+    return False
