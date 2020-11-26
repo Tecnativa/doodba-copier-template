@@ -183,3 +183,84 @@ def socket_is_open(host, port):
     if sock.connect_ex((host, port)) == 0:
         return True
     return False
+
+
+def generate_test_addon(addon_name, odoo_version, installable=True, ugly=False):
+    """Generates a simple addon for testing
+    Can be an ugly addon to trigger pre-commit formatting
+    """
+    is_py3 = odoo_version >= 11
+    manifest = "__manifest__" if is_py3 else "__openerp__"
+    file_tree = {
+        f"{addon_name}/__init__.py": """\
+            from . import models
+        """,
+        f"{addon_name}/models/__init__.py": """\
+            from . import res_partner
+        """,
+    }
+    if ugly:
+        file_tree[
+            f"{addon_name}/{manifest}.py"
+        ] = f"""\
+            {"{"}
+            'name':"{addon_name}",'license':'AGPL-3',
+            'version':'{odoo_version}.1.0.0',
+            'installable': {installable},
+            'auto_install': False
+            {"}"}
+        """
+    else:
+        file_tree[
+            f"{addon_name}/{manifest}.py"
+        ] = f"""\
+            {"{"}
+                "name": "{addon_name}",
+                "license": "AGPL-3",
+                "version": "{odoo_version}.1.0.0",
+                "installable": {installable},
+                "auto_install": False,
+            {"}"}
+        """
+    if ugly:
+        file_tree[
+            f"{addon_name}/models/res_partner.py"
+        ] = '''\
+            import io
+            import sys
+            from logging import getLogger
+            from os.path import join
+
+            from requests import get
+
+            import odoo
+            from odoo import models
+
+            _logger = getLogger(__name__)
+
+
+            class ResPartner(models.Model):
+                _name = "res.partner"
+
+                def some_method(self, test):
+                    """some weird
+                    docstring"""
+                    _logger.info(models, join, get, io, sys, odoo)
+        '''
+    else:
+        file_tree[
+            f"{addon_name}/models/res_partner.py"
+        ] = """\
+            from odoo import models;from os.path import join;
+            from requests import get
+            from logging import getLogger
+            import io,sys,odoo
+            _logger=getLogger(__name__)
+            class ResPartner(models.Model):
+                _name='res.partner'
+                def some_method(self,test):
+                    '''some weird
+                        docstring'''
+                    _logger.info(models,join,get,io,sys,odoo)
+        """
+    build_file_tree(file_tree)
