@@ -24,7 +24,9 @@ def test_multiple_domains(
     # XXX Remove traefik1 specific stuff some day
     is_traefik1 = version.parse(traefik_host["traefik_version"]) < version.parse("2")
     data = {
+        "odoo_listdb": True,
         "odoo_version": supported_odoo_version,
+        "paths_without_crawlers": ["/web/login", "/web/database"],
         "project_name": uuid.uuid4().hex,
         f"domains_{environment}": [
             # main0 has no TLS
@@ -153,11 +155,13 @@ def test_multiple_domains(
             # alt0 and alt1, with self-signed TLS
             for alt_num in range(2):
                 response = requests.get(
-                    f"http://alt{alt_num}.main1.{base_path}",
+                    f"http://alt{alt_num}.main1.{base_domain}/web/database/selector",
                     verify=False,
                 )
                 assert response.ok
-                assert response.url == f"https://main1.{base_path}"
+                assert (
+                    response.url == f"https://main1.{base_domain}/web/database/selector"
+                )
                 assert response.headers["X-Robots-Tag"] == "noindex, nofollow"
             # missing, which fails with Traefik 404, both with and without TLS
             bad_response = requests.get(
