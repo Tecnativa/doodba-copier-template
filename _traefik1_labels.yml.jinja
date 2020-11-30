@@ -10,8 +10,11 @@
 {%- macro path_prefix_rule(path_prefixes) -%}
   Path:
     {%- for path in path_prefixes %}
-      {%- set sep = "" if path.endswith("/") else "/" %}
-      {{- path }}{anything:{{ sep }}.*}
+      {%- if path.endswith("/") %}
+        {{- path }}{anything:.*}
+      {%- else %}
+        {{- path }},{{ path }}/{anything:.*}
+      {%- endif %}
       {%- if not loop.last %},{% endif %}
     {%- endfor %}
 {%- endmacro %}
