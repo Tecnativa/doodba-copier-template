@@ -6,10 +6,10 @@ from textwrap import dedent
 import pytest
 import yaml
 from copier.main import copy
-from plumbum import local
+from plumbum import ProcessExecutionError, local
 from plumbum.cmd import diff, docker_compose, git, invoke, pre_commit
 
-from .conftest import LAST_ODOO_VERSION, build_file_tree
+from .conftest import LAST_ODOO_VERSION, build_file_tree, generate_test_addon
 
 WHITESPACE_PREFIXED_LICENSES = (
     "AGPL-3.0-or-later",
@@ -349,44 +349,14 @@ def test_pre_commit_in_subproject(
         git("commit", "-m", "hello world", retcode=1)
         git("commit", "-am", "hello world")
         manifest = "__manifest__" if is_py3 else "__openerp__"
-        build_file_tree(
-            {
-                f"test_module/{manifest}.py": f"""\
-                    {"{"}
-                    'name':'test module','license':'AGPL-3',
-                    'version':'{supported_odoo_version}.1.0.0',
-                    'installable': True,
-                    'auto_install': False
-                    {"}"}
-                """,
-                "test_module/__init__.py": """\
-                    from . import models;
-                """,
-                "test_module/models/__init__.py": """\
-                    from . import res_partner;
-                """,
-                "test_module/models/res_partner.py": """\
-                    from odoo import models;from os.path import join;
-                    from requests import get
-                    from logging import getLogger
-                    import io,sys,odoo
-                    _logger=getLogger(__name__)
-                    class ResPartner(models.Model):
-                        _name='res.partner'
-                        def some_method(self,test):
-                            '''some weird
-                                docstring'''
-                            _logger.info(models,join,get,io,sys,odoo)
-                """,
-            }
-        )
+        generate_test_addon("test_module", supported_odoo_version, ugly=True)
         git("add", "-A")
         git("commit", "-m", "added test_module", retcode=1)
         git("commit", "-am", "added test_module")
         expected_samples = {
             f"test_module/{manifest}.py": f"""\
                 {"{"}
-                    "name": "test module",
+                    "name": "test_module",
                     "license": "AGPL-3",
                     "version": "{supported_odoo_version}.1.0.0",
                     "installable": True,
@@ -427,6 +397,40 @@ def test_pre_commit_in_subproject(
             if not is_py3 and path.endswith(".py"):
                 content = f"# -*- coding: utf-8 -*-\n{content}"
             assert Path(path).read_text() == content
+    # Make sure it doesn't fail for incorrect module version when addon not installable
+    with local.cwd(tmp_path / "odoo" / "custom" / "src" / "private"):
+        # Bump version in test module and set as not installable
+        generate_test_addon(
+            "test_module", supported_odoo_version + 1, installable=False
+        )
+        git("add", "-A")
+        # First commit will add new module to the exclude list in pre-commit
+        git("commit", "-m", "start migration of test_module", retcode=1)
+        # Module should now be ignored by pre-commit and give no problems in commit
+        git("commit", "-am", "start migration of test_module")
+        # Load pre-commit config
+        with open(tmp_path / ".pre-commit-config.yaml", "r") as fd:
+            pre_commit_config = yaml.safe_load(fd.read())
+        assert "^odoo/custom/src/private/test_module/|" in pre_commit_config["exclude"]
+        # Make sure uninstallable addon was ignored by pre-commit
+        pre_commit("run", "-a")
+        assert "test_module" not in git("status", "--porcelain")
+    # It should still fail for installable addon with bad manifest
+    with local.cwd(tmp_path / "odoo" / "custom" / "src" / "private"):
+        # Mark test module as installable again
+        generate_test_addon("test_module", supported_odoo_version + 1, installable=True)
+        git("add", "-A")
+        # First commit will remove test module to the exclude list in pre-commit
+        git("commit", "-m", "Mark test module as installable again", retcode=1)
+        # Commit should fail for incorrect version
+        with pytest.raises(ProcessExecutionError):
+            git("commit", "-am", "Mark test_module as installable again")
+        # Load pre-commit config
+        with open(tmp_path / ".pre-commit-config.yaml", "r") as fd:
+            pre_commit_config = yaml.safe_load(fd.read())
+        assert (
+            "^odoo/custom/src/private/test_module/|" not in pre_commit_config["exclude"]
+        )
 
 
 def test_no_python_write_bytecode_in_devel(
