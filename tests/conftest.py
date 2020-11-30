@@ -200,67 +200,65 @@ def generate_test_addon(addon_name, odoo_version, installable=True, ugly=False):
         """,
     }
     if ugly:
-        file_tree[
-            f"{addon_name}/{manifest}.py"
-        ] = f"""\
-            {"{"}
-            'name':"{addon_name}",'license':'AGPL-3',
-            'version':'{odoo_version}.1.0.0',
-            'installable': {installable},
-            'auto_install': False
-            {"}"}
-        """
+        file_tree.update(
+            {
+                f"{addon_name}/{manifest}.py": f"""\
+                    {"{"}
+                    'name':"{addon_name}",'license':'AGPL-3',
+                    'version':'{odoo_version}.1.0.0',
+                    'installable': {installable},
+                    'auto_install': False
+                    {"}"}
+                """,
+                f"{addon_name}/models/res_partner.py": """\
+                    from odoo import models;from os.path import join;
+                    from requests import get
+                    from logging import getLogger
+                    import io,sys,odoo
+                    _logger=getLogger(__name__)
+                    class ResPartner(models.Model):
+                        _name='res.partner'
+                        def some_method(self,test):
+                            '''some weird
+                                docstring'''
+                            _logger.info(models,join,get,io,sys,odoo)
+                """,
+            }
+        )
     else:
-        file_tree[
-            f"{addon_name}/{manifest}.py"
-        ] = f"""\
-            {"{"}
-                "name": "{addon_name}",
-                "license": "AGPL-3",
-                "version": "{odoo_version}.1.0.0",
-                "installable": {installable},
-                "auto_install": False,
-            {"}"}
-        """
-    if ugly:
-        file_tree[
-            f"{addon_name}/models/res_partner.py"
-        ] = '''\
-            import io
-            import sys
-            from logging import getLogger
-            from os.path import join
+        file_tree.update(
+            {
+                f"{addon_name}/{manifest}.py": f"""\
+                    {"{"}
+                        "name": "{addon_name}",
+                        "license": "AGPL-3",
+                        "version": "{odoo_version}.1.0.0",
+                        "installable": {installable},
+                        "auto_install": False,
+                    {"}"}
+                """,
+                f"{addon_name}/models/res_partner.py": '''\
+                    import io
+                    import sys
+                    from logging import getLogger
+                    from os.path import join
 
-            from requests import get
+                    from requests import get
 
-            import odoo
-            from odoo import models
+                    import odoo
+                    from odoo import models
 
-            _logger = getLogger(__name__)
+                    _logger = getLogger(__name__)
 
 
-            class ResPartner(models.Model):
-                _name = "res.partner"
+                    class ResPartner(models.Model):
+                        _name = "res.partner"
 
-                def some_method(self, test):
-                    """some weird
-                    docstring"""
-                    _logger.info(models, join, get, io, sys, odoo)
-        '''
-    else:
-        file_tree[
-            f"{addon_name}/models/res_partner.py"
-        ] = """\
-            from odoo import models;from os.path import join;
-            from requests import get
-            from logging import getLogger
-            import io,sys,odoo
-            _logger=getLogger(__name__)
-            class ResPartner(models.Model):
-                _name='res.partner'
-                def some_method(self,test):
-                    '''some weird
-                        docstring'''
-                    _logger.info(models,join,get,io,sys,odoo)
-        """
+                        def some_method(self, test):
+                            """some weird
+                            docstring"""
+                            _logger.info(models, join, get, io, sys, odoo)
+                ''',
+            }
+        )
     build_file_tree(file_tree)
