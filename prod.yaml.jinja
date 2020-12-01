@@ -16,6 +16,7 @@ services:
     environment:
       DOODBA_ENVIRONMENT: "${DOODBA_ENVIRONMENT-prod}"
       INITIAL_LANG: "{{ odoo_initial_lang }}"
+      PYTHONPATH: /opt/odoo/custom/src/odoo
       {%- if smtp_relay_host %}
       SMTP_SERVER: smtplocal
       {%- endif %}
