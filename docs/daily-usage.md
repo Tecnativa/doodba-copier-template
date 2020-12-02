@@ -216,6 +216,7 @@ Once secrets are in place and you started the
 production environment with:
 
 ```bash
+mkdir -p odoo/auto/addons
 docker-compose -f prod.yaml build --pull
 docker-compose --file setup-devel.yaml run --rm odoo
 docker-compose -f prod.yaml up -d
