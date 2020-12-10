@@ -23,7 +23,7 @@ repos:
         language: fail
         files: "\\.rej$"
   - repo: https://github.com/oca/maintainer-tools
-    rev: f1b5595
+    rev: b9c963d
     hooks:
       # update the NOT INSTALLABLE ADDONS section above
       - id: oca-update-pre-commit-excluded-addons
@@ -101,7 +101,7 @@ repos:
           - --exit-zero
         verbose: true
         additional_dependencies:
-          - isort==4.3.21
+          - isort==4.3.4
           - pylint-odoo==3.5.0
       - id: pylint
         name: pylint with mandatory checks
@@ -109,7 +109,7 @@ repos:
           - --valid_odoo_versions={{ "%.1f"|format(odoo_version) }}
           - --rcfile=.pylintrc-mandatory
         additional_dependencies:
-          - isort==4.3.21
+          - isort==4.3.4
           - pylint-odoo==3.5.0
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: v7.8.1
