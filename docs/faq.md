@@ -29,6 +29,7 @@ Maybe not so frequent, but interesting anyway. 🤷
 - [Why can't Firefox load the page after I start a debugging session?](#why-cant-firefox-load-the-page-after-i-start-a-debugging-session)
 - [Why won't my program stop on the specified breakpoints when using Firefox?](#why-wont-my-program-stop-on-the-specified-breakpoints-when-using-firefox)
 - [When upgrading from an old template, prettier fails badly. How to update?](#when-upgrading-from-an-old-template-prettier-fails-badly-how-to-update)
+- [When upgrading from an old template, pre-commit fails to install. What can I do?](#when-upgrading-from-an-old-template-pre-commit-fails-to-install-what-can-i-do)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 <!-- prettier-ignore-end -->
@@ -576,3 +577,32 @@ Once all your doodba subprojects are on template v2.5.0 or later, you won't need
 `~/.nodeenvrc` anymore (hopefully) and you can safely delete it, as node version is
 pinned there and we install prettier from
 [their new specific pre-commit repo](https://github.com/prettier/pre-commit).
+
+## When upgrading from an old template, pre-commit fails to install. What can I do?
+
+Due to the
+[latest updates to the `pip` dependency resolver](https://pip.pypa.io/en/latest/user_guide/#changes-to-the-pip-dependency-resolver-in-20-2-2020),
+some packages fail to install.
+
+As with the recent
+[prettiermageddon](#when-upgrading-from-an-old-template-prettier-fails-badly-how-to-update),
+when you're updating from an older template to a newer, Copier will try to produce a
+vanilla project with the old template before updating it, to be able to extract a smart
+diff and apply the required changes to your subproject.
+
+Since old versions of the template might be broken if you are running the latest `pip`
+version, you cannot update anymore. Where is what you can do to avoid it:
+
+1.  Since `pre-commit` manages it's dependencies with `python-virtualenv`, you can
+    indicate which version of pip it should use. There are several ways of doing it, but
+    the easiest is with an environment variable. Just pass `VIRTUALENV_PIP=20.2` before
+    any command that fails due to this problem. For example, when running a copier
+    update:
+
+    ```bash
+    env VIRTUALENV_PIP=20.2 copier update
+    ```
+
+Once all your doodba subprojects are on template v2.6.1 or later, you shouldn't have
+this problem, as the pre-commit hook's versions and dependencies where tailored to work
+with these new constraints.
