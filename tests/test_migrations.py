@@ -262,3 +262,39 @@ def test_v2_1_1_migration(
         # Assert config files removal
         assert not Path(".vscode", "launch.json").exists()
         assert not Path(".vscode", "tasks.json").exists()
+
+
+def test_v2_7_0_migration(
+    tmp_path: Path,
+    cloned_template: Path,
+    supported_odoo_version: float,
+):
+    """Test migration to v2.1.1."""
+    pre, target = "v2.6.1", "v2.7.0"
+    # This part makes sense only when target version is not yet released
+    with local.cwd(cloned_template):
+        if target not in git("tag").split():
+            git("tag", "-d", "test")
+            git("tag", target)
+    with local.cwd(tmp_path):
+        # Copy previous version
+        copy(
+            src_path=str(cloned_template),
+            vcs_ref=pre,
+            force=True,
+            answers_file=".custom.copier-answers.yaml",
+            data={
+                "odoo_version": supported_odoo_version,
+            },
+        )
+        git("config", "commit.gpgsign", "false")
+        git("add", ".")
+        git("commit", "-am", "reformat", retcode=1)
+        git("commit", "-am", f"copied from template in {pre}")
+        # Update to target version
+        copy(answers_file=".custom.copier-answers.yaml", vcs_ref=target, force=True)
+        git("add", ".")
+        git("commit", "-am", "reformat", retcode=1)
+        git("commit", "-am", f"updated from template in {target}")
+        # Assert config files removal
+        assert not Path(".vscode", "settings.json").exists()
