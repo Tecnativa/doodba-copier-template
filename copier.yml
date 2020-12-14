@@ -18,6 +18,7 @@ _exclude:
   - /.github
   - /.gitmodules
   - /.vscode/launch.json
+  - /.vscode/settings.json
   - /**.pyc
   - /**.pyo
   - /CONTRIBUTING.md
@@ -75,6 +76,13 @@ _migrations:
         - --search-root={{ _copier_conf.src_path }}
         - --collection=migrations
         - remove-vscode-launch-and-tasks
+        - "{{ _copier_conf.dst_path }}"
+  - version: v2.7.0a4
+    after:
+      - - invoke
+        - --search-root={{ _copier_conf.src_path }}
+        - --collection=migrations
+        - remove-vscode-settings
         - "{{ _copier_conf.dst_path }}"
 
 # Questions for the user
