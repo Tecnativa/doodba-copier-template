@@ -58,7 +58,7 @@ should know your toolbox, specifically these tools:
 - [invoke](https://www.pyinvoke.org/)
 - [Odoo](https://www.odoo.com/) 😆
 - [python](https://www.python.org/)
-- [click-odoo-contrib](https://github.com/acsone/click-odoo-contrib)
+- [click-odoo-contrib][]
 
 Go read their docs and learn them fine.
 
@@ -508,7 +508,7 @@ Just run:
 docker-compose run --rm odoo click-odoo-update --watcher-max-seconds 30
 ```
 
-This script is part of [`click-odoo-contrib`][]; check it for more details.
+This script is part of [click-odoo-contrib][]; check it for more details.
 
 \* Note: `--watcher-max-seconds` is available because we ship a
 [patched](https://github.com/acsone/click-odoo-contrib/pull/38) version. Check that PR
@@ -600,3 +600,4 @@ adding the whitelist proxy like this to your docker-compose.yml:
 [development]: #development
 [testing]: #testing
 [production]: #production
+[click-odoo-contrib]: https://github.com/acsone/click-odoo-contrib
