@@ -11,7 +11,7 @@ version: "2.4"
 
 services:
   odoo_proxy:
-    image: tecnativa/whitelist
+    image: ghcr.io/tecnativa/docker-whitelist:latest
     depends_on:
       - odoo
     networks: &public
@@ -114,7 +114,7 @@ services:
   # Whitelist outgoing traffic for tests, reports, etc.
 {%- for host in whitelisted_hosts %}
   proxy_{{ host|replace(".", "_") }}:
-    image: tecnativa/whitelist
+    image: ghcr.io/tecnativa/docker-whitelist:latest
     networks:
       default:
         aliases:
