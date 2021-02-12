@@ -222,8 +222,8 @@ docker-compose -f prod.yaml up -d
 #### Backups
 
 Backups are only available in the production environment. They are provided by
-[tecnativa/duplicity:postgres-s3](https://github.com/Tecnativa/docker-duplicity). The
-structure of the backed up folder:
+[docker-duplicity](https://github.com/Tecnativa/docker-duplicity). The structure of the
+backed up folder:
 
 ```
 ├── prod.sql
@@ -322,7 +322,7 @@ networks:
 
 services:
   cdnjs_cloudflare_com:
-    image: tecnativa/whitelist
+    image: ghcr.io/tecnativa/docker-whitelist
     restart: unless-stopped
     networks:
       public:
@@ -334,7 +334,7 @@ services:
       PRE_RESOLVE: 1
 
   fonts_googleapis_com:
-    image: tecnativa/whitelist
+    image: ghcr.io/tecnativa/docker-whitelist
     restart: unless-stopped
     networks:
       public:
@@ -346,7 +346,7 @@ services:
       PRE_RESOLVE: 1
 
   fonts_gstatic_com:
-    image: tecnativa/whitelist
+    image: ghcr.io/tecnativa/docker-whitelist
     restart: unless-stopped
     networks:
       public:
@@ -358,7 +358,7 @@ services:
       PRE_RESOLVE: 1
 
   www_google_com:
-    image: tecnativa/whitelist
+    image: ghcr.io/tecnativa/docker-whitelist
     restart: unless-stopped
     networks:
       public:
@@ -370,7 +370,7 @@ services:
       PRE_RESOLVE: 1
 
   www_gravatar_com:
-    image: tecnativa/whitelist
+    image: ghcr.io/tecnativa/docker-whitelist
     restart: unless-stopped
     networks:
       public:
@@ -584,7 +584,7 @@ adding the whitelist proxy like this to your docker-compose.yml:
   ...
 
   maxmind_proxy:
-    image: tecnativa/whitelist
+    image: ghcr.io/tecnativa/docker-whitelist
     networks:
       default:
         aliases:
