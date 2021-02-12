@@ -329,6 +329,24 @@ def write_code_workspace_file(c, cw_path=None):
                 "problemMatcher": [],
                 "options": {"statusbar": {"label": "$(history) Restart Odoo"}},
             },
+            {
+                "label": "See container logs",
+                "type": "process",
+                "command": "invoke",
+                "args": ["logs"],
+                "presentation": {
+                    "echo": True,
+                    "reveal": "always",
+                    "focus": False,
+                    "panel": "shared",
+                    "showReuseMessage": True,
+                    "clear": False,
+                },
+                "problemMatcher": [],
+                "options": {
+                    "statusbar": {"label": "$(list-selection) See container logs"}
+                },
+            },
         ],
     }
     # Sort project folders
