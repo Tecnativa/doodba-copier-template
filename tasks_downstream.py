@@ -457,7 +457,11 @@ def start(c, detach=True, debugpy=False):
                     DOODBA_DEBUGPY_ENABLE=str(int(debugpy)),
                 ),
             )
-            if not ("Recreating" in result.stdout or "Starting" in result.stdout):
+            if not (
+                "Recreating" in result.stdout
+                or "Starting" in result.stdout
+                or "Creating" in result.stdout
+            ):
                 restart(c)
         _logger.info("Waiting for services to spin up...")
         time.sleep(SERVICES_WAIT_TIME)
