@@ -245,6 +245,24 @@ def write_code_workspace_file(c, cw_path=None):
                 "options": {"statusbar": {"label": "$(play-circle) Start Odoo"}},
             },
             {
+                "label": "Install current module",
+                "type": "process",
+                "command": "invoke",
+                "args": ["install", "--cur-file", "${file}", "restart"],
+                "presentation": {
+                    "echo": True,
+                    "reveal": "always",
+                    "focus": True,
+                    "panel": "shared",
+                    "showReuseMessage": True,
+                    "clear": False,
+                },
+                "problemMatcher": [],
+                "options": {
+                    "statusbar": {"label": "$(symbol-property) Install module"}
+                },
+            },
+            {
                 "label": "Run Odoo Tests for current module",
                 "type": "process",
                 "command": "invoke",
@@ -474,16 +492,18 @@ def start(c, detach=True, debugpy=False):
         "core": "Install all core addons. Default: False",
         "extra": "Install all extra addons. Default: False",
         "private": "Install all private addons. Default: False",
+        "cur-file": "Path to the current file."
+        " Addon name will be obtained from there to install.",
     },
 )
-def install(c, modules=None, core=False, extra=False, private=False):
+def install(c, modules=None, cur_file=None, core=False, extra=False, private=False):
     """Install Odoo addons
 
     By default, installs addon from directory being worked on,
     unless other options are specified.
     """
     if not (modules or core or extra or private):
-        cur_module = _get_cwd_addon(Path.cwd())
+        cur_module = _get_cwd_addon(cur_file or Path.cwd())
         if not cur_module:
             raise exceptions.ParseError(
                 msg="Odoo addon to install not found. "
