@@ -18,6 +18,9 @@ services:
       WITHOUT_DEMO: "${DOODBA_WITHOUT_DEMO-all}"
       SMTP_PORT: "1025"
       SMTP_SERVER: smtplocal
+      # Disable GeoIp in demo allways
+      GEOIP_ACCOUNT_ID: ""
+      GEOIP_LICENSE_KEY: ""
     restart: unless-stopped
     depends_on:
       - db
