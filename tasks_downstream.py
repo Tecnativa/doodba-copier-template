@@ -370,6 +370,7 @@ def git_aggregate(c):
         c.run(
             "docker-compose --file setup-devel.yaml run --rm odoo",
             env=UID_ENV,
+            pty=True,
         )
     write_code_workspace_file(c)
     for git_folder in SRC_PATH.glob("*/.git/.."):
