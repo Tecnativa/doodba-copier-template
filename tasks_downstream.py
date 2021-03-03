@@ -108,7 +108,30 @@ def write_code_workspace_file(c, cw_path=None):
         pass  # Nevermind, we start with a new config
     # Static settings
     cw_config.setdefault("settings", {})
-    cw_config["settings"].update({"search.followSymlinks": False})
+    cw_config["settings"].update(
+        {
+            "python.autoComplete.extraPaths": [f"{str(SRC_PATH)}/odoo"],
+            "python.languageServer": "Jedi",
+            "python.linting.flake8Enabled": True,
+            "python.linting.ignorePatterns": [f"{str(SRC_PATH)}/odoo/**/*.py"],
+            "python.linting.pylintArgs": [
+                f"--init-hook=\"import sys;sys.path.append('{str(SRC_PATH)}/odoo')\"",
+                "--load-plugins=pylint_odoo",
+            ],
+            "python.linting.pylintEnabled": True,
+            "python.pythonPath": "python%s" % (2 if ODOO_VERSION < 11 else 3),
+            "restructuredtext.confPath": "",
+            "search.followSymlinks": False,
+            "search.useIgnoreFiles": False,
+            # Language-specific configurations
+            "[python]": {"editor.defaultFormatter": "ms-python.python"},
+            "[json]": {"editor.defaultFormatter": "esbenp.prettier-vscode"},
+            "[jsonc]": {"editor.defaultFormatter": "esbenp.prettier-vscode"},
+            "[markdown]": {"editor.defaultFormatter": "esbenp.prettier-vscode"},
+            "[yaml]": {"editor.defaultFormatter": "esbenp.prettier-vscode"},
+            "[xml]": {"editor.formatOnSave": False},
+        }
+    )
     # Launch configurations
     debugpy_configuration = {
         "name": "Attach Python debugger to running container",
@@ -347,6 +370,7 @@ def git_aggregate(c):
         c.run(
             "docker-compose --file setup-devel.yaml run --rm odoo",
             env=UID_ENV,
+            pty=True,
         )
     write_code_workspace_file(c)
     for git_folder in SRC_PATH.glob("*/.git/.."):

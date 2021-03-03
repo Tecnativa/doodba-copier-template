@@ -75,6 +75,17 @@ def remove_vscode_launch_and_tasks(c, dst_path):
 
 
 @task
+def remove_vscode_settings(c, dst_path):
+    """Remove .vscode/{launch,tasks}.json file.
+
+    Launch configurations are now generated in the doodba.*.code-workspace file.
+    """
+    garbage = Path(dst_path, ".vscode", "settings.json")
+    if garbage.is_file():
+        garbage.unlink()
+
+
+@task
 def update_domains_structure(c, dst_path, answers_rel_path):
     """Migrates from v1 to v2 domain structure.
 
