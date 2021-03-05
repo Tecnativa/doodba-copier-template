@@ -426,14 +426,14 @@ def img_build(c, pull=True):
     if pull:
         cmd += " --pull"
     with c.cd(str(PROJECT_ROOT)):
-        c.run(cmd, env=UID_ENV)
+        c.run(cmd, env=UID_ENV, pty=True)
 
 
 @task(develop)
 def img_pull(c):
     """Pull docker images."""
     with c.cd(str(PROJECT_ROOT)):
-        c.run("docker-compose pull")
+        c.run("docker-compose pull", pty=True)
 
 
 @task(develop)
@@ -550,6 +550,7 @@ def _test_in_debug_mode(c, odoo_command):
                     UID_ENV,
                     DOODBA_DEBUGPY_ENABLE="1",
                 ),
+                pty=True,
             )
         _logger.info("Waiting for services to spin up...")
         time.sleep(SERVICES_WAIT_TIME)
@@ -620,7 +621,7 @@ def stop(c, purge=False):
     else:
         cmd += " stop"
     with c.cd(str(PROJECT_ROOT)):
-        c.run(cmd)
+        c.run(cmd, pty=True)
 
 
 @task(
@@ -660,7 +661,7 @@ def restart(c, quick=True):
         cmd = f"{cmd} -t0"
     cmd = f"{cmd} odoo odoo_proxy"
     with c.cd(str(PROJECT_ROOT)):
-        c.run(cmd, env=UID_ENV)
+        c.run(cmd, env=UID_ENV, pty=True)
 
 
 @task(
@@ -681,4 +682,4 @@ def logs(c, tail=10, follow=True, container=None):
     if container:
         cmd += f" {container.replace(',', ' ')}"
     with c.cd(str(PROJECT_ROOT)):
-        c.run(cmd)
+        c.run(cmd, pty=True)
