@@ -115,7 +115,7 @@ def write_code_workspace_file(c, cw_path=None):
             "python.linting.flake8Enabled": True,
             "python.linting.ignorePatterns": [f"{str(SRC_PATH)}/odoo/**/*.py"],
             "python.linting.pylintArgs": [
-                f"--init-hook=\"import sys;sys.path.append('{str(SRC_PATH)}/odoo')\"",
+                f"--init-hook=\\\"import sys;sys.path.append('{str(SRC_PATH)}/odoo')\\\"",
                 "--load-plugins=pylint_odoo",
             ],
             "python.linting.pylintEnabled": True,
