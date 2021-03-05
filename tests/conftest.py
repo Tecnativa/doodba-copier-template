@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import socket
 import textwrap
@@ -8,9 +9,12 @@ from typing import Dict, Union
 import pytest
 import yaml
 from packaging import version
-from plumbum import FG, local
-from plumbum.cmd import git
+from plumbum import FG, ProcessExecutionError, local
+from plumbum.cmd import docker_compose, git, invoke
 from plumbum.machines.local import LocalCommand
+
+_logger = logging.getLogger(__name__)
+
 
 with open("copier.yml") as copier_fd:
     COPIER_SETTINGS = yaml.safe_load(copier_fd)
@@ -262,3 +266,26 @@ def generate_test_addon(addon_name, odoo_version, installable=True, ugly=False):
             }
         )
     build_file_tree(file_tree)
+
+
+def _containers_running(exec_path):
+    with local.cwd(exec_path):
+        if len(docker_compose("ps", "-aq").splitlines()) > 0:
+            _logger.error(docker_compose("ps", "-a"))
+            return True
+        return False
+
+
+def safe_stop_env(exec_path):
+    with local.cwd(exec_path):
+        try:
+            invoke("stop", "--purge")
+        except ProcessExecutionError as e:
+            if (
+                "has active endpoints" not in e.stderr
+                and "has active endpoints" not in e.stdout
+            ):
+                raise e
+            assert not _containers_running(
+                exec_path
+            ), "Containers running or not removed. 'stop --purge' command did not work."

@@ -1,3 +1,4 @@
+import logging
 import re
 import time
 from pathlib import Path
@@ -8,7 +9,9 @@ from plumbum import ProcessExecutionError, local
 from plumbum.cmd import docker_compose, invoke
 from plumbum.machines.local import LocalCommand
 
-from .conftest import socket_is_open
+from .conftest import safe_stop_env, socket_is_open
+
+_logger = logging.getLogger(__name__)
 
 
 def _install_status(module, dbname="devel"):
@@ -52,6 +55,7 @@ def _tests_ran(stdout, odoo_version, addon_name):
         assert not re.search(fr"{main_pkg}\.addons\.base\.tests\.\w+{suffix}", stdout)
 
 
+@pytest.mark.sequential
 def test_resetdb(
     cloned_template: Path,
     docker: LocalCommand,
@@ -115,9 +119,9 @@ def test_resetdb(
             assert _install_status("purchase") == "uninstalled"
             assert _install_status("sale") == "installed"
     finally:
-        # Imagine the user is in the odoo subrepo for this command
-        with local.cwd(tmp_path / "odoo" / "custom" / "src" / "odoo"):
-            invoke("stop", "--purge")
+        safe_stop_env(
+            tmp_path / "odoo" / "custom" / "src" / "odoo",
+        )
 
 
 @pytest.mark.sequential
@@ -160,9 +164,9 @@ def test_start(
             container_logs = docker_compose("logs", "odoo")
             assert "dev=reload" not in container_logs
     finally:
-        # Imagine the user is in the odoo subrepo for this command
-        with local.cwd(tmp_path / "odoo" / "custom" / "src" / "odoo"):
-            invoke("stop", "--purge")
+        safe_stop_env(
+            tmp_path,
+        )
 
 
 @pytest.mark.sequential
@@ -231,6 +235,6 @@ def test_install_test(
             stdout = _wait_for_test_to_start()
             assert "python -m debugpy" in stdout
     finally:
-        # Imagine the user is in the odoo subrepo for this command
-        with local.cwd(tmp_path / "odoo" / "custom" / "src" / "odoo"):
-            invoke("stop", "--purge")
+        safe_stop_env(
+            tmp_path,
+        )
