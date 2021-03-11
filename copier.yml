@@ -466,7 +466,7 @@ backup_dst:
 backup_image_version:
   type: str
   when: &backup_present "{{ backup_dst and true }}"
-  default: "1.0"
+  default: "latest"
   help: >-
     Doodba uses the docker-duplicity image to make the backups.
 

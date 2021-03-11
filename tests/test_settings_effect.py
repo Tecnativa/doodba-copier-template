@@ -13,7 +13,7 @@ from plumbum.cmd import docker_compose
     "backup_dst",
     (None, "s3://example", "s3+http://example", "boto3+s3://example", "sftp://example"),
 )
-@pytest.mark.parametrize("backup_image_version", ("1.0"))
+@pytest.mark.parametrize("backup_image_version", ("latest"))
 @pytest.mark.parametrize("smtp_relay_host", (None, "example"))
 def test_backup_config(
     backup_deletion: bool,
