@@ -29,6 +29,24 @@ def _install_status(module, dbname="devel"):
     ).strip()
 
 
+def _get_config_param(key, dbname="devel"):
+    return (
+        docker_compose(
+            "run",
+            "--rm",
+            "-e",
+            "LOG_LEVEL=WARNING",
+            "-e",
+            f"PGDATABASE={dbname}",
+            "odoo",
+            "psql",
+            "-tc",
+            f"select value from ir_config_parameter where key='{key}'",
+        ).strip()
+        or False
+    )
+
+
 def _wait_for_test_to_start():
     # Wait for test to start
     for _i in range(10):
@@ -88,12 +106,17 @@ def test_resetdb(
             # Imagine the user is in the odoo subrepo for these tasks
             with local.cwd(tmp_path / "odoo" / "custom" / "src" / "odoo"):
                 # This should install just "base"
-                stdout = invoke("resetdb")
+                stdout = invoke("resetdb", "--no-populate")
             assert "Creating database cache" in stdout
             assert "from template devel" in stdout
             assert _install_status("base") == "installed"
             assert _install_status("purchase") == "uninstalled"
             assert _install_status("sale") == "uninstalled"
+            assert not _get_config_param("report.url")
+            if supported_odoo_version >= 11:
+                stdout = invoke("resetdb", "--populate")  # (default)
+                # report.url should be set in the DB
+                assert _get_config_param("report.url") == "http://localhost:8069"
             # Install "purchase"
             stdout = invoke("resetdb", "-m", "purchase")
             assert "Creating database cache" in stdout
