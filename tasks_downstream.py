@@ -630,7 +630,7 @@ def stop(c, purge=False):
         "modules": "Comma-separated list of modules to install. Default: 'base'.",
     },
 )
-def resetdb(c, modules="base", dbname="devel"):
+def resetdb(c, modules="base", dbname="devel", populate=True):
     """Reset the specified database with the specified modules.
 
     Uses click-odoo-initdb behind the scenes, which has a caching system that
@@ -650,6 +650,8 @@ def resetdb(c, modules="base", dbname="devel"):
             env=UID_ENV,
             pty=True,
         )
+        if populate and ODOO_VERSION >= 11:
+            c.run(f"{_run} preparedb", env=UID_ENV, pty=True)
 
 
 @task(develop)
