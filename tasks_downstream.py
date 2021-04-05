@@ -528,6 +528,31 @@ def install(c, modules=None, cur_file=None, core=False, extra=False, private=Fal
         )
 
 
+def _get_module_dependencies(c, modules=None, core=False, extra=False, private=False):
+    """Returns a list of the addons' dependencies
+
+    By default, refers to the addon from directory being worked on,
+    unless other options are specified.
+    """
+    # Get list of dependencies for addon
+    cmd = "docker-compose run --rm odoo addons list --dependencies"
+    if core:
+        cmd += " --core"
+    if extra:
+        cmd += " --extra"
+    if private:
+        cmd += " --private"
+    if modules:
+        cmd += f" -w {modules}"
+    with c.cd(str(PROJECT_ROOT)):
+        dependencies = c.run(
+            cmd,
+            env=UID_ENV,
+            hide="stdout",
+        ).stdout.splitlines()[-1]
+    return dependencies
+
+
 def _test_in_debug_mode(c, odoo_command):
     with tempfile.NamedTemporaryFile(
         mode="w", suffix=".yaml"
@@ -681,14 +706,34 @@ def stop(c, purge=False):
     help={
         "dbname": "The DB that will be DESTROYED and recreated. Default: 'devel'.",
         "modules": "Comma-separated list of modules to install. Default: 'base'.",
+        "core": "Install all core addons. Default: False",
+        "extra": "Install all extra addons. Default: False",
+        "private": "Install all private addons. Default: False",
+        "dependencies": "Install only the dependencies of the specified addons."
+        "Default: False",
     },
 )
-def resetdb(c, modules="base", dbname="devel", populate=True):
+def resetdb(
+    c,
+    modules=None,
+    core=False,
+    extra=False,
+    private=False,
+    dbname="devel",
+    populate=True,
+    dependencies=False,
+):
     """Reset the specified database with the specified modules.
 
     Uses click-odoo-initdb behind the scenes, which has a caching system that
     makes DB resets quicker. See its docs for more info.
     """
+    if dependencies:
+        modules = _get_module_dependencies(c, modules, core, extra, private)
+    elif core or extra or private:
+        modules = _get_module_list(c, modules, core, extra, private)
+    else:
+        modules = modules or "base"
     with c.cd(str(PROJECT_ROOT)):
         c.run("docker-compose stop odoo", pty=True)
         _run = "docker-compose run --rm -l traefik.enable=false odoo"
