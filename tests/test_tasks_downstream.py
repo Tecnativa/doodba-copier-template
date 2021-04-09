@@ -9,7 +9,12 @@ from plumbum import ProcessExecutionError, local
 from plumbum.cmd import docker_compose, invoke
 from plumbum.machines.local import LocalCommand
 
-from .conftest import safe_stop_env, socket_is_open
+from .conftest import (
+    build_file_tree,
+    generate_test_addon,
+    safe_stop_env,
+    socket_is_open,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -114,7 +119,7 @@ def test_resetdb(
             assert _install_status("sale") == "uninstalled"
             assert not _get_config_param("report.url")
             if supported_odoo_version >= 11:
-                stdout = invoke("resetdb", "--populate")  # (default)
+                stdout = invoke("resetdb")  # --populate default
                 # report.url should be set in the DB
                 assert _get_config_param("report.url") == "http://localhost:8069"
             # Install "purchase"
@@ -257,6 +262,94 @@ def test_install_test(
             assert socket_is_open("127.0.0.1", int(supported_odoo_version) * 1000 + 899)
             stdout = _wait_for_test_to_start()
             assert "python -m debugpy" in stdout
+    finally:
+        safe_stop_env(
+            tmp_path,
+        )
+
+
+@pytest.mark.sequential
+def test_test_tasks(
+    cloned_template: Path,
+    docker: LocalCommand,
+    supported_odoo_version: float,
+    tmp_path: Path,
+):
+    """Test the tasks associated with the Odoo test flow.
+
+    On this test flow, the following tasks are tested:
+
+    - img-build
+    - git-aggregate
+    - stop --purge
+    - resetdb --dependencies
+    - test [options]
+    """
+    try:
+        with local.cwd(tmp_path):
+            copy(
+                src_path=str(cloned_template),
+                vcs_ref="HEAD",
+                force=True,
+                data={"odoo_version": supported_odoo_version},
+            )
+            # Imagine the user is in the src subfolder for these tasks
+            # and the DB is clean
+            with local.cwd(tmp_path / "odoo" / "custom" / "src"):
+                invoke("img-build")
+                invoke("git-aggregate")
+            # Prepare environment with "note" dependencies
+            invoke("resetdb", "-m", "note", "--dependencies")
+            assert _install_status("mail") == "installed"
+            # Test "note" simple call in init mode (default)
+            assert _install_status("note") == "uninstalled"
+            stdout = invoke("test", "-m", "note", retcode=None)
+            # Ensure "note" was installed and tests ran
+            assert _install_status("note") == "installed"
+            _tests_ran(stdout, supported_odoo_version, "note")
+            # Prepare environment for all private addons and "test" them
+            with local.cwd(tmp_path / "odoo" / "custom" / "src" / "private"):
+                generate_test_addon(
+                    "test_module", supported_odoo_version, dependencies='["mail"]'
+                )
+                invoke("resetdb", "--private", "--dependencies")
+                assert _install_status("mail") == "installed"
+                # Test "test_module" simple call in init mode (default)
+                assert _install_status("test_module") == "uninstalled"
+                stdout = invoke("test", "--private", retcode=None)
+                # Ensure "test_module" was installed and tests ran
+                assert _install_status("test_module") == "installed"
+            # Prepare environment for OCA addons and test them
+            if supported_odoo_version >= 9:
+                with local.cwd(tmp_path / "odoo" / "custom" / "src"):
+                    build_file_tree(
+                        {
+                            "addons.yaml": """\
+                            account-invoicing:
+                                - account_invoice_refund_link
+                        """,
+                        }
+                    )
+                    invoke("git-aggregate")
+                    invoke("resetdb", "--extra", "--private", "--dependencies")
+                    assert (
+                        _install_status("mail") == "installed"
+                    )  # dependency of test_module
+                    assert (
+                        _install_status("account") == "installed"
+                    )  # dependency of account_invoice_refund_link
+                    # Test "account_invoice_refund_link"
+                    assert _install_status("test_module") == "uninstalled"
+                    assert (
+                        _install_status("account_invoice_refund_link") == "uninstalled"
+                    )
+                    stdout = invoke("test", "--private", "--extra", retcode=None)
+                    # Ensure "test_module" and "account_invoice_refund_link" were installed
+                    assert _install_status("test_module") == "installed"
+                    assert _install_status("account_invoice_refund_link") == "installed"
+                    _tests_ran(
+                        stdout, supported_odoo_version, "account_invoice_refund_link"
+                    )
     finally:
         safe_stop_env(
             tmp_path,
