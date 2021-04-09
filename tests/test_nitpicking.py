@@ -359,6 +359,7 @@ def test_pre_commit_in_subproject(
                     "name": "test_module",
                     "license": "AGPL-3",
                     "version": "{supported_odoo_version}.1.0.0",
+                    "depends": ["base"],
                     "installable": True,
                     "auto_install": False,
                 {"}"}
@@ -384,7 +385,7 @@ def test_pre_commit_in_subproject(
 
 
                 class ResPartner(models.Model):
-                    _name = "res.partner"
+                    _inherit = "res.partner"
 
                     def some_method(self, test):
                         """some weird

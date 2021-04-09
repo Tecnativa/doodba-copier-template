@@ -189,7 +189,9 @@ def socket_is_open(host, port):
     return False
 
 
-def generate_test_addon(addon_name, odoo_version, installable=True, ugly=False):
+def generate_test_addon(
+    addon_name, odoo_version, installable=True, ugly=False, dependencies=None
+):
     """Generates a simple addon for testing
     Can be an ugly addon to trigger pre-commit formatting
     """
@@ -210,6 +212,7 @@ def generate_test_addon(addon_name, odoo_version, installable=True, ugly=False):
                     {"{"}
                     'name':"{addon_name}",'license':'AGPL-3',
                     'version':'{odoo_version}.1.0.0',
+                    'depends': {dependencies or '["base"]'},
                     'installable': {installable},
                     'auto_install': False
                     {"}"}
@@ -221,7 +224,7 @@ def generate_test_addon(addon_name, odoo_version, installable=True, ugly=False):
                     import io,sys,odoo
                     _logger=getLogger(__name__)
                     class ResPartner(models.Model):
-                        _name='res.partner'
+                        _inherit='res.partner'
                         def some_method(self,test):
                             '''some weird
                                 docstring'''
@@ -237,6 +240,7 @@ def generate_test_addon(addon_name, odoo_version, installable=True, ugly=False):
                         "name": "{addon_name}",
                         "license": "AGPL-3",
                         "version": "{odoo_version}.1.0.0",
+                        "depends": {dependencies or '["base"]'},
                         "installable": {installable},
                         "auto_install": False,
                     {"}"}
@@ -256,7 +260,7 @@ def generate_test_addon(addon_name, odoo_version, installable=True, ugly=False):
 
 
                     class ResPartner(models.Model):
-                        _name = "res.partner"
+                        _inherit = "res.partner"
 
                         def some_method(self, test):
                             """some weird
