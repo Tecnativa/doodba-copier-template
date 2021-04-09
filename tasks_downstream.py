@@ -555,10 +555,40 @@ def _test_in_debug_mode(c, odoo_command):
         time.sleep(SERVICES_WAIT_TIME)
 
 
+def _get_module_list(c, modules=None, core=False, extra=False, private=False):
+    """Returns a list of addons according to the passed parameters.
+
+    By default, refers to the addon from directory being worked on,
+    unless other options are specified.
+    """
+    # Get list of dependencies for addon
+    cmd = "docker-compose run --rm odoo addons list"
+    if core:
+        cmd += " --core"
+    if extra:
+        cmd += " --extra"
+    if private:
+        cmd += " --private"
+    if modules:
+        cmd += f" -w {modules}"
+    with c.cd(str(PROJECT_ROOT)):
+        module_list = c.run(
+            cmd,
+            env=UID_ENV,
+            pty=True,
+            hide="stdout",
+        ).stdout.splitlines()[-1]
+    return module_list
+
+
 @task(
     develop,
     help={
         "modules": "Comma-separated list of modules to test.",
+        "core": "Test all core addons. Default: False",
+        "extra": "Test all extra addons. Default: False",
+        "private": "Test all private addons. Default: False",
+        "skip": "List of addons to skip. Default: []",
         "debugpy": "Whether or not to run tests in a VSCode debugging session. "
         "Default: False",
         "cur-file": "Path to the current file."
@@ -566,7 +596,17 @@ def _test_in_debug_mode(c, odoo_command):
         "mode": "Mode in which tests run. Options: ['init'(default), 'update']",
     },
 )
-def test(c, modules=None, debugpy=False, cur_file=None, mode="init"):
+def test(
+    c,
+    modules=None,
+    core=False,
+    extra=False,
+    private=False,
+    skip=None,
+    debugpy=False,
+    cur_file=None,
+    mode="init",
+):
     """Run Odoo tests
 
     By default, tests addon from directory being worked on,
@@ -574,17 +614,18 @@ def test(c, modules=None, debugpy=False, cur_file=None, mode="init"):
 
     NOTE: Odoo must be restarted manually after this to go back to normal mode
     """
-    if not modules:
+    if not (modules or core or extra or private):
         cur_module = _get_cwd_addon(cur_file or Path.cwd())
         if not cur_module:
             raise exceptions.ParseError(
-                msg="Odoo addon to test not found. "
-                "You must provide at least one option for modules/file "
-                "or be in a subdirectory of one. "
-                "See --help for details."
+                msg="Odoo addon to install not found. "
+                "You must provide at least one option for modules"
+                " or be in a subdirectory of one."
+                " See --help for details."
             )
-        else:
-            modules = cur_module
+        modules = cur_module
+    else:
+        modules = _get_module_list(c, modules, core, extra, private)
     odoo_command = ["odoo", "--test-enable", "--stop-after-init", "--workers=0"]
     if mode == "init":
         odoo_command.append("-i")
@@ -595,6 +636,18 @@ def test(c, modules=None, debugpy=False, cur_file=None, mode="init"):
             msg="Available modes are 'init' or 'update'. See --help for details."
         )
     odoo_command.append(modules)
+    # Skip test in some modules
+    modules_list = modules.split(",")
+    for m_to_skip in skip or []:
+        if m_to_skip not in modules:
+            _logger.warn(
+                "%s not found in the list of addons to test: %s" % (m_to_skip, modules)
+            )
+        modules_list.remove(m_to_skip)
+    modules = ",".join(modules_list)
+    if ODOO_VERSION >= 12:
+        # Limit tests to explicit list
+        odoo_command.extend(["--test-tags", modules])
     if debugpy:
         _test_in_debug_mode(c, odoo_command)
     else:
