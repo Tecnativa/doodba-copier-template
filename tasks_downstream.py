@@ -709,6 +709,8 @@ def stop(c, purge=False):
         "core": "Install all core addons. Default: False",
         "extra": "Install all extra addons. Default: False",
         "private": "Install all private addons. Default: False",
+        "populate": "Run preparedb task right after (only available for v11+)."
+        " Default: True",
         "dependencies": "Install only the dependencies of the specified addons."
         "Default: False",
     },
@@ -748,8 +750,31 @@ def resetdb(
             env=UID_ENV,
             pty=True,
         )
-        if populate and ODOO_VERSION >= 11:
-            c.run(f"{_run} preparedb", env=UID_ENV, pty=True)
+    if populate and ODOO_VERSION < 11:
+        _logger.warn(
+            "Skipping populate task as it is not available in v%s" % ODOO_VERSION
+        )
+        populate = False
+    if populate:
+        preparedb(c)
+
+
+@task(develop)
+def preparedb(c):
+    """Run the `preparedb` script inside the container
+
+    Populates the DB with some helpful config
+    """
+    if ODOO_VERSION < 11:
+        raise exceptions.PlatformError(
+            "The preparedb script is not available for Doodba environments bellow v11."
+        )
+    with c.cd(str(PROJECT_ROOT)):
+        c.run(
+            "docker-compose run --rm -l traefik.enable=false odoo preparedb",
+            env=UID_ENV,
+            pty=True,
+        )
 
 
 @task(develop)

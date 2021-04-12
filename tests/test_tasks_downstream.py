@@ -118,10 +118,6 @@ def test_resetdb(
             assert _install_status("purchase") == "uninstalled"
             assert _install_status("sale") == "uninstalled"
             assert not _get_config_param("report.url")
-            if supported_odoo_version >= 11:
-                stdout = invoke("resetdb")  # --populate default
-                # report.url should be set in the DB
-                assert _get_config_param("report.url") == "http://localhost:8069"
             # Install "purchase"
             stdout = invoke("resetdb", "-m", "purchase")
             assert "Creating database cache" in stdout
@@ -146,6 +142,18 @@ def test_resetdb(
             assert _install_status("base") == "installed"
             assert _install_status("purchase") == "uninstalled"
             assert _install_status("sale") == "installed"
+            if supported_odoo_version >= 11:
+                invoke("preparedb")
+                assert _get_config_param("report.url") == "http://localhost:8069"
+                stdout = invoke("resetdb")  # --populate default
+                # report.url should be set in the DB
+                assert _get_config_param("report.url") == "http://localhost:8069"
+            else:
+                invoke(
+                    "resetdb"
+                )  # Despite new default --populate, shouldn't introduce error
+                with pytest.raises(ProcessExecutionError):
+                    invoke("preparedb")
     finally:
         safe_stop_env(
             tmp_path / "odoo" / "custom" / "src" / "odoo",
