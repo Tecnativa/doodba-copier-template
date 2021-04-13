@@ -111,7 +111,6 @@ def write_code_workspace_file(c, cw_path=None):
     cw_config["settings"].update(
         {
             "python.autoComplete.extraPaths": [f"{str(SRC_PATH)}/odoo"],
-            "python.languageServer": "Jedi",
             "python.linting.flake8Enabled": True,
             "python.linting.ignorePatterns": [f"{str(SRC_PATH)}/odoo/**/*.py"],
             "python.linting.pylintArgs": [
