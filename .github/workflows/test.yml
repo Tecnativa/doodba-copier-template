@@ -78,10 +78,8 @@ jobs:
       # Non concurrent first (in parallel)
       - run: poetry run invoke test
         env:
-          DOCKER_TEST: 1
           SELECTED_ODOO_VERSIONS: ${{ matrix.odoo-version }}
       # Concurrent tests (isolated)
       - run: poetry run invoke test --sequential
         env:
-          DOCKER_TEST: 1
           SELECTED_ODOO_VERSIONS: ${{ matrix.odoo-version }}

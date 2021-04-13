@@ -35,6 +35,15 @@ SELECTED_ODOO_VERSIONS = (
 ALL_TRAEFIK_VERSIONS = ("latest", "1.7")
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--skip-docker-tests",
+        action="store_true",
+        default=False,
+        help="Skip Docker tests",
+    )
+
+
 @pytest.fixture(params=ALL_ODOO_VERSIONS)
 def any_odoo_version(request) -> float:
     """Returns any usable odoo version."""
@@ -79,9 +88,9 @@ def cloned_template(tmp_path_factory):
 
 
 @pytest.fixture()
-def docker() -> LocalCommand:
-    if os.environ.get("DOCKER_TEST") != "1":
-        pytest.skip("Missing DOCKER_TEST=1 env variable")
+def docker(request) -> LocalCommand:
+    if request.config.getoption("--skip-docker-tests"):
+        pytest.skip("Skipping docker tests")
     try:
         from plumbum.cmd import docker
     except ImportError:

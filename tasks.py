@@ -67,7 +67,7 @@ def lint(c, verbose=False):
 
 
 @task(develop)
-def test(c, verbose=False, sequential=False):
+def test(c, verbose=False, sequential=False, docker=True):
     """Test project.
 
     Add --sequential to run only sequential tests, with parallelization disabled.
@@ -75,6 +75,8 @@ def test(c, verbose=False, sequential=False):
     flags = ["--color=yes"]
     if verbose:
         flags.append("-vv")
+    if not docker:
+        flags.append("--skip-docker-tests")
     if sequential:
         flags.extend(["-m", "sequential"])
     else:
