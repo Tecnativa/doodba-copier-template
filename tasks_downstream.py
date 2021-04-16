@@ -678,7 +678,7 @@ def test(
     if debugpy:
         _test_in_debug_mode(c, odoo_command)
     else:
-        cmd = ["docker-compose", "run", "--rm", "odoo"]
+        cmd = ["docker-compose", "run", "--rm", "-e", "DB_FILTER=devel", "odoo"]
         cmd.extend(odoo_command)
         with c.cd(str(PROJECT_ROOT)):
             c.run(
