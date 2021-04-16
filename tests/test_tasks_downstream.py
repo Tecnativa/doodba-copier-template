@@ -315,20 +315,20 @@ def test_test_tasks(
             # Ensure "note" was installed and tests ran
             assert _install_status("note") == "installed"
             _tests_ran(stdout, supported_odoo_version, "note")
-            # Prepare environment for all private addons and "test" them
-            with local.cwd(tmp_path / "odoo" / "custom" / "src" / "private"):
-                generate_test_addon(
-                    "test_module", supported_odoo_version, dependencies='["mail"]'
-                )
-                invoke("resetdb", "--private", "--dependencies")
-                assert _install_status("mail") == "installed"
-                # Test "test_module" simple call in init mode (default)
-                assert _install_status("test_module") == "uninstalled"
-                stdout = invoke("test", "--private", retcode=None)
-                # Ensure "test_module" was installed and tests ran
-                assert _install_status("test_module") == "installed"
-            # Prepare environment for OCA addons and test them
-            if supported_odoo_version >= 9:
+            if supported_odoo_version >= 11:
+                # Prepare environment for all private addons and "test" them
+                with local.cwd(tmp_path / "odoo" / "custom" / "src" / "private"):
+                    generate_test_addon(
+                        "test_module", supported_odoo_version, dependencies='["mail"]'
+                    )
+                    invoke("resetdb", "--private", "--dependencies")
+                    assert _install_status("mail") == "installed"
+                    # Test "test_module" simple call in init mode (default)
+                    assert _install_status("test_module") == "uninstalled"
+                    stdout = invoke("test", "--private", retcode=None)
+                    # Ensure "test_module" was installed and tests ran
+                    assert _install_status("test_module") == "installed"
+                # Prepare environment for OCA addons and test them
                 with local.cwd(tmp_path / "odoo" / "custom" / "src"):
                     build_file_tree(
                         {
