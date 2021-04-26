@@ -110,22 +110,25 @@ def update_test_samples(c):
         odoo_versions = copier_conf["odoo_version"]["choices"]
         samples = Path("tests", "samples")
         for odoo_version in odoo_versions:
-            with tempfile.TemporaryDirectory(prefix="dct-samples") as copy_path:
+            with tempfile.TemporaryDirectory(
+                prefix="dct-samples"
+            ) as dct_copy_path, tempfile.TemporaryDirectory(
+                prefix="oca-samples"
+            ) as oca_copy_path:
                 c.run(
-                    "poetry run copier -fr HEAD -x '**' -x '!.pylintrc*' -x '!tasks.py' "
-                    f"-d odoo_version={odoo_version} copy . {copy_path}"
+                    "poetry run copier -fr HEAD -x '**' -x '!.pylintrc*' -x '!tasks.py' -x '!common.yaml' "
+                    f"-d odoo_version={odoo_version} copy . {dct_copy_path}"
+                )
+                oca_template_version = odoo_version if odoo_version >= 13 else "13.0"
+                c.run(
+                    "poetry run copier -fr HEAD -x '**' -x '!.pylintrc*' "
+                    f"-d odoo_version={oca_template_version} copy vendor/oca-addons-repo-template {oca_copy_path}"
                 )
                 for file_name in (".pylintrc", ".pylintrc-mandatory"):
                     with open(
                         samples / "mqt-diffs" / f"v{odoo_version}-{file_name}.diff", "w"
                     ) as fd:
-                        copied = Path(copy_path, file_name)
-                        mqt = Path(
-                            "vendor",
-                            "maintainer-quality-tools",
-                            "sample_files",
-                            "pre-commit-13.0",
-                            file_name,
-                        )
+                        copied = Path(dct_copy_path, file_name)
+                        mqt = Path(oca_copy_path, file_name)
                         fd.write(c.run(f"diff {copied} {mqt}", warn=True).stdout)
         c.run("poetry run pre-commit run -a", warn=True)

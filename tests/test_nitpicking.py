@@ -115,11 +115,20 @@ def test_mqt_configs_synced(
         force=True,
         data={"odoo_version": any_odoo_version},
     )
-    mqt = Path("vendor", "maintainer-quality-tools", "sample_files", "pre-commit-13.0")
+    tmp_oca_path = tmp_path / ".." / "oca-addons-repo-files"
+    tmp_oca_path.mkdir()
+    copy(
+        str(Path("vendor", "oca-addons-repo-template")),
+        tmp_oca_path,
+        vcs_ref="HEAD",
+        force=True,
+        data={"odoo_version": any_odoo_version if any_odoo_version >= 13 else "13.0"},
+        exclude=["**", "!.pylintrc*"],
+    )
     good_diffs = Path("tests", "samples", "mqt-diffs")
     for conf in (".pylintrc", ".pylintrc-mandatory"):
         good = (good_diffs / f"v{any_odoo_version}-{conf}.diff").read_text()
-        tested = diff(tmp_path / conf, mqt / conf, retcode=1)
+        tested = diff(tmp_path / conf, tmp_oca_path / conf, retcode=1)
         assert good == tested
 
 
