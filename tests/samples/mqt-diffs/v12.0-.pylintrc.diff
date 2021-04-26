@@ -8,3 +8,12 @@
 ---
 > license_allowed=AGPL-3,GPL-2,GPL-2 or any later version,GPL-3,GPL-3 or any later version,LGPL-3
 > valid_odoo_versions=13.0
+30a31
+>     development-status-allowed,
+48,49d48
+<     missing-import-error,
+<     missing-manifest-dependency,
+74a74
+>     missing-manifest-dependency,
+82a83
+> 
