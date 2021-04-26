@@ -1,6 +1,7 @@
 default_language_version:
   python: python3
   node: "14.14.0"
+exclude: ^tests/samples/mqt-diffs/.*
 repos:
   - repo: local
     hooks:
