@@ -93,10 +93,17 @@ Start Odoo with:
 invoke start
 ```
 
+You can also apply some common configurations to help you setup the devel environment
+(like setting the `report.url` parameter)::
+
+```bash
+invoke preparedb
+```
+
 All of the above in one shot:
 
 ```bash
-invoke img-pull img-build --pull git-aggregate resetdb start
+invoke img-pull img-build git-aggregate resetdb start
 ```
 
 See the other tasks we ship for you with:
