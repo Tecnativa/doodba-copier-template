@@ -1,28 +1,29 @@
 ---
 name: Bug report
 about: Report a bug
-title: ''
+title: ""
 labels: bug
-assignees: ''
-
+assignees: ""
 ---
 
 <!-- Provide a general summary of the issue in the Title above.
 Before opening the issue, please check that you are using the latest version of the template: https://github.com/Tecnativa/doodba-copier-template/releases/latest and that there isn't another issue adressing the same problem already created -->
 
-## Describe the bug 
+## Describe the bug
+
 A clear and concise description of what the bug is.
 
 ## To Reproduce
+
 **Affected versions**:
 
 Steps to reproduce the behavior:
-1. 
-2. 
+
+1.
+2.
 3.
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+**Expected behavior** A clear and concise description of what you expected to happen.
 
-**Additional context**
-Add any other context about the problem here. (e.g. OS, Docker version, ...)
+**Additional context** Add any other context about the problem here. (e.g. OS, Docker
+version, ...)
