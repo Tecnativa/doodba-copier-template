@@ -358,6 +358,33 @@ def test_test_tasks(
                     _tests_ran(
                         stdout, supported_odoo_version, "account_invoice_refund_link"
                     )
+            # Test --test-tags
+            if supported_odoo_version >= 12:
+                with local.cwd(tmp_path / "odoo" / "custom" / "src" / "private"):
+                    generate_test_addon(
+                        "test_module",
+                        supported_odoo_version,
+                        dependencies='["account_invoice_refund_link"]',
+                    )
+                    # Run again but skip tests
+                    invoke("resetdb", "--extra", "--private", "--dependencies")
+                    stdout = invoke(
+                        "test",
+                        "--private",
+                        "--extra",
+                        "--skip",
+                        "account_invoice_refund_link",
+                        retcode=None,
+                    )
+                    assert _install_status("test_module") == "installed"
+                    assert _install_status("account_invoice_refund_link") == "installed"
+                    # Tests for account_invoice_refund_link should not run
+                    with pytest.raises(AssertionError):
+                        _tests_ran(
+                            stdout,
+                            supported_odoo_version,
+                            "account_invoice_refund_link",
+                        )
     finally:
         safe_stop_env(
             tmp_path,
