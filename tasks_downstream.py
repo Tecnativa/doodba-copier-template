@@ -627,7 +627,7 @@ def test(
     core=False,
     extra=False,
     private=False,
-    skip=None,
+    skip="",
     debugpy=False,
     cur_file=None,
     mode="init",
@@ -660,16 +660,18 @@ def test(
         raise exceptions.ParseError(
             msg="Available modes are 'init' or 'update'. See --help for details."
         )
-    odoo_command.append(modules)
     # Skip test in some modules
     modules_list = modules.split(",")
-    for m_to_skip in skip or []:
+    for m_to_skip in skip.split(","):
+        if not m_to_skip:
+            continue
         if m_to_skip not in modules:
             _logger.warn(
                 "%s not found in the list of addons to test: %s" % (m_to_skip, modules)
             )
         modules_list.remove(m_to_skip)
     modules = ",".join(modules_list)
+    odoo_command.append(modules)
     if ODOO_VERSION >= 12:
         # Limit tests to explicit list
         odoo_command.extend(["--test-tags", modules])
