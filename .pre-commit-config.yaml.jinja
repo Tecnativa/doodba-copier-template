@@ -34,7 +34,13 @@ repos:
     rev: v1.4
     hooks:
       - id: autoflake
-        args: ["-i", "--ignore-init-module-imports"]
+        args:
+          - --expand-star-imports
+          - --ignore-init-module-imports
+          - --in-place
+          - --remove-all-unused-imports
+          - --remove-duplicate-keys
+          - --remove-unused-variables
   - repo: https://github.com/psf/black
     rev: 20.8b1
     hooks:
