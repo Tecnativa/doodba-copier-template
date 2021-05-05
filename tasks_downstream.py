@@ -620,8 +620,6 @@ def _get_module_list(c, modules=None, core=False, extra=False, private=False):
         "cur-file": "Path to the current file."
         " Addon name will be obtained from there to run tests",
         "mode": "Mode in which tests run. Options: ['init'(default), 'update']",
-        "db_filter": "DB_FILTER regex to pass to the test container Set to ''"
-        " to disable. Default: '^devel$'",
     },
 )
 def test(
@@ -634,7 +632,6 @@ def test(
     debugpy=False,
     cur_file=None,
     mode="init",
-    db_filter="^devel$",
 ):
     """Run Odoo tests
 
@@ -683,8 +680,6 @@ def test(
         _test_in_debug_mode(c, odoo_command)
     else:
         cmd = ["docker-compose", "run", "--rm"]
-        if db_filter:
-            cmd.extend(["-e", "DB_FILTER='%s'" % db_filter])
         cmd.append("odoo")
         cmd.extend(odoo_command)
         with c.cd(str(PROJECT_ROOT)):
