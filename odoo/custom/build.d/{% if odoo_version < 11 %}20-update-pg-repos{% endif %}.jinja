@@ -1,0 +1,6 @@
+#!/bin/bash
+# First one removes the current line
+echo "deb https://apt-archive.postgresql.org/pub/repos/apt jessie-pgdg-archive main" > /etc/apt/sources.list.d/postgresql.list
+# Second one appends
+echo "deb-src https://apt-archive.postgresql.org/pub/repos/apt jessie-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list
+apt update

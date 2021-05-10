@@ -6,6 +6,7 @@ Contains common helpers to develop using this child project.
 """
 import json
 import os
+import stat
 import tempfile
 import time
 from itertools import chain
@@ -815,3 +816,16 @@ def logs(c, tail=10, follow=True, container=None):
         cmd += f" {container.replace(',', ' ')}"
     with c.cd(str(PROJECT_ROOT)):
         c.run(cmd, pty=True)
+
+
+@task
+def after_update(c):
+    """Execute some actions after a copier update or init"""
+    # Make custom build script executable
+    if ODOO_VERSION < 11:
+        script_file = Path(
+            PROJECT_ROOT, "odoo", "custom", "build.d", "20-update-pg-repos"
+        )
+        cur_stat = script_file.stat()
+        # Like chmod ug+x
+        script_file.chmod(cur_stat.st_mode | stat.S_IXUSR | stat.S_IXGRP)
