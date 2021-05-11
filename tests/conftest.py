@@ -289,10 +289,13 @@ def _containers_running(exec_path):
         return False
 
 
-def safe_stop_env(exec_path):
+def safe_stop_env(exec_path, purge=True):
     with local.cwd(exec_path):
         try:
-            invoke("stop", "--purge")
+            args = ["stop"]
+            if purge:
+                args.append("--purge")
+            invoke.run(args)
         except ProcessExecutionError as e:
             if (
                 "has active endpoints" not in e.stderr
@@ -301,4 +304,4 @@ def safe_stop_env(exec_path):
                 raise e
             assert not _containers_running(
                 exec_path
-            ), "Containers running or not removed. 'stop --purge' command did not work."
+            ), "Containers running or not removed. 'stop [--purge]' command did not work."
