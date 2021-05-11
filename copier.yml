@@ -41,6 +41,7 @@ _skip_if_exists:
   - odoo/custom/ssh/*
 
 _tasks:
+  - invoke after-update
   - invoke develop
 
 _migrations:
