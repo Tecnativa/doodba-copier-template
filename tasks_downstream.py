@@ -675,7 +675,9 @@ def test(
     odoo_command.append(modules)
     if ODOO_VERSION >= 12:
         # Limit tests to explicit list
-        odoo_command.extend(["--test-tags", modules])
+        # Filter spec format (comma-separated)
+        # [-][tag][/module][:class][.method]
+        odoo_command.extend(["--test-tags", "/" + ",/".join(modules_list)])
     if debugpy:
         _test_in_debug_mode(c, odoo_command)
     else:
