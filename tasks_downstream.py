@@ -698,9 +698,9 @@ def test(
 )
 def stop(c, purge=False):
     """Stop and (optionally) purge environment."""
-    cmd = "docker-compose down"
+    cmd = "docker-compose down --remove-orphans"
     if purge:
-        cmd += " --remove-orphans --rmi local --volumes"
+        cmd += " --rmi local --volumes"
     with c.cd(str(PROJECT_ROOT)):
         c.run(cmd, pty=True)
 
