@@ -111,7 +111,7 @@ odoo_dbfilter:
 odoo_proxy:
   default: traefik
   choices:
-    No proxy (dangerous for production): null
+    No proxy (dangerous for production): ""
     Traefik: traefik
     Other proxy (it's up to you!): other
   help: >-
@@ -184,7 +184,7 @@ project_license:
     So, what's your project's license?
   default: BSL-1.0
   choices:
-    No license: null
+    No license: ""
     Apache License 2.0: Apache-2.0
     Boost Software License 1.0: BSL-1.0
     GNU Affero General Public License (AGPL) 3.0 or later: AGPL-3.0-or-later
@@ -330,16 +330,16 @@ cidr_whitelist:
     ⚠️ It must be a list. And this is only supported if you deploy with Traefik 2+.
 
 postgres_version:
-  default: 13
+  default: "13"
   help: >-
     Which PostgreSQL version do you want to deploy?
   choices:
-    I will use an external PostgreSQL server: null
-    "9.6": 9.6
-    "10": 10
-    "11": 11
-    "12": 12
-    "13": 13
+    I will use an external PostgreSQL server: ""
+    "9.6": "9.6"
+    "10": "10"
+    "11": "11"
+    "12": "12"
+    "13": "13"
 
 postgres_username:
   type: str
