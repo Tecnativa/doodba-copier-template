@@ -265,7 +265,6 @@ def test_install_test(
                 stdout = invoke("test", retcode=None)
                 _tests_ran(stdout, supported_odoo_version, "note")
             # Test --debugpy and wait time call with
-            invoke("stop")
             safe_stop_env(tmp_path, purge=False)
             invoke("test", "-m", "note", "--debugpy", retcode=None)
             assert socket_is_open("127.0.0.1", int(supported_odoo_version) * 1000 + 899)
