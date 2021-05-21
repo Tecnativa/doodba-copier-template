@@ -193,7 +193,7 @@ def test_start(
             assert "Reinitialized existing Git repository" in stdout
             assert "pre-commit installed" in stdout
             # Test "--debugpy and wait time call
-            invoke("stop")
+            safe_stop_env(tmp_path)
             stdout = invoke("start", "--debugpy")
             assert socket_is_open("127.0.0.1", int(supported_odoo_version) * 1000 + 899)
             # Check if auto-reload is disabled
