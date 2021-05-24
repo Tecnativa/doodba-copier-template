@@ -11,7 +11,7 @@ version: "2.4"
 
 services:
   odoo_proxy:
-    image: tecnativa/whitelist
+    image: ghcr.io/tecnativa/docker-whitelist:latest
     depends_on:
       - odoo
     networks: &public
@@ -51,6 +51,7 @@ services:
       WDB_WEB_PORT: "{{ macros.version_major(odoo_version) }}984"
       # To avoid installing demo data export DOODBA_WITHOUT_DEMO=all
       WITHOUT_DEMO: "${DOODBA_WITHOUT_DEMO-false}"
+      DB_FILTER: "^devel"
     volumes:
       - ./odoo/custom:/opt/odoo/custom:ro,z
       - ./odoo/auto:/opt/odoo/auto:rw,z
@@ -114,7 +115,7 @@ services:
   # Whitelist outgoing traffic for tests, reports, etc.
 {%- for host in whitelisted_hosts %}
   proxy_{{ host|replace(".", "_") }}:
-    image: tecnativa/whitelist
+    image: ghcr.io/tecnativa/docker-whitelist:latest
     networks:
       default:
         aliases:

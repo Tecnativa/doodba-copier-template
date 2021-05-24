@@ -93,10 +93,17 @@ Start Odoo with:
 invoke start
 ```
 
+You can also apply some common configurations to help you setup the devel environment
+(like setting the `report.url` parameter)::
+
+```bash
+invoke preparedb
+```
+
 All of the above in one shot:
 
 ```bash
-invoke img-pull img-build --pull git-aggregate resetdb start
+invoke img-pull img-build git-aggregate resetdb start
 ```
 
 See the other tasks we ship for you with:
@@ -222,8 +229,8 @@ docker-compose -f prod.yaml up -d
 #### Backups
 
 Backups are only available in the production environment. They are provided by
-[tecnativa/duplicity:postgres-s3](https://github.com/Tecnativa/docker-duplicity). The
-structure of the backed up folder:
+[docker-duplicity](https://github.com/Tecnativa/docker-duplicity). The structure of the
+backed up folder:
 
 ```
 ├── prod.sql
@@ -322,7 +329,7 @@ networks:
 
 services:
   cdnjs_cloudflare_com:
-    image: tecnativa/whitelist
+    image: ghcr.io/tecnativa/docker-whitelist
     restart: unless-stopped
     networks:
       public:
@@ -334,7 +341,7 @@ services:
       PRE_RESOLVE: 1
 
   fonts_googleapis_com:
-    image: tecnativa/whitelist
+    image: ghcr.io/tecnativa/docker-whitelist
     restart: unless-stopped
     networks:
       public:
@@ -346,7 +353,7 @@ services:
       PRE_RESOLVE: 1
 
   fonts_gstatic_com:
-    image: tecnativa/whitelist
+    image: ghcr.io/tecnativa/docker-whitelist
     restart: unless-stopped
     networks:
       public:
@@ -358,7 +365,7 @@ services:
       PRE_RESOLVE: 1
 
   www_google_com:
-    image: tecnativa/whitelist
+    image: ghcr.io/tecnativa/docker-whitelist
     restart: unless-stopped
     networks:
       public:
@@ -370,7 +377,7 @@ services:
       PRE_RESOLVE: 1
 
   www_gravatar_com:
-    image: tecnativa/whitelist
+    image: ghcr.io/tecnativa/docker-whitelist
     restart: unless-stopped
     networks:
       public:
@@ -584,7 +591,7 @@ adding the whitelist proxy like this to your docker-compose.yml:
   ...
 
   maxmind_proxy:
-    image: tecnativa/whitelist
+    image: ghcr.io/tecnativa/docker-whitelist
     networks:
       default:
         aliases:

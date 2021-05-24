@@ -115,11 +115,20 @@ def test_mqt_configs_synced(
         force=True,
         data={"odoo_version": any_odoo_version},
     )
-    mqt = Path("vendor", "maintainer-quality-tools", "sample_files", "pre-commit-13.0")
+    tmp_oca_path = tmp_path / ".." / "oca-addons-repo-files"
+    tmp_oca_path.mkdir()
+    copy(
+        str(Path("vendor", "oca-addons-repo-template")),
+        tmp_oca_path,
+        vcs_ref="HEAD",
+        force=True,
+        data={"odoo_version": any_odoo_version if any_odoo_version >= 13 else "13.0"},
+        exclude=["**", "!.pylintrc*"],
+    )
     good_diffs = Path("tests", "samples", "mqt-diffs")
     for conf in (".pylintrc", ".pylintrc-mandatory"):
         good = (good_diffs / f"v{any_odoo_version}-{conf}.diff").read_text()
-        tested = diff(tmp_path / conf, mqt / conf, retcode=1)
+        tested = diff(tmp_path / conf, tmp_oca_path / conf, retcode=1)
         assert good == tested
 
 
@@ -359,6 +368,7 @@ def test_pre_commit_in_subproject(
                     "name": "test_module",
                     "license": "AGPL-3",
                     "version": "{supported_odoo_version}.1.0.0",
+                    "depends": ["base"],
                     "installable": True,
                     "auto_install": False,
                 {"}"}
@@ -384,7 +394,7 @@ def test_pre_commit_in_subproject(
 
 
                 class ResPartner(models.Model):
-                    _name = "res.partner"
+                    _inherit = "res.partner"
 
                     def some_method(self, test):
                         """some weird

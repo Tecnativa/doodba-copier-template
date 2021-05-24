@@ -50,7 +50,7 @@ services:
   {%- if smtp_relay_host %}
 
   smtpreal:
-    image: tvial/docker-mailserver:latest
+    image: ghcr.io/docker-mailserver/docker-mailserver:{{ smtp_relay_version }}
     domainname: "{{ smtp_canonical_default }}"
     stop_grace_period: 1m
     volumes:
@@ -83,7 +83,7 @@ services:
   {%- if backup_dst %}
 
   backup:
-    image: tecnativa/duplicity:postgres{% if backup_dst.startswith(('boto3+s3://', 's3://', 's3+http://')) %}-s3{% endif %}
+    image: ghcr.io/tecnativa/docker-duplicity-postgres{% if backup_dst.startswith(('boto3+s3://', 's3://', 's3+http://')) %}-s3{% endif %}:{{ backup_image_version }}
     hostname: backup
     {%- if macros.first_main_domain(domains_prod) %}
     domainname: {{ macros.first_main_domain(domains_prod) }}

@@ -41,6 +41,7 @@ _skip_if_exists:
   - odoo/custom/ssh/*
 
 _tasks:
+  - invoke after-update
   - invoke develop
 
 _migrations:
@@ -411,6 +412,17 @@ smtp_relay_password:
   help: >-
     What is your SMTP password?
 
+smtp_relay_version:
+  type: str
+  when: *has_smtp
+  default: "9.0"
+  help: >-
+    Doodba uses docker-mailserver as the local mail relay.
+
+    Which version of the image do you want to use? You can check which ones are
+    available in
+    https://github.com/orgs/docker-mailserver/packages/container/docker-mailserver/versions
+
 smtp_canonical_default:
   type: str
   when: *has_smtp
@@ -452,9 +464,22 @@ backup_dst:
 
     Where should the backups be stored?
 
-backup_email_from:
+backup_image_version:
   type: str
   when: &backup_present "{{ backup_dst and true }}"
+  default: "latest"
+  help: >-
+    Doodba uses the docker-duplicity image to make the backups.
+
+    Which version of the image do you want to use? You can check which ones are
+    available in
+    https://github.com/orgs/Tecnativa/packages/container/docker-duplicity-postgres/versions
+    and
+    https://github.com/orgs/Tecnativa/packages/container/docker-duplicity-postgres-s3/versions
+
+backup_email_from:
+  type: str
+  when: *backup_present
   help: >-
     The backup container will send email reports if the SMTP relay is properly
     configured.

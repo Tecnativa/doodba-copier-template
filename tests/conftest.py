@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import socket
 import textwrap
@@ -8,9 +9,12 @@ from typing import Dict, Union
 import pytest
 import yaml
 from packaging import version
-from plumbum import FG, local
-from plumbum.cmd import git
+from plumbum import FG, ProcessExecutionError, local
+from plumbum.cmd import docker_compose, git, invoke
 from plumbum.machines.local import LocalCommand
+
+_logger = logging.getLogger(__name__)
+
 
 with open("copier.yml") as copier_fd:
     COPIER_SETTINGS = yaml.safe_load(copier_fd)
@@ -29,6 +33,15 @@ SELECTED_ODOO_VERSIONS = (
 
 # Traefik versions matrix
 ALL_TRAEFIK_VERSIONS = ("latest", "1.7")
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--skip-docker-tests",
+        action="store_true",
+        default=False,
+        help="Skip Docker tests",
+    )
 
 
 @pytest.fixture(params=ALL_ODOO_VERSIONS)
@@ -75,9 +88,9 @@ def cloned_template(tmp_path_factory):
 
 
 @pytest.fixture()
-def docker() -> LocalCommand:
-    if os.environ.get("DOCKER_TEST") != "1":
-        pytest.skip("Missing DOCKER_TEST=1 env variable")
+def docker(request) -> LocalCommand:
+    if request.config.getoption("--skip-docker-tests"):
+        pytest.skip("Skipping docker tests")
     try:
         from plumbum.cmd import docker
     except ImportError:
@@ -185,7 +198,9 @@ def socket_is_open(host, port):
     return False
 
 
-def generate_test_addon(addon_name, odoo_version, installable=True, ugly=False):
+def generate_test_addon(
+    addon_name, odoo_version, installable=True, ugly=False, dependencies=None
+):
     """Generates a simple addon for testing
     Can be an ugly addon to trigger pre-commit formatting
     """
@@ -206,6 +221,7 @@ def generate_test_addon(addon_name, odoo_version, installable=True, ugly=False):
                     {"{"}
                     'name':"{addon_name}",'license':'AGPL-3',
                     'version':'{odoo_version}.1.0.0',
+                    'depends': {dependencies or '["base"]'},
                     'installable': {installable},
                     'auto_install': False
                     {"}"}
@@ -217,7 +233,7 @@ def generate_test_addon(addon_name, odoo_version, installable=True, ugly=False):
                     import io,sys,odoo
                     _logger=getLogger(__name__)
                     class ResPartner(models.Model):
-                        _name='res.partner'
+                        _inherit='res.partner'
                         def some_method(self,test):
                             '''some weird
                                 docstring'''
@@ -233,6 +249,7 @@ def generate_test_addon(addon_name, odoo_version, installable=True, ugly=False):
                         "name": "{addon_name}",
                         "license": "AGPL-3",
                         "version": "{odoo_version}.1.0.0",
+                        "depends": {dependencies or '["base"]'},
                         "installable": {installable},
                         "auto_install": False,
                     {"}"}
@@ -252,7 +269,7 @@ def generate_test_addon(addon_name, odoo_version, installable=True, ugly=False):
 
 
                     class ResPartner(models.Model):
-                        _name = "res.partner"
+                        _inherit = "res.partner"
 
                         def some_method(self, test):
                             """some weird
@@ -262,3 +279,29 @@ def generate_test_addon(addon_name, odoo_version, installable=True, ugly=False):
             }
         )
     build_file_tree(file_tree)
+
+
+def _containers_running(exec_path):
+    with local.cwd(exec_path):
+        if len(docker_compose("ps", "-aq").splitlines()) > 0:
+            _logger.error(docker_compose("ps", "-a"))
+            return True
+        return False
+
+
+def safe_stop_env(exec_path, purge=True):
+    with local.cwd(exec_path):
+        try:
+            args = ["stop"]
+            if purge:
+                args.append("--purge")
+            invoke.run(args)
+        except ProcessExecutionError as e:
+            if (
+                "has active endpoints" not in e.stderr
+                and "has active endpoints" not in e.stdout
+            ):
+                raise e
+            assert not _containers_running(
+                exec_path
+            ), "Containers running or not removed. 'stop [--purge]' command did not work."
