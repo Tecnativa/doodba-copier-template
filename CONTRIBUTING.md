@@ -75,14 +75,6 @@ blocks here are:
 
 ### Open a Pull Request
 
-You will have to choose the correct base to start developing your change:
-
-1. Base it on the `devel` branch if you're adding a new feature. This branch is intended
-   to be the next feature or major release.
-1. Base it on the `stable` branch if you're fixing a bug. This branch only accepts that
-   kind of patches. It is also updated from `devel` when a new bigger release is going
-   to happen.
-
 Follow
 [Github's instructions to open a pull request](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request).
 
