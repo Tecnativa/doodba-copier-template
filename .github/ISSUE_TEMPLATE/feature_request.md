@@ -6,13 +6,18 @@ labels: enhancement
 assignees: ""
 ---
 
-**Is your feature request related to a problem?** If so, please provide clear and
-concise description of what the problem is.
+**Is your feature request related to a problem?**
 
-**Describe the solution you'd like** A clear and concise description of what you want to
-happen.
+<!-- If so, please provide clear and concise description of what the problem is. -->
 
-**Describe alternatives you've considered** A clear and concise description of any
-alternative solutions or features you've considered.
+**Describe the solution you'd like**
 
-**Additional context** Add any other context about the feature request here.
+<!-- A clear and concise description of what you want to happen. -->
+
+**Describe alternatives you've considered**
+
+<!-- A clear and concise description of any alternative solutions or features you've considered. -->
+
+**Additional context**
+
+<!-- Add any other context about the feature request here. -->
