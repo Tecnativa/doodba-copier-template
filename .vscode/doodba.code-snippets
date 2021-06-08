@@ -16,5 +16,23 @@
       "\t\t- ${40} refs/pull/${50:1234}/head"
     ],
     "description": "Git-aggregator repo definition with merges"
+  },
+  // See https://github.com/Tecnativa/doodba-copier-template/blob/main/docs/faq.md#how-can-i-whitelist-a-service-and-allow-external-access-to-it
+  "Docker Whitelist Proxy": {
+    "prefix": "proxy",
+    "scope": "yaml",
+    "body": [
+      "${10:proxy_}:",
+      "\timage: ghcr.io/tecnativa/docker-whitelist:latest",
+      "\tnetworks:",
+      "\t\tdefault:",
+      "\t\t\taliases:",
+      "\t\t\t\t- ${20:URL}",
+      "\t\tpublic:",
+      "\tenvironment:",
+      "\t\tTARGET: ${20}",
+      "\t\tPRE_RESOLVE: 1"
+    ],
+    "description": "Docker Whitelist definition"
   }
 }
