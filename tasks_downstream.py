@@ -60,7 +60,7 @@ def _remove_auto_reload(file, orig_file):
 
 
 def _get_cwd_addon(file):
-    cwd = Path(file)
+    cwd = Path(file).resolve()
     manifest_file = False
     while PROJECT_ROOT < cwd:
         manifest_file = (cwd / "__manifest__.py").exists() or (
