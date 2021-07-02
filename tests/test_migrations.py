@@ -1,5 +1,6 @@
 from glob import glob
 from pathlib import Path
+from typing import Optional
 
 import pytest
 import yaml
@@ -298,3 +299,49 @@ def test_v2_7_0_migration(
         git("commit", "-am", f"updated from template in {target}")
         # Assert config files removal
         assert not Path(".vscode", "settings.json").exists()
+
+
+@pytest.mark.parametrize(
+    "migration_from_version, license_answer", (("v2.8.0", None), ("v3.0.0", ""))
+)
+def test_v3_0_1_migration(
+    tmp_path: Path,
+    cloned_template: Path,
+    supported_odoo_version: float,
+    migration_from_version: str,
+    license_answer: Optional[str],
+):
+    """Test migration to v3.0.1."""
+    target, license_path = "v3.0.1", Path("LICENSE")
+    # This part makes sense only when target version is not yet released
+    with local.cwd(cloned_template):
+        if target not in git("tag").split():
+            git("tag", "-d", "test")
+            git("tag", target)
+    with local.cwd(tmp_path):
+        # Copy previous version
+        copy(
+            src_path=str(cloned_template),
+            vcs_ref=migration_from_version,
+            force=True,
+            answers_file=".custom.copier-answers.yaml",
+            data={
+                "odoo_version": supported_odoo_version,
+                "project_license": license_answer,
+            },
+        )
+        git("config", "commit.gpgsign", "false")
+        git("add", ".")
+        git("commit", "-am", "reformat", retcode=1)
+        git("commit", "-am", f"copied from template in {migration_from_version}")
+        assert not license_path.exists()
+        # Update to target version
+        copy(answers_file=".custom.copier-answers.yaml", vcs_ref=target, force=True)
+        git("add", ".")
+        git("commit", "-am", "reformat", retcode=1)
+        git("commit", "-am", f"updated from template in {target}")
+        # Assert LICENSE still does not exist, after updating
+        assert not license_path.exists()
+        # Assert correct answer in copier answers file
+        answers = yaml.safe_load(Path(".custom.copier-answers.yaml").read_bytes())
+        assert answers["project_license"] == "no_license"
