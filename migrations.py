@@ -130,3 +130,32 @@ def update_domains_structure(c, dst_path, answers_rel_path):
     answers_path.write_text(yaml.safe_dump(answers_yaml))
     # Remove .env file
     Path(dst_path, ".env").unlink()
+
+
+@task
+def update_no_license(c, dst_path, answers_rel_path):
+    """Update projects with no license.
+
+    In template version < 3.0.0, no license was `None`. In 3.0.0 it was changed
+    to `""`, to make it compatible with Copier 6, but that made it not work
+    fine with Copier 5. So, in version 3.0.1 it was changed to `"no_license"`.
+    This value will always be a string, no matter the parser, and should make
+    the parameter work fine in any Copier version.
+
+    This migrates old answers to this new format.
+    """
+    answers_path = Path(dst_path, answers_rel_path)
+    answers_yaml = _load_yaml(answers_path)
+    if (
+        not answers_yaml.get("project_license")
+        or answers_yaml.get("project_license") == "no_license"
+    ):
+        answers_yaml["project_license"] = "no_license"
+        answers_path.write_text(yaml.safe_dump(answers_yaml))
+        # Delete LICENSE if it existed but was empty
+        license = Path(dst_path, "LICENSE")
+        try:
+            if not license.read_text().strip():
+                license.unlink()
+        except FileNotFoundError:
+            pass  # LICENSE does not exist, and that's good

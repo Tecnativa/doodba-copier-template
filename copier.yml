@@ -85,6 +85,15 @@ _migrations:
         - --collection=migrations
         - remove-vscode-settings
         - "{{ _copier_conf.dst_path }}"
+  - version: v3.0.1
+    before: &update_no_license
+      - - invoke
+        - --search-root={{ _copier_conf.src_path }}
+        - --collection=migrations
+        - update-no-license
+        - "{{ _copier_conf.dst_path }}"
+        - "{{ _copier_conf.answers_file }}"
+    after: *update_no_license
 
 # Questions for the user
 odoo_version:
@@ -184,7 +193,7 @@ project_license:
     So, what's your project's license?
   default: BSL-1.0
   choices:
-    No license: ""
+    No license: no_license
     Apache License 2.0: Apache-2.0
     Boost Software License 1.0: BSL-1.0
     GNU Affero General Public License (AGPL) 3.0 or later: AGPL-3.0-or-later

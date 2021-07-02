@@ -12,7 +12,7 @@
 {%- if domains_test %}
 [![Deployment data](https://img.shields.io/badge/%E2%9A%92%20demo-{{ macros.first_main_domain(domains_test)|replace('-', '--') }}-yellow)](http://{{ macros.first_main_domain(domains_test) }})
 {%- endif %}
-{%- if project_license %}
+{%- if project_license != "no_license" %}
 [![{{ project_license }} license](https://img.shields.io/badge/license-{{ project_license|replace("-", "--") }}-{%- if project_license in ["OEEL-1.0", "OPL-1.0"] %}critical{%- else %}success{%- endif %}})](LICENSE)
 {%- endif %}
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
