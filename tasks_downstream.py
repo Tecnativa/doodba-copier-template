@@ -581,7 +581,9 @@ def _test_in_debug_mode(c, odoo_command):
         time.sleep(SERVICES_WAIT_TIME)
 
 
-def _get_module_list(c, modules=None, core=False, extra=False, private=False):
+def _get_module_list(
+    c, modules=None, core=False, extra=False, private=False, only_installable=True
+):
     """Returns a list of addons according to the passed parameters.
 
     By default, refers to the addon from directory being worked on,
@@ -597,6 +599,8 @@ def _get_module_list(c, modules=None, core=False, extra=False, private=False):
         cmd += " --private"
     if modules:
         cmd += f" -w {modules}"
+    if only_installable:
+        cmd += " --installable"
     with c.cd(str(PROJECT_ROOT)):
         module_list = c.run(
             cmd,
