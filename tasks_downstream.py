@@ -492,17 +492,26 @@ def start(c, detach=True, debugpy=False):
         "core": "Install all core addons. Default: False",
         "extra": "Install all extra addons. Default: False",
         "private": "Install all private addons. Default: False",
+        "enterprise": "Install all enterprise addons. Default: False",
         "cur-file": "Path to the current file."
         " Addon name will be obtained from there to install.",
     },
 )
-def install(c, modules=None, cur_file=None, core=False, extra=False, private=False):
+def install(
+    c,
+    modules=None,
+    cur_file=None,
+    core=False,
+    extra=False,
+    private=False,
+    enterprise=False,
+):
     """Install Odoo addons
 
     By default, installs addon from directory being worked on,
     unless other options are specified.
     """
-    if not (modules or core or extra or private):
+    if not (modules or core or extra or private or enterprise):
         cur_module = _get_cwd_addon(cur_file or Path.cwd())
         if not cur_module:
             raise exceptions.ParseError(
@@ -519,6 +528,8 @@ def install(c, modules=None, cur_file=None, core=False, extra=False, private=Fal
         cmd += " --extra"
     if private:
         cmd += " --private"
+    if enterprise:
+        cmd += " --enterprise"
     if modules:
         cmd += f" -w {modules}"
     with c.cd(str(PROJECT_ROOT)):
@@ -529,7 +540,9 @@ def install(c, modules=None, cur_file=None, core=False, extra=False, private=Fal
         )
 
 
-def _get_module_dependencies(c, modules=None, core=False, extra=False, private=False):
+def _get_module_dependencies(
+    c, modules=None, core=False, extra=False, private=False, enterprise=False
+):
     """Returns a list of the addons' dependencies
 
     By default, refers to the addon from directory being worked on,
@@ -543,6 +556,8 @@ def _get_module_dependencies(c, modules=None, core=False, extra=False, private=F
         cmd += " --extra"
     if private:
         cmd += " --private"
+    if enterprise:
+        cmd += " --enterprise"
     if modules:
         cmd += f" -w {modules}"
     with c.cd(str(PROJECT_ROOT)):
@@ -582,7 +597,13 @@ def _test_in_debug_mode(c, odoo_command):
 
 
 def _get_module_list(
-    c, modules=None, core=False, extra=False, private=False, only_installable=True
+    c,
+    modules=None,
+    core=False,
+    extra=False,
+    private=False,
+    enterprise=False,
+    only_installable=True,
 ):
     """Returns a list of addons according to the passed parameters.
 
@@ -597,6 +618,8 @@ def _get_module_list(
         cmd += " --extra"
     if private:
         cmd += " --private"
+    if enterprise:
+        cmd += " --enterprise"
     if modules:
         cmd += f" -w {modules}"
     if only_installable:
@@ -618,6 +641,7 @@ def _get_module_list(
         "core": "Test all core addons. Default: False",
         "extra": "Test all extra addons. Default: False",
         "private": "Test all private addons. Default: False",
+        "enterprise": "Test all enterprise addons. Default: False",
         "skip": "List of addons to skip. Default: []",
         "debugpy": "Whether or not to run tests in a VSCode debugging session. "
         "Default: False",
@@ -634,6 +658,7 @@ def test(
     core=False,
     extra=False,
     private=False,
+    enterprise=False,
     skip="",
     debugpy=False,
     cur_file=None,
@@ -647,7 +672,7 @@ def test(
 
     NOTE: Odoo must be restarted manually after this to go back to normal mode
     """
-    if not (modules or core or extra or private):
+    if not (modules or core or extra or private or enterprise):
         cur_module = _get_cwd_addon(cur_file or Path.cwd())
         if not cur_module:
             raise exceptions.ParseError(
@@ -658,7 +683,7 @@ def test(
             )
         modules = cur_module
     else:
-        modules = _get_module_list(c, modules, core, extra, private)
+        modules = _get_module_list(c, modules, core, extra, private, enterprise)
     odoo_command = ["odoo", "--test-enable", "--stop-after-init", "--workers=0"]
     if mode == "init":
         odoo_command.append("-i")
@@ -722,6 +747,7 @@ def stop(c, purge=False):
         "core": "Install all core addons. Default: False",
         "extra": "Install all extra addons. Default: False",
         "private": "Install all private addons. Default: False",
+        "enterprise": "Install all enterprise addons. Default: False",
         "populate": "Run preparedb task right after (only available for v11+)."
         " Default: True",
         "dependencies": "Install only the dependencies of the specified addons."
@@ -734,6 +760,7 @@ def resetdb(
     core=False,
     extra=False,
     private=False,
+    enterprise=False,
     dbname="devel",
     populate=True,
     dependencies=False,
@@ -744,9 +771,9 @@ def resetdb(
     makes DB resets quicker. See its docs for more info.
     """
     if dependencies:
-        modules = _get_module_dependencies(c, modules, core, extra, private)
-    elif core or extra or private:
-        modules = _get_module_list(c, modules, core, extra, private)
+        modules = _get_module_dependencies(c, modules, core, extra, private, enterprise)
+    elif core or extra or private or enterprise:
+        modules = _get_module_list(c, modules, core, extra, private, enterprise)
     else:
         modules = modules or "base"
     with c.cd(str(PROJECT_ROOT)):
