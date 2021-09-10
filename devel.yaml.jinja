@@ -33,6 +33,8 @@ services:
         # Export these variables to own files created by odoo in your filesystem
         UID: "${UID:-1000}"
         GID: "${GID:-1000}"
+    stdin_open: true
+    tty: true
     environment:
       DOODBA_ENVIRONMENT: "${DOODBA_ENVIRONMENT-devel}"
       LIST_DB: "true"
