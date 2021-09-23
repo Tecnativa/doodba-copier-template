@@ -9,6 +9,7 @@ import os
 import stat
 import tempfile
 import time
+from datetime import datetime
 from itertools import chain
 from logging import getLogger
 from pathlib import Path
@@ -860,3 +861,102 @@ def after_update(c):
         cur_stat = script_file.stat()
         # Like chmod ug+x
         script_file.chmod(cur_stat.st_mode | stat.S_IXUSR | stat.S_IXGRP)
+
+
+@task(
+    develop,
+    help={
+        "source_db": "The source DB name. Default: 'devel'.",
+        "destination_db": "The destination DB name. Default: '[SOURCE_DB_NAME]-[CURRENT_DATE]'",
+    },
+)
+def snapshot(
+    c,
+    source_db="devel",
+    destination_db=None,
+):
+    """Snapshot current database and filestore.
+
+    Uses click-odoo-copydb behind the scenes to make a snapshot.
+    """
+    if not destination_db:
+        destination_db = "%s-%s" % (
+            source_db,
+            datetime.now().strftime("%Y_%m_%d-%H_%M"),
+        )
+    with c.cd(str(PROJECT_ROOT)):
+        cur_state = c.run("docker-compose stop odoo db", pty=True).stdout
+        _logger.info("Snapshoting current %s DB to %s" % (source_db, destination_db))
+        _run = "docker-compose run --rm -l traefik.enable=false odoo"
+        c.run(
+            f"{_run} click-odoo-copydb {source_db} {destination_db}",
+            env=UID_ENV,
+            pty=True,
+        )
+        if "Stopping" in cur_state:
+            # Restart services if they were previously active
+            c.run("docker-compose start odoo db", pty=True)
+
+
+@task(
+    develop,
+    help={
+        "snapshot_name": "The snapshot name. If not provided,"
+        "the script will try to find the last snapshot"
+        " that starts with the destination_db name",
+        "destination_db": "The destination DB name. Default: 'devel'",
+    },
+)
+def restore_snapshot(
+    c,
+    snapshot_name=None,
+    destination_db="devel",
+):
+    """Restore database and filestore snapshot.
+
+    Uses click-odoo-copydb behind the scenes to restore a DB snapshot.
+    """
+    with c.cd(str(PROJECT_ROOT)):
+        cur_state = c.run("docker-compose stop odoo db", pty=True).stdout
+        if not snapshot_name:
+            # List DBs
+            res = c.run(
+                "docker-compose run --rm -e LOG_LEVEL=WARNING odoo psql -tc"
+                " 'SELECT datname FROM pg_database;'",
+                env=UID_ENV,
+                hide="stdout",
+            )
+            db_list = []
+            for db in res.stdout.splitlines():
+                # Parse and filter DB List
+                if not db.lstrip().startswith(destination_db):
+                    continue
+                db_name = db.lstrip()
+                try:
+                    db_date = datetime.strptime(
+                        db_name.lstrip(destination_db + "-"), "%Y_%m_%d-%H_%M"
+                    )
+                    db_list.append((db_name, db_date))
+                except ValueError:
+                    continue
+            snapshot_name = max(db_list, key=lambda x: x[1])[0]
+            if not snapshot_name:
+                raise exceptions.PlatformError(
+                    "No snapshot found for destination_db %s" % destination_db
+                )
+        _logger.info("Restoring snapshot %s to %s" % (snapshot_name, destination_db))
+        _run = "docker-compose run --rm -l traefik.enable=false odoo"
+        c.run(
+            f"{_run} click-odoo-dropdb {destination_db}",
+            env=UID_ENV,
+            warn=True,
+            pty=True,
+        )
+        c.run(
+            f"{_run} click-odoo-copydb {snapshot_name} {destination_db}",
+            env=UID_ENV,
+            pty=True,
+        )
+        if "Stopping" in cur_state:
+            # Restart services if they were previously active
+            c.run("docker-compose start odoo db", pty=True)
