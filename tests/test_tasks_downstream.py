@@ -92,6 +92,8 @@ def test_resetdb(
     - img-build
     - git-aggregate
     - stop --purge
+    - snapshot
+    - restore-snapshot
     """
     try:
         with local.cwd(tmp_path):
@@ -142,6 +144,8 @@ def test_resetdb(
             assert _install_status("base") == "installed"
             assert _install_status("purchase") == "uninstalled"
             assert _install_status("sale") == "installed"
+            # Snapshot current DB
+            invoke("snapshot", "--destination-db", "db_with_sale")
             if supported_odoo_version >= 11:
                 invoke("preparedb")
                 assert _get_config_param("report.url") == "http://localhost:8069"
@@ -154,6 +158,11 @@ def test_resetdb(
                 )  # Despite new default --populate, shouldn't introduce error
                 with pytest.raises(ProcessExecutionError):
                     invoke("preparedb")
+            # DB should now be reset
+            assert _install_status("sale") == "uninstalled"
+            # Restore snapshot
+            invoke("restore-snapshot", "--snapshot-name", "db_with_sale")
+            assert _install_status("sale") == "installed"
     finally:
         safe_stop_env(
             tmp_path / "odoo" / "custom" / "src" / "odoo",
