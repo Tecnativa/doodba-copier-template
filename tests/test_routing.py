@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 import requests
 from copier import copy
+from invoke.util import yaml
 from packaging import version
 from plumbum import local
 from plumbum.cmd import docker_compose
@@ -67,6 +68,15 @@ def test_multiple_domains(
             vcs_ref="test",
             force=True,
             data=data,
+        )
+        # Check if Odoo options were passed correctly
+        _ret_code, _stdout, _stderr = dc.run(["config"])
+        docker_compose_config = yaml.safe_load(
+            _stdout or _stderr
+        )  # docker-compose sometimes prints to STDERR and others to STDOUT, so we check both
+        assert (
+            docker_compose_config["services"]["odoo"]["environment"]["LIST_DB"]
+            == "true"
         )
         try:
             dc("build")

@@ -18,6 +18,7 @@ services:
       PGUSER: &dbuser "{{ postgres_username }}"
       DB_FILTER: "{{ odoo_dbfilter }}"
       PROXY_MODE: "{% if odoo_proxy %}true{% else %}false{% endif %}"
+      LIST_DB: "{{ odoo_listdb | tojson }}"
     {%- if smtp_canonical_default %}
     hostname: "{{ smtp_canonical_default }}"
     {%- endif %}
