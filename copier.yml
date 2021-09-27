@@ -18,6 +18,7 @@ _exclude:
   - /.github
   - /.gitmodules
   - /.vscode/launch.json
+  - /.vscode/settings.json
   - /**.pyc
   - /**.pyo
   - /CONTRIBUTING.md
@@ -40,6 +41,7 @@ _skip_if_exists:
   - odoo/custom/ssh/*
 
 _tasks:
+  - invoke after-update
   - invoke develop
 
 _migrations:
@@ -76,6 +78,22 @@ _migrations:
         - --collection=migrations
         - remove-vscode-launch-and-tasks
         - "{{ _copier_conf.dst_path }}"
+  - version: v2.7.0a4
+    after:
+      - - invoke
+        - --search-root={{ _copier_conf.src_path }}
+        - --collection=migrations
+        - remove-vscode-settings
+        - "{{ _copier_conf.dst_path }}"
+  - version: v3.0.1
+    before: &update_no_license
+      - - invoke
+        - --search-root={{ _copier_conf.src_path }}
+        - --collection=migrations
+        - update-no-license
+        - "{{ _copier_conf.dst_path }}"
+        - "{{ _copier_conf.answers_file }}"
+    after: *update_no_license
 
 # Questions for the user
 odoo_version:
@@ -102,7 +120,7 @@ odoo_dbfilter:
 odoo_proxy:
   default: traefik
   choices:
-    No proxy (dangerous for production): null
+    No proxy (dangerous for production): ""
     Traefik: traefik
     Other proxy (it's up to you!): other
   help: >-
@@ -175,7 +193,7 @@ project_license:
     So, what's your project's license?
   default: BSL-1.0
   choices:
-    No license: null
+    No license: no_license
     Apache License 2.0: Apache-2.0
     Boost Software License 1.0: BSL-1.0
     GNU Affero General Public License (AGPL) 3.0 or later: AGPL-3.0-or-later
@@ -321,16 +339,16 @@ cidr_whitelist:
     ⚠️ It must be a list. And this is only supported if you deploy with Traefik 2+.
 
 postgres_version:
-  default: 13
+  default: "13"
   help: >-
     Which PostgreSQL version do you want to deploy?
   choices:
-    I will use an external PostgreSQL server: null
-    "9.6": 9.6
-    "10": 10
-    "11": 11
-    "12": 12
-    "13": 13
+    I will use an external PostgreSQL server: ""
+    "9.6": "9.6"
+    "10": "10"
+    "11": "11"
+    "12": "12"
+    "13": "13"
 
 postgres_username:
   type: str
@@ -403,6 +421,17 @@ smtp_relay_password:
   help: >-
     What is your SMTP password?
 
+smtp_relay_version:
+  type: str
+  when: *has_smtp
+  default: "10"
+  help: >-
+    Doodba uses docker-mailserver as the local mail relay.
+
+    Which version of the image do you want to use? You can check which ones are
+    available in
+    https://github.com/orgs/docker-mailserver/packages/container/docker-mailserver/versions
+
 smtp_canonical_default:
   type: str
   when: *has_smtp
@@ -444,9 +473,22 @@ backup_dst:
 
     Where should the backups be stored?
 
-backup_email_from:
+backup_image_version:
   type: str
   when: &backup_present "{{ backup_dst and true }}"
+  default: "latest"
+  help: >-
+    Doodba uses the docker-duplicity image to make the backups.
+
+    Which version of the image do you want to use? You can check which ones are
+    available in
+    https://github.com/orgs/Tecnativa/packages/container/docker-duplicity-postgres/versions
+    and
+    https://github.com/orgs/Tecnativa/packages/container/docker-duplicity-postgres-s3/versions
+
+backup_email_from:
+  type: str
+  when: *backup_present
   help: >-
     The backup container will send email reports if the SMTP relay is properly
     configured.

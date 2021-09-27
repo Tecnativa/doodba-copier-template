@@ -1,3 +1,4 @@
+{%- import "_macros.jinja" as macros -%}
 [![Doodba deployment](https://img.shields.io/badge/deployment-doodba-informational)](https://github.com/Tecnativa/doodba)
 [![Last template update](https://img.shields.io/badge/last%20template%20update-{{ _copier_answers._commit|replace('-', '--') }}-informational)](https://github.com/Tecnativa/doodba-copier-template/tree/{{ _copier_answers._commit }})
 [![Odoo](https://img.shields.io/badge/odoo-v{{ odoo_version }}-a3478a)](https://github.com/odoo/odoo/tree/{{ odoo_version }})
@@ -5,7 +6,13 @@
 [![pipeline status]({{ gitlab_url }}/badges/{{ odoo_version }}/pipeline.svg)]({{ gitlab_url }}/commits/{{ odoo_version }})
 [![coverage report]({{ gitlab_url }}/badges/{{ odoo_version }}/coverage.svg)]({{ gitlab_url }}/commits/{{ odoo_version }})
 {%- endif %}
-{%- if project_license %}
+{%- if domains_prod %}
+[![Deployment data](https://img.shields.io/badge/%F0%9F%8C%90%20prod-{{ macros.first_main_domain(domains_prod)|replace('-', '--') }}-green)](http://{{ macros.first_main_domain(domains_prod) }})
+{%- endif %}
+{%- if domains_test %}
+[![Deployment data](https://img.shields.io/badge/%E2%9A%92%20demo-{{ macros.first_main_domain(domains_test)|replace('-', '--') }}-yellow)](http://{{ macros.first_main_domain(domains_test) }})
+{%- endif %}
+{%- if project_license != "no_license" %}
 [![{{ project_license }} license](https://img.shields.io/badge/license-{{ project_license|replace("-", "--") }}-{%- if project_license in ["OEEL-1.0", "OPL-1.0"] %}critical{%- else %}success{%- endif %}})](LICENSE)
 {%- endif %}
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)

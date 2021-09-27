@@ -13,10 +13,12 @@ from plumbum.cmd import docker_compose
     "backup_dst",
     (None, "s3://example", "s3+http://example", "boto3+s3://example", "sftp://example"),
 )
+@pytest.mark.parametrize("backup_image_version", ("latest"))
 @pytest.mark.parametrize("smtp_relay_host", (None, "example"))
 def test_backup_config(
     backup_deletion: bool,
     backup_dst: Union[None, str],
+    backup_image_version: str,
     cloned_template: Path,
     smtp_relay_host: Union[None, str],
     supported_odoo_version: float,
@@ -26,6 +28,7 @@ def test_backup_config(
     data = {
         "backup_deletion": backup_deletion,
         "backup_dst": backup_dst,
+        "backup_image_version": backup_image_version,
         "odoo_version": supported_odoo_version,
         "smtp_relay_host": smtp_relay_host,
     }
@@ -47,9 +50,17 @@ def test_backup_config(
         return
     # Check selected duplicity image
     if "s3" in backup_dst:
-        assert prod["services"]["backup"]["image"] == "tecnativa/duplicity:postgres-s3"
+        assert prod["services"]["backup"][
+            "image"
+        ] == "ghcr.io/tecnativa/docker-duplicity-postgres-s3:{}".format(
+            backup_image_version
+        )
     else:
-        assert prod["services"]["backup"]["image"] == "tecnativa/duplicity:postgres"
+        assert prod["services"]["backup"][
+            "image"
+        ] == "ghcr.io/tecnativa/docker-duplicity-postgres:{}".format(
+            backup_image_version
+        )
     # Check SMTP configuration
     if smtp_relay_host:
         assert "smtp" in prod["services"]
