@@ -469,7 +469,7 @@ backup_dst:
     choice backup engine; read http://duplicity.nongnu.org/vers8/duplicity.1.html#sect7
     for those URL formats).
 
-    If you don't want bakcups, leave this empty.
+    If you don't want backups, leave this empty.
 
     Where should the backups be stored?
 
