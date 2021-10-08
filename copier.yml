@@ -99,7 +99,7 @@ _migrations:
 odoo_version:
   help: On which odoo version is it based?
   type: float
-  default: 14.0
+  default: 15.0
   choices:
     - 7.0
     - 8.0
@@ -109,6 +109,7 @@ odoo_version:
     - 12.0
     - 13.0
     - 14.0
+    - 15.0
 
 odoo_dbfilter:
   default: ".*"
