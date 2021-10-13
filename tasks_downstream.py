@@ -860,6 +860,10 @@ def after_update(c):
             Path(PROJECT_ROOT, "odoo", "custom", "build.d", "10-fix-certs"),
         )
         for script_file in files:
+            # Ignore if, for some reason, the file didn't end up in the generated
+            # project despite of the correct version (e.g. Copier exclusions)
+            if not script_file.exists():
+                continue
             cur_stat = script_file.stat()
             # Like chmod ug+x
             script_file.chmod(cur_stat.st_mode | stat.S_IXUSR | stat.S_IXGRP)
