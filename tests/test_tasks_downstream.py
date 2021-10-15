@@ -286,6 +286,7 @@ def test_install_test(
 
 
 @pytest.mark.sequential
+@pytest.mark.skip_for_prereleases
 def test_test_tasks(
     cloned_template: Path,
     docker: LocalCommand,
@@ -301,6 +302,8 @@ def test_test_tasks(
     - stop --purge
     - resetdb --dependencies
     - test [options]
+
+    This test will be skipped for prereleased versions of Doodba
     """
     try:
         with local.cwd(tmp_path):
