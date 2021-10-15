@@ -30,9 +30,22 @@ SELECTED_ODOO_VERSIONS = (
     frozenset(map(float, os.environ.get("SELECTED_ODOO_VERSIONS", "").split()))
     or ALL_ODOO_VERSIONS
 )
+PRERELEASE_ODOO_VERSIONS = {15.0}
 
 # Traefik versions matrix
 ALL_TRAEFIK_VERSIONS = ("latest", "1.7")
+
+
+@pytest.fixture(autouse=True)
+def skip_odoo_prereleases(supported_odoo_version: float, request):
+    """Fixture to automatically skip tests for prereleased odoo versions."""
+    if (
+        request.node.get_closest_marker("skip_for_prereleases")
+        and supported_odoo_version in PRERELEASE_ODOO_VERSIONS
+    ):
+        pytest.skip(
+            f"skipping tests for prereleased odoo version {supported_odoo_version}"
+        )
 
 
 def pytest_addoption(parser):
