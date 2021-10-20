@@ -853,7 +853,7 @@ def logs(c, tail=10, follow=True, container=None):
 @task
 def after_update(c):
     """Execute some actions after a copier update or init"""
-    # Make custom build script executable
+    # Make custom build scripts executable
     if ODOO_VERSION < 11:
         files = (
             Path(PROJECT_ROOT, "odoo", "custom", "build.d", "20-update-pg-repos"),
@@ -867,6 +867,18 @@ def after_update(c):
             cur_stat = script_file.stat()
             # Like chmod ug+x
             script_file.chmod(cur_stat.st_mode | stat.S_IXUSR | stat.S_IXGRP)
+    else:
+        # Remove version-specific build scripts if the copier update didn't
+        # HACK: https://github.com/copier-org/copier/issues/461
+        files = (
+            Path(PROJECT_ROOT, "odoo", "custom", "build.d", "20-update-pg-repos"),
+            Path(PROJECT_ROOT, "odoo", "custom", "build.d", "10-fix-certs"),
+        )
+        for script_file in files:
+            # missing_ok argument would take care of this, but it was only added for
+            # Python 3.8
+            if script_file.exists():
+                script_file.unlink()
 
 
 @task(
