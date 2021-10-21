@@ -420,7 +420,7 @@ def git_aggregate(c):
             c.run(f"pre-commit {action}")
 
 
-@task(develop)
+@task()
 def img_build(c, pull=True):
     """Build docker images."""
     cmd = "docker-compose build"
@@ -430,14 +430,14 @@ def img_build(c, pull=True):
         c.run(cmd, env=UID_ENV, pty=True)
 
 
-@task(develop)
+@task()
 def img_pull(c):
     """Pull docker images."""
     with c.cd(str(PROJECT_ROOT)):
         c.run("docker-compose pull", pty=True)
 
 
-@task(develop)
+@task()
 def lint(c, verbose=False):
     """Lint & format source code."""
     cmd = "pre-commit run --show-diff-on-failure --all-files --color=always"
@@ -447,7 +447,7 @@ def lint(c, verbose=False):
         c.run(cmd)
 
 
-@task(develop)
+@task()
 def start(c, detach=True, debugpy=False):
     """Start environment."""
     cmd = "docker-compose up"
@@ -487,7 +487,6 @@ def start(c, detach=True, debugpy=False):
 
 
 @task(
-    develop,
     help={
         "modules": "Comma-separated list of modules to install.",
         "core": "Install all core addons. Default: False",
@@ -636,7 +635,6 @@ def _get_module_list(
 
 
 @task(
-    develop,
     help={
         "modules": "Comma-separated list of modules to test.",
         "core": "Test all core addons. Default: False",
@@ -728,7 +726,6 @@ def test(
 
 
 @task(
-    develop,
     help={"purge": "Remove all related containers, networks images and volumes"},
 )
 def stop(c, purge=False):
@@ -741,7 +738,6 @@ def stop(c, purge=False):
 
 
 @task(
-    develop,
     help={
         "dbname": "The DB that will be DESTROYED and recreated. Default: 'devel'.",
         "modules": "Comma-separated list of modules to install. Default: 'base'.",
@@ -800,7 +796,7 @@ def resetdb(
         preparedb(c)
 
 
-@task(develop)
+@task()
 def preparedb(c):
     """Run the `preparedb` script inside the container
 
@@ -818,7 +814,7 @@ def preparedb(c):
         )
 
 
-@task(develop)
+@task()
 def restart(c, quick=True):
     """Restart odoo container(s)."""
     cmd = "docker-compose restart"
@@ -830,7 +826,6 @@ def restart(c, quick=True):
 
 
 @task(
-    develop,
     help={
         "container": "Names of the containers from which logs will be obtained."
         " You can specify a single one, or several comma-separated names."
@@ -866,7 +861,6 @@ def after_update(c):
 
 
 @task(
-    develop,
     help={
         "source_db": "The source DB name. Default: 'devel'.",
         "destination_db": "The destination DB name. Default: '[SOURCE_DB_NAME]-[CURRENT_DATE]'",
@@ -901,7 +895,6 @@ def snapshot(
 
 
 @task(
-    develop,
     help={
         "snapshot_name": "The snapshot name. If not provided,"
         "the script will try to find the last snapshot"
