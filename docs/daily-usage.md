@@ -58,6 +58,7 @@ should know your toolbox, specifically these tools:
 - [invoke](https://www.pyinvoke.org/)
 - [Odoo](https://www.odoo.com/) 😆
 - [python](https://www.python.org/)
+- [pre-commit](https://pre-commit.com/)
 - [click-odoo-contrib][]
 
 Go read their docs and learn them fine.
