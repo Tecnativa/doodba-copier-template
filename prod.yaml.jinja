@@ -20,7 +20,9 @@ services:
       SMTP_SERVER: smtplocal
       {%- endif %}
     depends_on:
+      {%- if postgres_version %}
       - db
+      {%- endif %}
       {%- if smtp_relay_host %}
       - smtp
       {%- endif %}
@@ -45,7 +47,8 @@ services:
       ) }}
       {%- endif %}
 
-  {% if postgres_version -%}
+  {%- if postgres_version %}
+
   db:
     extends:
       file: common.yaml

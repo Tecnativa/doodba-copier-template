@@ -75,7 +75,6 @@ services:
       - --dev=reload,qweb,werkzeug,xml
       {%- endif %}
 
-  {% if postgres_version -%}
   db:
     extends:
       file: common.yaml
@@ -83,7 +82,6 @@ services:
     environment:
       POSTGRES_DB: *dbname
       POSTGRES_PASSWORD: odoopassword
-  {%- endif %}
 
   pgweb:
     image: sosedoff/pgweb
