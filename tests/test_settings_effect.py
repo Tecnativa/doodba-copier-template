@@ -82,3 +82,25 @@ def test_backup_config(
     else:
         assert "JOB_800_WHAT" not in prod["services"]["backup"]["environment"]
         assert "JOB_800_WHEN" not in prod["services"]["backup"]["environment"]
+
+
+def test_dbfilter_default(
+    cloned_template: Path, supported_odoo_version: float, tmp_path: Path
+):
+    """Default DB filter inherits database name and is applied to prod only."""
+    with local.cwd(tmp_path):
+        copy(
+            src_path=str(cloned_template),
+            dst_path=".",
+            vcs_ref="test",
+            force=True,
+            data={"odoo_version": supported_odoo_version, "backup_dst": "file:///here"},
+        )
+        devel, test, prod = map(
+            lambda env: yaml.safe_load(docker_compose("-f", f"{env}.yaml", "config")),
+            ("devel", "test", "prod"),
+        )
+        assert "DB_FILTER" not in devel["services"]["odoo"]["environment"]
+        assert "DB_FILTER" not in test["services"]["odoo"]["environment"]
+        assert prod["services"]["odoo"]["environment"]["DB_FILTER"] == "^prod"
+        assert prod["services"]["backup"]["environment"]["DBS_TO_INCLUDE"] == "^prod"

@@ -94,6 +94,14 @@ _migrations:
         - "{{ _copier_conf.dst_path }}"
         - "{{ _copier_conf.answers_file }}"
     after: *update_no_license
+  - version: v4.0.0a0
+    after:
+      - - invoke
+        - --search-root={{ _copier_conf.src_path }}
+        - --collection=migrations
+        - db-filter-prefix-default
+        - "{{ _copier_conf.dst_path }}"
+        - "{{ _copier_conf.answers_file }}"
 
 # Questions for the user
 odoo_version:
@@ -110,13 +118,6 @@ odoo_version:
     - 13.0
     - 14.0
     - 15.0
-
-odoo_dbfilter:
-  default: ".*"
-  type: str
-  help: >-
-    Set your Odoo db filter. It must be a regexp that matches the domain name being
-    visited. It is useful if you use Odoo in SaaS mode.
 
 odoo_proxy:
   default: traefik
@@ -373,6 +374,14 @@ postgres_password:
   type: str
   help: >-
     What will be your postgres user password?
+
+odoo_dbfilter:
+  default: "^{{ postgres_dbname }}"
+  type: str
+  help: >-
+    Set your Odoo db filter. It must be a regexp that matches the domain name being
+    visited. It is useful if you use Odoo in SaaS mode. Only applied to production
+    environment.
 
 smtp_default_from:
   type: str
