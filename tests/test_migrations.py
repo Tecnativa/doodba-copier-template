@@ -6,7 +6,7 @@ import pytest
 import yaml
 from copier import copy
 from plumbum import local
-from plumbum.cmd import git, invoke
+from plumbum.cmd import docker_compose, git, invoke
 
 LATEST_VERSION_WITHOUT_COPIER = "v0.0.0"
 MISSING = object()
@@ -345,3 +345,55 @@ def test_v3_0_1_migration(
         # Assert correct answer in copier answers file
         answers = yaml.safe_load(Path(".custom.copier-answers.yaml").read_bytes())
         assert answers["project_license"] == "no_license"
+
+
+@pytest.mark.parametrize("previous_db_filter", (".*", "custom"))
+def test_v4_0_0_migration(
+    tmp_path: Path,
+    cloned_template: Path,
+    supported_odoo_version: float,
+    previous_db_filter: str,
+):
+    """Test migration to v4.0.0."""
+    target_filter = "^prod" if previous_db_filter == ".*" else previous_db_filter
+    migration_from_version, target = "v3.2.0", "v4.0.0"
+    # This part makes sense only when target version is not yet released
+    with local.cwd(cloned_template):
+        if target not in git("tag").split():
+            git("tag", "-d", "test")
+            git("tag", target)
+    with local.cwd(tmp_path):
+        # Copy previous version
+        copy(
+            src_path=str(cloned_template),
+            vcs_ref=migration_from_version,
+            force=True,
+            answers_file=".custom.copier-answers.yaml",
+            data={
+                "odoo_version": supported_odoo_version,
+                "odoo_dbfilter": previous_db_filter,
+                "backup_dst": "file:///here",
+            },
+        )
+        git("config", "commit.gpgsign", "false")
+        git("add", ".")
+        git("commit", "-am", "reformat", retcode=1)
+        git("commit", "-am", f"copied from template in {migration_from_version}")
+        # Update to target version
+        copy(answers_file=".custom.copier-answers.yaml", vcs_ref=target, force=True)
+        git("add", ".")
+        git("commit", "-am", "reformat", retcode=1)
+        git("commit", "-am", f"updated from template in {target}")
+        # Assert correct answer
+        devel, test, prod = map(
+            lambda env: yaml.safe_load(docker_compose("-f", f"{env}.yaml", "config")),
+            ("devel", "test", "prod"),
+        )
+        assert "DB_FILTER" not in devel["services"]["odoo"]["environment"]
+        assert "DB_FILTER" not in test["services"]["odoo"]["environment"]
+        assert prod["services"]["odoo"]["environment"]["DB_FILTER"] == target_filter
+        assert (
+            prod["services"]["backup"]["environment"]["DBS_TO_INCLUDE"] == target_filter
+        )
+        answers = yaml.safe_load(Path(".custom.copier-answers.yaml").read_bytes())
+        assert answers["odoo_dbfilter"] == target_filter
