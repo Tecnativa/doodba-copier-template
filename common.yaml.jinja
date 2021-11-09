@@ -35,7 +35,7 @@ services:
   {% if postgres_version -%}
   db:
     image: ghcr.io/tecnativa/postgres-autoconf:{{ postgres_version }}-alpine
-    shm_size: 512mb
+    shm_size: 4gb
     environment:
       POSTGRES_DB: *dbname
       POSTGRES_USER: *dbuser
