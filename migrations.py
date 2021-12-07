@@ -175,8 +175,12 @@ def db_filter_prefix_default(c, dst_path, answers_rel_path):
     answers_yaml = _load_yaml(answers_path)
     postgres_dbname = answers_yaml.get("postgres_dbname")
     if answers_yaml.get("odoo_dbfilter") == ".*" and postgres_dbname:
-        answers_yaml["odoo_dbfilter"] = f"^{postgres_dbname}"
-        yaml.safe_dump(answers_yaml, answers_path.open("w"))
+        # Replace odoo_dbfilter value in answers file
+        answers_path.write_text(
+            answers_path.read_text().replace(
+                "odoo_dbfilter: .*", f"odoo_dbfilter: ^{postgres_dbname}"
+            )
+        )
         common_path = Path(dst_path, "common.yaml")
         common_path.write_text(
             common_path.read_text().replace(
