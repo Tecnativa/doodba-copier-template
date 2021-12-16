@@ -1,8 +1,11 @@
 import json
 import logging
 import os
+import shutil
 import socket
+import stat
 import textwrap
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Dict, Union
 
@@ -318,3 +321,28 @@ def safe_stop_env(exec_path, purge=True):
             assert not _containers_running(
                 exec_path
             ), "Containers running or not removed. 'stop [--purge]' command did not work."
+
+
+@contextmanager
+def bypass_pre_commit():
+    """A context manager to patch the pre-commit binary to ignore it"""
+    pre_commit_path_str = shutil.which("pre-commit")
+    try:
+        # Move current binary to different location
+        pre_commit_path = Path(pre_commit_path_str)
+        shutil.move(pre_commit_path_str, pre_commit_path_str + "-old")
+        with pre_commit_path.open("w") as fd:
+            fd.write(
+                "#!/usr/bin/python3\n"
+                "# -*- coding: utf-8 -*-\n"
+                "import sys\n"
+                "if __name__ == '__main__':\n"
+                "    sys.exit(0)\n"
+            )
+        cur_stat = pre_commit_path.stat()
+        # Like chmod ug+x
+        pre_commit_path.chmod(cur_stat.st_mode | stat.S_IXUSR | stat.S_IXGRP)
+        yield
+    finally:
+        # Restore original binary
+        shutil.move(pre_commit_path_str + "-old", pre_commit_path_str)
