@@ -8,6 +8,8 @@ from copier import copy
 from plumbum import local
 from plumbum.cmd import docker_compose, git, invoke
 
+from .conftest import bypass_pre_commit
+
 LATEST_VERSION_WITHOUT_COPIER = "v0.0.0"
 MISSING = object()
 
@@ -89,6 +91,7 @@ def test_transtion_to_copier(
         )
 
 
+@pytest.mark.sequential
 def test_v1_5_2_migration(
     tmp_path: Path, cloned_template: Path, supported_odoo_version: float
 ):
@@ -102,16 +105,29 @@ def test_v1_5_2_migration(
             vcs_ref="v1.5.1",
             force=True,
             data={"odoo_version": supported_odoo_version},
+            tasks=[
+                "git init",
+                "ln -sf devel.yaml docker-compose.yml",
+                "invoke write-code-workspace-file",
+            ],  # Installation of pre-commit modules fails in old versions. We don't need to check that (and can't fix it), so override post-copy and update tasks to avoid pre-commit hooks.
         )
         auto.mkdir()
         empty.touch()
         assert empty.exists()
         git("add", ".")
         git("add", "-f", empty)
-        git("commit", "-am", "reformat", retcode=1)
         git("commit", "-am", "copied from template in v1.5.1")
         # Update to v1.5.2
-        copy(vcs_ref="v1.5.2", force=True)
+        with bypass_pre_commit():
+            copy(
+                vcs_ref="v1.5.2",
+                force=True,
+                tasks=[
+                    "git init",
+                    "ln -sf devel.yaml docker-compose.yml",
+                    "invoke write-code-workspace-file",
+                ],  # Installation of pre-commit modules fails in old versions. We don't need to check that (and can't fix it), so override post-copy and update tasks to avoid pre-commit hooks.
+            )
         assert not empty.exists()
         assert not auto.exists()
         invoke("develop")
@@ -119,6 +135,7 @@ def test_v1_5_2_migration(
         assert not empty.exists()
 
 
+@pytest.mark.sequential
 def test_v1_5_3_migration(
     tmp_path: Path, cloned_template: Path, supported_odoo_version: float
 ):
@@ -131,13 +148,30 @@ def test_v1_5_3_migration(
             git("tag", "v1.5.3")
     with local.cwd(tmp_path):
         # Copy v1.5.2
-        copy(src_path=str(cloned_template), vcs_ref="v1.5.2", force=True)
+        copy(
+            src_path=str(cloned_template),
+            vcs_ref="v1.5.2",
+            force=True,
+            tasks=[
+                "git init",
+                "ln -sf devel.yaml docker-compose.yml",
+                "invoke write-code-workspace-file",
+            ],  # Installation of pre-commit modules fails in old versions. We don't need to check that (and can't fix it), so override post-copy and update tasks to avoid pre-commit hooks.
+        )
         assert not auto_addons.exists()
         git("add", ".")
-        git("commit", "-am", "reformat", retcode=1)
         git("commit", "-am", "copied from template in v1.5.2")
         # Update to v1.5.3
-        copy(vcs_ref="v1.5.3", force=True)
+        with bypass_pre_commit():
+            copy(
+                vcs_ref="v1.5.3",
+                force=True,
+                tasks=[
+                    "git init",
+                    "ln -sf devel.yaml docker-compose.yml",
+                    "invoke write-code-workspace-file",
+                ],  # Installation of pre-commit modules fails in old versions. We don't need to check that (and can't fix it), so override post-copy and update tasks to avoid pre-commit hooks.
+            )
         assert not auto_addons.exists()
         invoke("develop")
         assert auto_addons.is_dir()
@@ -145,6 +179,7 @@ def test_v1_5_3_migration(
         (auto_addons / "sample").touch()
 
 
+@pytest.mark.sequential
 @pytest.mark.parametrize("domain_prod", (MISSING, None, "www.example.com"))
 @pytest.mark.parametrize(
     "domain_prod_alternatives",
@@ -183,15 +218,28 @@ def test_v2_0_0_migration(
             force=True,
             answers_file=".custom.copier-answers.yaml",
             data=data,
+            tasks=[
+                "git init",
+                "ln -sf devel.yaml docker-compose.yml",
+                "invoke write-code-workspace-file",
+            ],  # Installation of pre-commit modules fails in old versions. We don't need to check that (and can't fix it), so override post-copy and update tasks to avoid pre-commit hooks.
         )
         git("config", "commit.gpgsign", "false")
         git("add", ".")
-        git("commit", "-am", "reformat", retcode=1)
         git("commit", "-am", "copied from template in v1.6.0")
         # Update to v2.0.0
-        copy(answers_file=".custom.copier-answers.yaml", vcs_ref="v2.0.0", force=True)
+        with bypass_pre_commit():
+            copy(
+                answers_file=".custom.copier-answers.yaml",
+                vcs_ref="v2.0.0",
+                force=True,
+                tasks=[
+                    "git init",
+                    "ln -sf devel.yaml docker-compose.yml",
+                    "invoke write-code-workspace-file",
+                ],  # Installation of pre-commit modules fails in old versions. We don't need to check that (and can't fix it), so override post-copy and update tasks to avoid pre-commit hooks.
+            )
         git("add", ".")
-        git("commit", "-am", "reformat", retcode=1)
         git("commit", "-am", "updated from template in v2.0.0")
         # Assert .env removal
         assert not Path(".env").exists()
@@ -228,6 +276,7 @@ def test_v2_0_0_migration(
         assert answers["domains_test"] == expected_domains_test
 
 
+@pytest.mark.sequential
 def test_v2_1_1_migration(
     tmp_path: Path,
     cloned_template: Path,
@@ -250,15 +299,28 @@ def test_v2_1_1_migration(
             data={
                 "odoo_version": supported_odoo_version,
             },
+            tasks=[
+                "git init",
+                "ln -sf devel.yaml docker-compose.yml",
+                "invoke write-code-workspace-file",
+            ],  # Installation of pre-commit modules fails in old versions. We don't need to check that (and can't fix it), so override post-copy and update tasks to avoid pre-commit hooks.
         )
         git("config", "commit.gpgsign", "false")
         git("add", ".")
-        git("commit", "-am", "reformat", retcode=1)
         git("commit", "-am", f"copied from template in {pre}")
         # Update to target version
-        copy(answers_file=".custom.copier-answers.yaml", vcs_ref=target, force=True)
+        with bypass_pre_commit():
+            copy(
+                answers_file=".custom.copier-answers.yaml",
+                vcs_ref=target,
+                force=True,
+                tasks=[
+                    "git init",
+                    "ln -sf devel.yaml docker-compose.yml",
+                    "invoke write-code-workspace-file",
+                ],  # Installation of pre-commit modules fails in old versions. We don't need to check that (and can't fix it), so override post-copy and update tasks to avoid pre-commit hooks.
+            )
         git("add", ".")
-        git("commit", "-am", "reformat", retcode=1)
         git("commit", "-am", f"updated from template in {target}")
         # Assert config files removal
         assert not Path(".vscode", "launch.json").exists()
