@@ -27,16 +27,19 @@ services:
         COMPILE: "false"
         UID: "${UID:-1000}"
         GID: "${GID:-1000}"
+        GIT_AUTOSHARE: "1"
     networks:
       - public
     volumes:
       - ./odoo/custom/src:/opt/odoo/custom/src:rw,z
+      - ~/.cache/git-autoshare/:/home/odoo/.cache/git-autoshare/:rw,z
     environment:
       DEPTH_DEFAULT: 100
       # XXX Export these variables before running setup to own the files
       UID: "${UID:-1000}"
       GID: "${GID:-1000}"
       UMASK: "$UMASK"
+      GIT_AUTOSHARE: "1"
     user: root
     entrypoint: autoaggregate
 

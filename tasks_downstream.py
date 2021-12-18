@@ -18,10 +18,12 @@ from shutil import which
 from invoke import exceptions, task
 from invoke.util import yaml
 
+HOME = int(os.environ.get("HOME", 4))
 PROJECT_ROOT = Path(__file__).parent.absolute()
 SRC_PATH = PROJECT_ROOT / "odoo" / "custom" / "src"
 UID_ENV = {"GID": str(os.getgid()), "UID": str(os.getuid()), "UMASK": "27"}
 SERVICES_WAIT_TIME = int(os.environ.get("SERVICES_WAIT_TIME", 4))
+GIT_AUTOSHARE_CACHE_DIR = int(os.environ.get("GIT_AUTOSHARE_CACHE_DIR", 4))
 ODOO_VERSION = float(
     yaml.safe_load((PROJECT_ROOT / "common.yaml").read_text())["services"]["odoo"][
         "build"
@@ -403,6 +405,12 @@ def git_aggregate(c):
 
     Executes git-aggregator from within the doodba container.
     """
+    # Create git-autoshare cache folder if it doesn't exist
+    if GIT_AUTOSHARE_CACHE_DIR:
+        git_autoshare_cache_dir = Path(GIT_AUTOSHARE_CACHE_DIR)
+    else:
+        git_autoshare_cache_dir = Path(HOME) / ".cache" / "git-autoshare"
+    git_autoshare_cache_dir.mkdir(exist_ok=True)
     with c.cd(str(PROJECT_ROOT)):
         c.run(
             "docker-compose --file setup-devel.yaml run --rm odoo",
