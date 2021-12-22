@@ -16,7 +16,11 @@ from pathlib import Path
 from shutil import which
 
 from invoke import exceptions, task
-from invoke.util import yaml
+
+try:
+    import yaml
+except ImportError:
+    from invoke.util import yaml
 
 PROJECT_ROOT = Path(__file__).parent.absolute()
 SRC_PATH = PROJECT_ROOT / "odoo" / "custom" / "src"
