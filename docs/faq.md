@@ -187,7 +187,7 @@ version: "2.1"
 
 services:
   proxy:
-    image: traefik:1.6-alpine
+    image: docker.io/traefik:1.6-alpine
     networks:
       shared:
       private:
