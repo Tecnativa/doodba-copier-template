@@ -46,7 +46,7 @@ services:
   {%- endif %}
 
   smtpfake:
-    image: mailhog/mailhog
+    image: docker.io/mailhog/mailhog
   {%- if smtp_relay_host %}
 
   smtpreal:
