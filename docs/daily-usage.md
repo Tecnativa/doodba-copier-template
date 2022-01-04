@@ -333,7 +333,7 @@ networks:
     driver_opts:
       encrypted: 1
   shared:
-    internal: true
+    internal: ${DOODBA_NETWORK_INTERNAL-true}
     driver_opts:
       encrypted: 1
 

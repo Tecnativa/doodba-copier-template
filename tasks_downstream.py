@@ -24,7 +24,21 @@ except ImportError:
 
 PROJECT_ROOT = Path(__file__).parent.absolute()
 SRC_PATH = PROJECT_ROOT / "odoo" / "custom" / "src"
-UID_ENV = {"GID": str(os.getgid()), "UID": str(os.getuid()), "UMASK": "27"}
+UID_ENV = {
+    "GID": os.environ.get("DOODBA_GID", str(os.getgid())),
+    "UID": os.environ.get("DOODBA_UID", str(os.getuid())),
+    "DOODBA_UMASK": os.environ.get("DOODBA_UMASK", "27"),
+}
+UID_ENV.update(
+    {
+        "DOODBA_GITAGGREGATE_GID": os.environ.get(
+            "DOODBA_GITAGGREGATE_GID", UID_ENV["GID"]
+        ),
+        "DOODBA_GITAGGREGATE_UID": os.environ.get(
+            "DOODBA_GITAGGREGATE_UID", UID_ENV["UID"]
+        ),
+    }
+)
 SERVICES_WAIT_TIME = int(os.environ.get("SERVICES_WAIT_TIME", 4))
 ODOO_VERSION = float(
     yaml.safe_load((PROJECT_ROOT / "common.yaml").read_text())["services"]["odoo"][
@@ -393,7 +407,12 @@ def write_code_workspace_file(c, cw_path=None):
 def develop(c):
     """Set up a basic development environment."""
     # Prepare environment
-    Path(PROJECT_ROOT, "odoo", "auto", "addons").mkdir(parents=True, exist_ok=True)
+    auto = Path(PROJECT_ROOT, "odoo", "auto")
+    addons = auto / "addons"
+    addons.mkdir(parents=True, exist_ok=True)
+    # Allow others writing, for podman support
+    auto.chmod(0o777)
+    addons.chmod(0o777)
     with c.cd(str(PROJECT_ROOT)):
         c.run("git init")
         c.run("ln -sf devel.yaml docker-compose.yml")
