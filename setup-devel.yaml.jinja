@@ -1,7 +1,7 @@
 {% import "_macros.jinja" as macros -%}
 # Use this environment to download all repositories from `repos.yaml` file:
 #
-#   export UID="$(id -u $USER)" GID="$(id -g $USER)" UMASK="$(umask)"
+#   export DOODBA_GITAGGREGATE_UID="$(id -u $USER)" DOODBA_GITAGGREGATE_GID="$(id -g $USER)" DOODBA_UMASK="$(umask)"
 #   docker-compose -f setup-devel.yaml run --rm odoo
 #
 # You can clean your git project before if you want to have all really clean:
@@ -34,9 +34,9 @@ services:
     environment:
       DEPTH_DEFAULT: 100
       # XXX Export these variables before running setup to own the files
-      UID: "${UID:-1000}"
-      GID: "${GID:-1000}"
-      UMASK: "$UMASK"
+      UID: "${DOODBA_GITAGGREGATE_UID:-1000}"
+      GID: "${DOODBA_GITAGGREGATE_GID:-1000}"
+      UMASK: "$DOODBA_UMASK"
     user: root
     entrypoint: autoaggregate
 

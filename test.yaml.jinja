@@ -128,7 +128,7 @@ services:
 
 networks:
   default:
-    internal: true
+    internal: ${DOODBA_NETWORK_INTERNAL-true}
     driver_opts:
       encrypted: 1
 
