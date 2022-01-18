@@ -49,6 +49,9 @@
 
       {#- Route redirections #}
       {%- if domain_group.redirect_to %}
+      {%- if domain_group.redirect_permanent %}
+      traefik.alt-{{ domain_group.loop.index0 }}.frontend.redirect.permanent: "true"
+      {%- endif %}
       traefik.alt-{{ domain_group.loop.index0 }}.frontend.redirect.regex: ^(.*)://([^/]+)/(.*)$$
       traefik.alt-{{ domain_group.loop.index0 }}.frontend.redirect.replacement: $$1://{{ domain_group.redirect_to }}/$$3
       {{-
