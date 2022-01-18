@@ -43,6 +43,7 @@ def test_multiple_domains(
                 "hosts": [f"alt0.main1.{base_domain}", f"alt1.main1.{base_domain}"],
                 "cert_resolver": True,
                 "redirect_to": f"main1.{base_domain}",
+                "redirect_permanent": True,
             },
             # main2 only serves certain routes
             {
@@ -104,6 +105,7 @@ def test_multiple_domains(
                     )
                     assert response.ok
                     assert response.url == f"https://main0.{base_path}"
+                    assert response.history[0].status_code == 302
                 # main2 serves https on port 80; returns a 404 from Traefik (not from
                 # Odoo) with global HTTPS redirection
                 bad_response = requests.get(
@@ -127,6 +129,7 @@ def test_multiple_domains(
                     response = requests.get(f"http://alt{alt_num}.main0.{base_path}")
                     assert response.ok
                     assert response.url == f"http://main0.{base_path}"
+                    assert response.history[0].status_code == 302
                 # main2 serves https on port 80; returns a 404 from Odoo (not from
                 # Traefik) without HTTPS redirection
                 bad_response = requests.get(
@@ -173,6 +176,9 @@ def test_multiple_domains(
                     response.url == f"https://main1.{base_domain}/web/database/selector"
                 )
                 assert response.headers["X-Robots-Tag"] == "noindex, nofollow"
+                # Search for a response in the chain with the 301 return code
+                # as several will be made during the redirection
+                assert filter(lambda r: r.status_code == 301, response.history)
             # missing, which fails with Traefik 404, both with and without TLS
             bad_response = requests.get(
                 f"http://missing.{base_path}", verify=not is_traefik1
