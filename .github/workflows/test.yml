@@ -48,7 +48,7 @@ jobs:
       # Shared steps
       - uses: actions/checkout@v1
       - name: Install python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2.3.1
         with:
           python-version: ${{ matrix.python-version }}
       - name: Generate cache key CACHE
