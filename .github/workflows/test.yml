@@ -57,7 +57,7 @@ jobs:
           sha256sum | cut -d' ' -f1) ${{ hashFiles('pyproject.toml') }} ${{
           hashFiles('poetry.lock') }} ${{ hashFiles('.pre-commit-config.yaml') }}" >>
           $GITHUB_ENV
-      - uses: actions/cache@v2.1.0
+      - uses: actions/cache@v2.1.7
         with:
           path: |
             .cache.~
