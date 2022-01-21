@@ -47,6 +47,8 @@ jobs:
     steps:
       # Shared steps
       - uses: actions/checkout@v2.4.0
+        with:
+          fetch-depth: 0Fetch all history for all tags and branches
       - name: Install python
         uses: actions/setup-python@v2.3.1
         with:
