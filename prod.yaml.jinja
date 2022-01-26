@@ -14,6 +14,7 @@ services:
       - .docker/odoo.env
       - .docker/db-access.env
     environment:
+      DB_FILTER: "{{ odoo_dbfilter }}"
       DOODBA_ENVIRONMENT: "${DOODBA_ENVIRONMENT-prod}"
       INITIAL_LANG: "{{ odoo_initial_lang }}"
       PYTHONPATH: /opt/odoo/custom/src/odoo

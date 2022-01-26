@@ -16,11 +16,29 @@ from pathlib import Path
 from shutil import which
 
 from invoke import exceptions, task
-from invoke.util import yaml
+
+try:
+    import yaml
+except ImportError:
+    from invoke.util import yaml
 
 PROJECT_ROOT = Path(__file__).parent.absolute()
 SRC_PATH = PROJECT_ROOT / "odoo" / "custom" / "src"
-UID_ENV = {"GID": str(os.getgid()), "UID": str(os.getuid()), "UMASK": "27"}
+UID_ENV = {
+    "GID": os.environ.get("DOODBA_GID", str(os.getgid())),
+    "UID": os.environ.get("DOODBA_UID", str(os.getuid())),
+    "DOODBA_UMASK": os.environ.get("DOODBA_UMASK", "27"),
+}
+UID_ENV.update(
+    {
+        "DOODBA_GITAGGREGATE_GID": os.environ.get(
+            "DOODBA_GITAGGREGATE_GID", UID_ENV["GID"]
+        ),
+        "DOODBA_GITAGGREGATE_UID": os.environ.get(
+            "DOODBA_GITAGGREGATE_UID", UID_ENV["UID"]
+        ),
+    }
+)
 SERVICES_WAIT_TIME = int(os.environ.get("SERVICES_WAIT_TIME", 4))
 ODOO_VERSION = float(
     yaml.safe_load((PROJECT_ROOT / "common.yaml").read_text())["services"]["odoo"][
@@ -389,7 +407,12 @@ def write_code_workspace_file(c, cw_path=None):
 def develop(c):
     """Set up a basic development environment."""
     # Prepare environment
-    Path(PROJECT_ROOT, "odoo", "auto", "addons").mkdir(parents=True, exist_ok=True)
+    auto = Path(PROJECT_ROOT, "odoo", "auto")
+    addons = auto / "addons"
+    addons.mkdir(parents=True, exist_ok=True)
+    # Allow others writing, for podman support
+    auto.chmod(0o777)
+    addons.chmod(0o777)
     with c.cd(str(PROJECT_ROOT)):
         c.run("git init")
         c.run("ln -sf devel.yaml docker-compose.yml")
@@ -420,7 +443,7 @@ def git_aggregate(c):
             c.run(f"pre-commit {action}")
 
 
-@task(develop)
+@task()
 def img_build(c, pull=True):
     """Build docker images."""
     cmd = "docker-compose build"
@@ -430,14 +453,14 @@ def img_build(c, pull=True):
         c.run(cmd, env=UID_ENV, pty=True)
 
 
-@task(develop)
+@task()
 def img_pull(c):
     """Pull docker images."""
     with c.cd(str(PROJECT_ROOT)):
         c.run("docker-compose pull", pty=True)
 
 
-@task(develop)
+@task()
 def lint(c, verbose=False):
     """Lint & format source code."""
     cmd = "pre-commit run --show-diff-on-failure --all-files --color=always"
@@ -447,7 +470,7 @@ def lint(c, verbose=False):
         c.run(cmd)
 
 
-@task(develop)
+@task()
 def start(c, detach=True, debugpy=False):
     """Start environment."""
     cmd = "docker-compose up"
@@ -487,7 +510,6 @@ def start(c, detach=True, debugpy=False):
 
 
 @task(
-    develop,
     help={
         "modules": "Comma-separated list of modules to install.",
         "core": "Install all core addons. Default: False",
@@ -636,7 +658,6 @@ def _get_module_list(
 
 
 @task(
-    develop,
     help={
         "modules": "Comma-separated list of modules to test.",
         "core": "Test all core addons. Default: False",
@@ -728,7 +749,6 @@ def test(
 
 
 @task(
-    develop,
     help={"purge": "Remove all related containers, networks images and volumes"},
 )
 def stop(c, purge=False):
@@ -741,7 +761,6 @@ def stop(c, purge=False):
 
 
 @task(
-    develop,
     help={
         "dbname": "The DB that will be DESTROYED and recreated. Default: 'devel'.",
         "modules": "Comma-separated list of modules to install. Default: 'base'.",
@@ -800,7 +819,7 @@ def resetdb(
         preparedb(c)
 
 
-@task(develop)
+@task()
 def preparedb(c):
     """Run the `preparedb` script inside the container
 
@@ -818,7 +837,7 @@ def preparedb(c):
         )
 
 
-@task(develop)
+@task()
 def restart(c, quick=True):
     """Restart odoo container(s)."""
     cmd = "docker-compose restart"
@@ -830,7 +849,6 @@ def restart(c, quick=True):
 
 
 @task(
-    develop,
     help={
         "container": "Names of the containers from which logs will be obtained."
         " You can specify a single one, or several comma-separated names."
@@ -853,18 +871,35 @@ def logs(c, tail=10, follow=True, container=None):
 @task
 def after_update(c):
     """Execute some actions after a copier update or init"""
-    # Make custom build script executable
+    # Make custom build scripts executable
     if ODOO_VERSION < 11:
-        script_file = Path(
-            PROJECT_ROOT, "odoo", "custom", "build.d", "20-update-pg-repos"
+        files = (
+            Path(PROJECT_ROOT, "odoo", "custom", "build.d", "20-update-pg-repos"),
+            Path(PROJECT_ROOT, "odoo", "custom", "build.d", "10-fix-certs"),
         )
-        cur_stat = script_file.stat()
-        # Like chmod ug+x
-        script_file.chmod(cur_stat.st_mode | stat.S_IXUSR | stat.S_IXGRP)
+        for script_file in files:
+            # Ignore if, for some reason, the file didn't end up in the generated
+            # project despite of the correct version (e.g. Copier exclusions)
+            if not script_file.exists():
+                continue
+            cur_stat = script_file.stat()
+            # Like chmod ug+x
+            script_file.chmod(cur_stat.st_mode | stat.S_IXUSR | stat.S_IXGRP)
+    else:
+        # Remove version-specific build scripts if the copier update didn't
+        # HACK: https://github.com/copier-org/copier/issues/461
+        files = (
+            Path(PROJECT_ROOT, "odoo", "custom", "build.d", "20-update-pg-repos"),
+            Path(PROJECT_ROOT, "odoo", "custom", "build.d", "10-fix-certs"),
+        )
+        for script_file in files:
+            # missing_ok argument would take care of this, but it was only added for
+            # Python 3.8
+            if script_file.exists():
+                script_file.unlink()
 
 
 @task(
-    develop,
     help={
         "source_db": "The source DB name. Default: 'devel'.",
         "destination_db": "The destination DB name. Default: '[SOURCE_DB_NAME]-[CURRENT_DATE]'",
@@ -899,7 +934,6 @@ def snapshot(
 
 
 @task(
-    develop,
     help={
         "snapshot_name": "The snapshot name. If not provided,"
         "the script will try to find the last snapshot"

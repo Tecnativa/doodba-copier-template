@@ -94,12 +94,20 @@ _migrations:
         - "{{ _copier_conf.dst_path }}"
         - "{{ _copier_conf.answers_file }}"
     after: *update_no_license
+  - version: v4.0.0a0
+    after:
+      - - invoke
+        - --search-root={{ _copier_conf.src_path }}
+        - --collection=migrations
+        - db-filter-prefix-default
+        - "{{ _copier_conf.dst_path }}"
+        - "{{ _copier_conf.answers_file }}"
 
 # Questions for the user
 odoo_version:
   help: On which odoo version is it based?
   type: float
-  default: 14.0
+  default: 15.0
   choices:
     - 7.0
     - 8.0
@@ -109,13 +117,7 @@ odoo_version:
     - 12.0
     - 13.0
     - 14.0
-
-odoo_dbfilter:
-  default: ".*"
-  type: str
-  help: >-
-    Set your Odoo db filter. It must be a regexp that matches the domain name being
-    visited. It is useful if you use Odoo in SaaS mode.
+    - 15.0
 
 odoo_proxy:
   default: traefik
@@ -231,6 +233,7 @@ domains_prod:
         - www.shop.main.com
         - old.shop.main.com
       redirect_to: shop.main.com
+      redirect_permanent: True
 
     # VPN-only domain, with self-signed certificate
     - hosts:
@@ -244,8 +247,12 @@ domains_prod:
     - hosts: The domain names. List of strings.
     - path_prefixes: The path prefixes (if any) that will match this routing rule.
       List of strings. Default: [].
-    - redirect_to: Apply a 301 redirection to this other domain.
+    - redirect_to: Apply a redirection to this other domain. By default, it will
+      be a 302 redirection, but it can be turned into a 301 redirection by enabling
+      the `redirect_permanent` option.
       String. Default: null.
+    - redirect_permanent: Return 301 instead of 302 in a Traefik redirection, making it permanent.
+      Boolean. Default: False.
     - cert_resolver: Traefik cert resolver name. String/Boolean. Default: "letsencrypt".
       Set it to `true` to use a self-signed certificate. Set it to `false` to
       disable TLS in those domains. If not `false`, it will force using HTTPS.
@@ -281,6 +288,7 @@ domains_test:
         - www.demo2.main.com
         - old.demo2.main.com
       redirect_to: demo2.main.com
+      redirect_permanent: True
 
     # VPN-only domain, with self-signed certificate
     - hosts:
@@ -294,8 +302,12 @@ domains_test:
     - hosts: The domain names. List of strings.
     - path_prefixes: The path prefixes (if any) that will match this routing rule.
       List of strings. Default: [].
-    - redirect_to: Apply a 301 redirection to this other domain.
+    - redirect_to: Apply a redirection to this other domain. By default, it will be a
+      302 redirection, but it can be turned into a 301 redirection by enabling the
+      `redirect_permanent` option.
       String. Default: null.
+    - redirect_permanent: Return 301 instead of 302 in a Traefik redirection, making it permanent.
+      Boolean. Default: False.
     - cert_resolver: Traefik cert resolver name. String/Boolean. Default: "letsencrypt".
       Set it to `true` to use a self-signed certificate. Set it to `false` to
       disable TLS in those domains. If not `false`, it will force using HTTPS.
@@ -372,6 +384,14 @@ postgres_password:
   type: str
   help: >-
     What will be your postgres user password?
+
+odoo_dbfilter:
+  default: "^{{ postgres_dbname }}"
+  type: str
+  help: >-
+    Set your Odoo db filter. It must be a regexp that matches the domain name being
+    visited. It is useful if you use Odoo in SaaS mode. Only applied to production
+    environment.
 
 smtp_default_from:
   type: str
@@ -469,7 +489,7 @@ backup_dst:
     choice backup engine; read http://duplicity.nongnu.org/vers8/duplicity.1.html#sect7
     for those URL formats).
 
-    If you don't want bakcups, leave this empty.
+    If you don't want backups, leave this empty.
 
     Where should the backups be stored?
 

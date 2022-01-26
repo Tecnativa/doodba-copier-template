@@ -32,7 +32,6 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - 3.6
           - 3.7
           - 3.8
         odoo-version:
@@ -44,11 +43,14 @@ jobs:
           - 12.0
           - 13.0
           - 14.0
+          - 15.0
     steps:
       # Shared steps
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2.4.0
+        with:
+          fetch-depth: 0Fetch all history for all tags and branches
       - name: Install python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2.3.1
         with:
           python-version: ${{ matrix.python-version }}
       - name: Generate cache key CACHE
@@ -57,7 +59,7 @@ jobs:
           sha256sum | cut -d' ' -f1) ${{ hashFiles('pyproject.toml') }} ${{
           hashFiles('poetry.lock') }} ${{ hashFiles('.pre-commit-config.yaml') }}" >>
           $GITHUB_ENV
-      - uses: actions/cache@v2.1.0
+      - uses: actions/cache@v2.1.7
         with:
           path: |
             .cache.~

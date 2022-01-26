@@ -20,6 +20,7 @@ Maybe not so frequent, but interesting anyway. 🤷
 - [This project is too opinionated, but can I question any of those opinions?](#this-project-is-too-opinionated-but-can-i-question-any-of-those-opinions)
 - [Where are screencasts and screenshots of my failed E2E tests?](#where-are-screencasts-and-screenshots-of-my-failed-e2e-tests)
   - [How to get screencasts and screenshots of failed E2E tests in Odoo 12.0?](#how-to-get-screencasts-and-screenshots-of-failed-e2e-tests-in-odoo-120)
+- [How to use with podman?](#how-to-use-with-podman)
 - [Why pre-commit fails each time I copy or update the template?](#why-pre-commit-fails-each-time-i-copy-or-update-the-template)
 - [Why XML is broken after running pre-commit?](#why-xml-is-broken-after-running-pre-commit)
 - [Why is Odoo saying that its database is not initialized?](#why-is-odoo-saying-that-its-database-is-not-initialized)
@@ -187,7 +188,7 @@ version: "2.1"
 
 services:
   proxy:
-    image: traefik:1.6-alpine
+    image: docker.io/traefik:1.6-alpine
     networks:
       shared:
       private:
@@ -351,6 +352,47 @@ output no logs to the console.
 
 Since this is an awkward side effect of that setting, we're not shipping that by
 default.
+
+## How to use with podman?
+
+Podman 3.4+ support is experimental.
+
+⚠ You will not have [network isolation](daily-usage.md#network-isolation) until podman
+rootless networks are fully supported. See
+https://github.com/containers/podman/issues/10672 for progress on that subject.
+
+Example usage:
+
+```sh
+# Install dependencies
+sudo dnf -y install podman podman-docker docker-compose
+# Make sure podman works
+podman run --rm hello-world
+# Install rootless podman backend socket replacement
+systemctl enable --user --now podman.socket
+# Instruct docker clients to connect to podman backend
+export DOCKER_HOST=unix:///run/user/$(id -u)/podman/podman.sock
+# Instruct git-aggregator to use inner UID and GID 0, which podman will map to your user
+export DOODBA_GITAGGREGATE_UID=0 DOODBA_GITAGGREGATE_GID=0 DOODBA_UMASK=22
+# Disable network isolation
+export DOODBA_NETWORK_INTERNAL=false
+```
+
+Once all that is done, continue with normal wokflow on that terminal.
+
+Add those exports to your bash profile to avoid repeating them for each terminal. If you
+use `fish`, it's easier:
+
+```fish
+# Fish-only syntax to save all those exports permanently
+set --universal --export DOCKER_HOST unix:///run/user/(id -u)/podman/podman.sock
+set --universal --export DOODBA_NETWORK_INTERNAL false
+set --universal --export DOODBA_GITAGGREGATE_UID 0
+set --universal --export DOODBA_GITAGGREGATE_GID 0
+set --universal --export DOODBA_UMASK 22
+```
+
+Then continue with the [instructions for daily usage](daily-usage.md).
 
 ## Why pre-commit fails each time I copy or update the template?
 

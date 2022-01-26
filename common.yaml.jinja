@@ -21,7 +21,6 @@ services:
       EMAIL_FROM: "{{ smtp_default_from|default("", true) }}"
       PGDATABASE: &dbname {{ postgres_dbname }}
       PGUSER: &dbuser "{{ postgres_username }}"
-      DB_FILTER: "{{ odoo_dbfilter }}"
       PROXY_MODE: "{% if odoo_proxy %}true{% else %}false{% endif %}"
       LIST_DB: "{{ odoo_listdb | tojson }}"
     {%- if smtp_canonical_default %}
@@ -43,7 +42,7 @@ services:
   {% if postgres_version -%}
   db:
     image: ghcr.io/tecnativa/postgres-autoconf:{{ postgres_version }}-alpine
-    shm_size: 512mb
+    shm_size: 4gb
     environment:
       POSTGRES_DB: *dbname
       POSTGRES_USER: *dbuser
@@ -54,7 +53,7 @@ services:
   {%- endif %}
 
   smtpfake:
-    image: mailhog/mailhog
+    image: docker.io/mailhog/mailhog
   {%- if smtp_relay_host %}
 
   smtpreal:
@@ -98,6 +97,7 @@ services:
     {%- endif %}
     init: true
     environment:
+      DBS_TO_INCLUDE: "{{ odoo_dbfilter }}"
       DST: "{{ backup_dst }}"
       {%- if smtp_relay_host %}
       EMAIL_FROM: "{{ backup_email_from }}"

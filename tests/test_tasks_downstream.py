@@ -195,12 +195,12 @@ def test_start(
             # Imagine the user is in the src subfolder for these tasks
             with local.cwd(tmp_path / "odoo" / "custom" / "src"):
                 invoke("img-build")
-                invoke("git-aggregate")
+                stdout = invoke("git-aggregate")
             # Test normal call
-            stdout = invoke("start")
             print(stdout)
             assert "Reinitialized existing Git repository" in stdout
             assert "pre-commit installed" in stdout
+            invoke("start")
             # Test "--debugpy and wait time call
             safe_stop_env(tmp_path)
             stdout = invoke("start", "--debugpy")
@@ -286,6 +286,7 @@ def test_install_test(
 
 
 @pytest.mark.sequential
+@pytest.mark.skip_for_prereleases
 def test_test_tasks(
     cloned_template: Path,
     docker: LocalCommand,
@@ -301,6 +302,8 @@ def test_test_tasks(
     - stop --purge
     - resetdb --dependencies
     - test [options]
+
+    This test will be skipped for prereleased versions of Doodba
     """
     try:
         with local.cwd(tmp_path):
