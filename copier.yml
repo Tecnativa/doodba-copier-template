@@ -234,6 +234,7 @@ domains_prod:
         - old.shop.main.com
       redirect_to: shop.main.com
       redirect_permanent: True
+      redirect_root_only: True
 
     # VPN-only domain, with self-signed certificate
     - hosts:
@@ -253,6 +254,8 @@ domains_prod:
       String. Default: null.
     - redirect_permanent: Return 301 instead of 302 in a Traefik redirection, making it permanent.
       Boolean. Default: False.
+    - redirec_root_only: Only redirects the root domain
+      Boolean. Default: False
     - cert_resolver: Traefik cert resolver name. String/Boolean. Default: "letsencrypt".
       Set it to `true` to use a self-signed certificate. Set it to `false` to
       disable TLS in those domains. If not `false`, it will force using HTTPS.
@@ -289,6 +292,7 @@ domains_test:
         - old.demo2.main.com
       redirect_to: demo2.main.com
       redirect_permanent: True
+      redirect_root_only: True
 
     # VPN-only domain, with self-signed certificate
     - hosts:
@@ -308,6 +312,8 @@ domains_test:
       String. Default: null.
     - redirect_permanent: Return 301 instead of 302 in a Traefik redirection, making it permanent.
       Boolean. Default: False.
+    - redirec_root_only: Only redirects the root domain
+      Boolean. Default: False
     - cert_resolver: Traefik cert resolver name. String/Boolean. Default: "letsencrypt".
       Set it to `true` to use a self-signed certificate. Set it to `false` to
       disable TLS in those domains. If not `false`, it will force using HTTPS.

@@ -121,8 +121,13 @@
       {%- if domain_group.redirect_permanent %}
       traefik.alt-{{ domain_group.loop.index0 }}.frontend.redirect.permanent: "true"
       {%- endif %}
+      {%- if domain_group.redirect_root_only %}
+      traefik.http.middlewares.{{ key }}-redirect-{{ domain_group.loop.index0 }}.redirectRegex.regex: ^(.*)://([^/]+)$$
+      traefik.http.middlewares.{{ key }}-redirect-{{ domain_group.loop.index0 }}.redirectRegex.replacement: $$1://{{ domain_group.redirect_to }}
+      {%- else %}
       traefik.http.middlewares.{{ key }}-redirect-{{ domain_group.loop.index0 }}.redirectRegex.regex: ^(.*)://([^/]+)/(.*)$$
       traefik.http.middlewares.{{ key }}-redirect-{{ domain_group.loop.index0 }}.redirectRegex.replacement: $$1://{{ domain_group.redirect_to }}/$$3
+      {%- endif %}
       {{-
         router(
           domain_group=domain_group,
