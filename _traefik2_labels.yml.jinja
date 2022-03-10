@@ -188,3 +188,51 @@
       {%- endif %}
       {%- endcall %}
 {%- endmacro %}
+
+{#- Basic labels for a single router #}
+{%- macro router_tcp(domain_group, key, suffix, rule=none, service=none, middlewares=()) %}
+      traefik.tcp.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.rule:
+        {{ rule|default(domains_rule(domain_group), true) }}
+      traefik.tcp.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.service:
+        {{ key }}-{{ service|default("main", true) }}
+      {%- if domain_group.entrypoints %}
+      traefik.tcp.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.entrypoints:
+        {{ domain_group.entrypoints|sort|join(", ") }}
+      {%- endif %}
+      {%- if middlewares %}
+      traefik.tcp.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.middlewares:
+        {{ key }}-{{ middlewares|sort|join(", %s-" % key) }}
+      {%- endif %}
+{%- endmacro %}
+
+{%- macro database(domain_groups_list, cidr_whitelist, key, project_name) %}
+      {#- Service #}
+      traefik.tcp.services.{{ key }}-database.loadbalancer.server.port: 5432
+
+      {%- if cidr_whitelist %}
+      {#- Declare whitelist middleware #}
+      ? traefik.tcp.middlewares.{{ key }}-whitelist.IPWhiteList.sourceRange
+      : {% for cidr in cidr_whitelist -%}
+        {{ cidr }}{% if not loop.last %}, {% endif %}
+        {%- endfor %}
+      {%- endif %}
+
+      {%- call(domain_group) macros.domains_loop_grouped(domain_groups_list) %}
+      {#- Remember basic middlewares for this domain group #}
+      {%- set _ns = namespace(basic_middlewares=[]) -%}
+      {%- if cidr_whitelist %}
+        {%- set _ns.basic_middlewares = _ns.basic_middlewares + ["whitelist"] %}
+      {%- endif %}
+
+      {#- database router #}
+      {{-
+        router_tcp(
+          domain_group=domain_group,
+          key=key,
+          suffix="database",
+          service="database",
+          middlewares=_ns.basic_middlewares,
+        )
+      }}
+      {%- endcall %}
+{%- endmacro %}
