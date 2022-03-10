@@ -46,7 +46,7 @@ jobs:
           - 15.0
     steps:
       # Shared steps
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0Fetch all history for all tags and branches
       - name: Install python
