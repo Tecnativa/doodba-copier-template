@@ -385,6 +385,22 @@ postgres_password:
   help: >-
     What will be your postgres user password?
 
+postgres_exposed:
+  default: false
+  type: bool
+  help: >-
+    Do you want to expose database service?
+
+postgres_cidr_whitelist:
+  multiline: true
+  default: null
+  when: &db_exposed "{{ postgres_exposed and true }}"
+  help: >-
+    If you need to whitelist certain CIDR to allow only them to access your Postgres
+    instance, set that here please.
+
+    ⚠️ It must be a list. And this is only supported if you deploy with Traefik 2+.
+
 odoo_dbfilter:
   default: "^{{ postgres_dbname }}"
   type: str

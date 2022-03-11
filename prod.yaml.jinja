@@ -54,9 +54,22 @@ services:
     env_file:
       - .docker/db-creation.env
     restart: unless-stopped
+    {%- if postgres_exposed %}
+    networks:
+      default:
+      inverseproxy_shared:
+    labels:
+      traefik.enable: "true"
+      {{- traefik2_labels.database(
+        domains_prod,
+        postgres_cidr_whitelist,
+        _key,
+        project_name,
+      ) }}
+    {%- endif %}
   {%- endif %}
-  {%- if smtp_relay_host %}
 
+  {%- if smtp_relay_host %}
   smtp:
     extends:
       file: common.yaml
