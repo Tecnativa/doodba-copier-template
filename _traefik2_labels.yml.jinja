@@ -190,7 +190,10 @@
 {%- endmacro %}
 
 {#- Basic labels for a single router #}
-{%- macro router_tcp(domain_group, key, suffix, rule=none, service=none, middlewares=()) %}
+{%- macro router_tcp(domain_group, key, suffix, rule=none, service=none, middlewares=(), port=none) %}
+      {%- if port %}
+      traefik.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.port: {{ port }}
+      {%- endif %}
       traefik.tcp.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.rule:
         {{ rule|default(domains_rule(domain_group), true) }}
       traefik.tcp.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.service:
@@ -205,7 +208,7 @@
       {%- endif %}
 {%- endmacro %}
 
-{%- macro database(domain_groups_list, cidr_whitelist, key, project_name) %}
+{%- macro database(domain_groups_list, cidr_whitelist, key, port, project_name) %}
       {#- Service #}
       traefik.tcp.services.{{ key }}-database.loadbalancer.server.port: 5432
 
@@ -232,6 +235,7 @@
           suffix="database",
           service="database",
           middlewares=_ns.basic_middlewares,
+          port=port,
         )
       }}
       {%- endcall %}

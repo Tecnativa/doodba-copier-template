@@ -60,10 +60,12 @@ services:
       inverseproxy_shared:
     labels:
       traefik.enable: "true"
+      traefik.docker.network: "inverseproxy_shared"
       {{- traefik2_labels.database(
         domains_prod,
         postgres_cidr_whitelist,
         _key,
+        postgres_exposed_port,
         project_name,
       ) }}
     {%- endif %}

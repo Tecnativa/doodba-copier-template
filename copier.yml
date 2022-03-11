@@ -391,10 +391,17 @@ postgres_exposed:
   help: >-
     Do you want to expose database service?
 
+postgres_exposed_port:
+  default: 5432
+  type: int
+  when: &db_exposed "{{ postgres_exposed and true }}"
+  help: >-
+    Indicate the port to connect to the database.
+
 postgres_cidr_whitelist:
   multiline: true
   default: null
-  when: &db_exposed "{{ postgres_exposed and true }}"
+  when: *db_exposed
   help: >-
     If you need to whitelist certain CIDR to allow only them to access your Postgres
     instance, set that here please.
