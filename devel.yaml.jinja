@@ -112,6 +112,7 @@ services:
     init: true
 
   wkhtmltopdf:
+    networks: *public
     extends:
       file: common.yaml
       service: wkhtmltopdf
