@@ -101,7 +101,7 @@ services:
         {%- set _ns.basic_middlewares = _ns.basic_middlewares + ["whitelist"] %}
       {%- endif %}
       {%- if domain_group.cert_resolver %}
-        {%- set _ns.basic_middlewares = _ns.basic_middlewares + ["forceSecure"] %}
+        {%- set _ns.basic_middlewares = _ns.basic_middlewares + ["addSTS", "forceSecure"] %}
       {%- endif %}
       {{-
         traefik2_labels.router(
