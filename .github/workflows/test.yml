@@ -46,11 +46,11 @@ jobs:
           - 15.0
     steps:
       # Shared steps
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0Fetch all history for all tags and branches
       - name: Install python
-        uses: actions/setup-python@v2.3.2
+        uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
       - name: Generate cache key CACHE
@@ -59,7 +59,7 @@ jobs:
           sha256sum | cut -d' ' -f1) ${{ hashFiles('pyproject.toml') }} ${{
           hashFiles('poetry.lock') }} ${{ hashFiles('.pre-commit-config.yaml') }}" >>
           $GITHUB_ENV
-      - uses: actions/cache@v2.1.7
+      - uses: actions/cache@v3
         with:
           path: |
             .cache.~

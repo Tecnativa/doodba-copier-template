@@ -47,6 +47,7 @@ repos:
     rev: 20.8b1
     hooks:
       - id: black
+        additional_dependencies: ["click<8.1.0"]
   - repo: https://github.com/asottile/pyupgrade
     rev: v2.7.2
     hooks:
@@ -104,7 +105,7 @@ repos:
         files: /__init__\.py$
         additional_dependencies: ["flake8-bugbear==20.1.4"]
   - repo: https://github.com/pycqa/pylint
-    rev: pylint-2.5.3
+    rev: v2.11.1
     hooks:
       - id: pylint
         name: pylint with optional checks
@@ -115,7 +116,7 @@ repos:
         verbose: true
         additional_dependencies:
           - isort==4.3.21
-          - pylint-odoo==3.6.0
+          - pylint-odoo==5.0.5
       - id: pylint
         name: pylint with mandatory checks
         args:
@@ -123,7 +124,7 @@ repos:
           - --rcfile=.pylintrc-mandatory
         additional_dependencies:
           - isort==4.3.21
-          - pylint-odoo==3.6.0
+          - pylint-odoo==5.0.5
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: v7.8.1
     hooks:
