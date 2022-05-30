@@ -44,6 +44,7 @@ services:
     image: ghcr.io/tecnativa/postgres-autoconf:{{ postgres_version }}-alpine
     shm_size: 4gb
     environment:
+      POSTGRES_INITDB_ARGS: "--lc-collate=C"
       POSTGRES_DB: *dbname
       POSTGRES_USER: *dbuser
       CONF_EXTRA: |
