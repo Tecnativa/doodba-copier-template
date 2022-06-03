@@ -88,9 +88,9 @@
       traefik.http.middlewares.{{ key }}-compress.compress: "true"
       ? traefik.http.middlewares.{{ key }}-forbid-crawlers.headers.customResponseHeaders.X-Robots-Tag
       : "noindex, nofollow"
-      traefik.http.middlewares.{{ key }}-forceSecure.headers.forceSTSHeader: "true"
-      traefik.http.middlewares.{{ key }}-forceSecure.headers.sslRedirect: "true"
-
+      traefik.http.middlewares.{{ key }}-addSTS.headers.forceSTSHeader: "true"
+      traefik.http.middlewares.{{ key }}-forceSecure.redirectScheme.scheme: https
+      traefik.http.middlewares.{{ key }}-forceSecure.redirectScheme.permanent: "true"
       {%- if cidr_whitelist %}
       {#- Declare whitelist middleware #}
       ? traefik.http.middlewares.{{ key }}-whitelist.IPWhiteList.sourceRange
@@ -113,7 +113,7 @@
         {%- set _ns.basic_middlewares = _ns.basic_middlewares + ["whitelist"] %}
       {%- endif %}
       {%- if domain_group.cert_resolver %}
-        {%- set _ns.basic_middlewares = _ns.basic_middlewares + ["forceSecure"] %}
+        {%- set _ns.basic_middlewares = _ns.basic_middlewares + ["addSTS", "forceSecure"] %}
       {%- endif %}
 
       {%- if domain_group.redirect_to %}
