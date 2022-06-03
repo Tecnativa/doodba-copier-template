@@ -555,6 +555,7 @@ def install(
     if modules:
         cmd += f" -w {modules}"
     with c.cd(str(PROJECT_ROOT)):
+        c.run("docker-compose stop odoo")
         c.run(
             cmd,
             env=UID_ENV,
