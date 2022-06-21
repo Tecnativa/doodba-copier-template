@@ -563,6 +563,42 @@ def install(
         )
 
 
+@task(
+    help={
+        "modules": "Comma-separated list of modules to install.",
+    },
+)
+def uninstall(
+    c,
+    modules=None,
+    cur_file=None,
+):
+    """Uninstall Odoo addons
+
+    By default, uninstalls addon from directory being worked on,
+    unless other options are specified.
+    """
+    if not modules:
+        cur_module = _get_cwd_addon(cur_file or Path.cwd())
+        if not cur_module:
+            raise exceptions.ParseError(
+                msg="Odoo addon to uninstall not found. "
+                "You must provide at least one option for modules"
+                " or be in a subdirectory of one."
+                " See --help for details."
+            )
+        modules = cur_module
+    cmd = (
+        f"docker-compose run --rm odoo click-odoo-uninstall -m {modules or cur_module}"
+    )
+    with c.cd(str(PROJECT_ROOT)):
+        c.run(
+            cmd,
+            env=UID_ENV,
+            pty=True,
+        )
+
+
 def _get_module_dependencies(
     c, modules=None, core=False, extra=False, private=False, enterprise=False
 ):
