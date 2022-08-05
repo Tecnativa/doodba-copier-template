@@ -442,6 +442,14 @@ def git_aggregate(c):
             c.run(f"pre-commit {action}")
 
 
+@task(develop)
+def closed_prs(c):
+    """Test closed PRs from repos.yaml"""
+    with c.cd(str(PROJECT_ROOT / "odoo/custom/src")):
+        cmd = "gitaggregate -c {} show-closed-prs".format("repos.yaml")
+        c.run(cmd, env=UID_ENV, pty=True)
+
+
 @task()
 def img_build(c, pull=True):
     """Build docker images."""
