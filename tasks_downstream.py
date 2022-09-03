@@ -565,7 +565,7 @@ def install(
 
 @task(
     help={
-        "modules": "Comma-separated list of modules to install.",
+        "modules": "Comma-separated list of modules to uninstall.",
     },
 )
 def uninstall(
