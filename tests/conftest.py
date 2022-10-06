@@ -33,7 +33,7 @@ SELECTED_ODOO_VERSIONS = (
     frozenset(map(float, os.environ.get("SELECTED_ODOO_VERSIONS", "").split()))
     or ALL_ODOO_VERSIONS
 )
-PRERELEASE_ODOO_VERSIONS = {15.0}
+PRERELEASE_ODOO_VERSIONS = {16.0}
 
 # Traefik versions matrix
 ALL_TRAEFIK_VERSIONS = ("latest", "1.7")
