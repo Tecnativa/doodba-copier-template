@@ -71,11 +71,11 @@ def _tests_ran(stdout, odoo_version, addon_name):
         suffix = r"\srunning tests."
     if odoo_version < 10.0:
         main_pkg = "openerp"
-    assert re.search(fr"{main_pkg}\.addons\.{addon_name}\.tests\.\w+{suffix}", stdout)
+    assert re.search(rf"{main_pkg}\.addons\.{addon_name}\.tests\.\w+{suffix}", stdout)
     # Check no alien addons are installed, updated or tested
     if addon_name != "base":
         assert "module base: creating or updating database tables" not in stdout
-        assert not re.search(fr"{main_pkg}\.addons\.base\.tests\.\w+{suffix}", stdout)
+        assert not re.search(rf"{main_pkg}\.addons\.base\.tests\.\w+{suffix}", stdout)
 
 
 @pytest.mark.sequential
@@ -97,11 +97,14 @@ def test_resetdb(
     """
     try:
         with local.cwd(tmp_path):
+            data = {"odoo_version": supported_odoo_version}
+            if supported_odoo_version < 16:
+                data["postgres_version"] = 13
             copy(
                 src_path=str(cloned_template),
                 vcs_ref="HEAD",
                 force=True,
-                data={"odoo_version": supported_odoo_version},
+                data=data,
             )
             # Imagine the user is in the src subfolder for these tasks
             with local.cwd(tmp_path / "odoo" / "custom" / "src"):
@@ -186,11 +189,14 @@ def test_start(
     """
     try:
         with local.cwd(tmp_path):
+            data = {"odoo_version": supported_odoo_version}
+            if supported_odoo_version < 16:
+                data["postgres_version"] = 13
             copy(
                 src_path=str(cloned_template),
                 vcs_ref="HEAD",
                 force=True,
-                data={"odoo_version": supported_odoo_version},
+                data=data,
             )
             # Imagine the user is in the src subfolder for these tasks
             with local.cwd(tmp_path / "odoo" / "custom" / "src"):
@@ -231,11 +237,14 @@ def test_install_test(
     """
     try:
         with local.cwd(tmp_path):
+            data = {"odoo_version": supported_odoo_version}
+            if supported_odoo_version < 16:
+                data["postgres_version"] = 13
             copy(
                 src_path=str(cloned_template),
                 vcs_ref="HEAD",
                 force=True,
-                data={"odoo_version": supported_odoo_version},
+                data=data,
             )
             # Imagine the user is in the src subfolder for these tasks
             # and the DB is clean
@@ -307,11 +316,14 @@ def test_test_tasks(
     """
     try:
         with local.cwd(tmp_path):
+            data = {"odoo_version": supported_odoo_version}
+            if supported_odoo_version < 16:
+                data["postgres_version"] = 13
             copy(
                 src_path=str(cloned_template),
                 vcs_ref="HEAD",
                 force=True,
-                data={"odoo_version": supported_odoo_version},
+                data=data,
             )
             # Imagine the user is in the src subfolder for these tasks
             # and the DB is clean
