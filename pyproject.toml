@@ -7,7 +7,7 @@ version = "0.1.0"
 
 [tool.poetry.dependencies]
 copier = "^5.1.0"
-plumbum = "^1.7.2"
+plumbum = "^1.8.0"
 python = "^3.6.1"
 
 [tool.poetry.dev-dependencies]
