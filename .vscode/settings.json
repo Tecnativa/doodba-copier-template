@@ -16,15 +16,6 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
 
-  // Custom file associations
-  "files.associations": {
-    // HACK https://github.com/samuelcolvin/jinjahtml-vscode/issues/47
-    ".env.jinja": "jinja-shell"
-  },
-
-  // Local spell dictionary
-  "cSpell.words": ["odoo", "pytest", "scaffoldings", "skipif", "venv"],
-
   // General settings
   "editor.formatOnSave": true,
   "markdown.extension.toc.updateOnSave": false,
@@ -32,11 +23,9 @@
   "python.formatting.provider": "black",
   "python.linting.flake8Enabled": true,
   "python.linting.pylintEnabled": true,
-  "python.pythonPath": "${workspaceRoot}/.venv/bin/python",
-  "python.testing.nosetestsEnabled": false,
+  "python.defaultInterpreterPath": "${workspaceRoot}/.venv/bin/python",
   "python.testing.pytestArgs": ["-nauto", "tests"],
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,
-  "restructuredtext.confPath": "",
   "search.followSymlinks": false
 }
