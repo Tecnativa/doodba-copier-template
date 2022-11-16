@@ -138,7 +138,8 @@ def write_code_workspace_file(c, cw_path=None):
                 "--load-plugins=pylint_odoo",
             ],
             "python.linting.pylintEnabled": True,
-            "python.pythonPath": "python%s" % (2 if ODOO_VERSION < 11 else 3),
+            "python.defaultInterpreterPath": "python%s"
+            % (2 if ODOO_VERSION < 11 else 3),
             "restructuredtext.confPath": "",
             "search.followSymlinks": False,
             "search.useIgnoreFiles": False,
