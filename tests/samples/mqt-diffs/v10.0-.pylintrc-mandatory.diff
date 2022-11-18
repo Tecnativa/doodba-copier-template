@@ -1,18 +1,20 @@
-6a7
+0a1
+> 
+6a8
 > manifest_required_authors=Odoo Community Association (OCA)
-8,9c9,11
+8,9c10,12
 < manifest_deprecated_keys=active
 < valid_odoo_versions=10.0
 ---
 > manifest_deprecated_keys=description,active
 > license_allowed=AGPL-3,GPL-2,GPL-2 or any later version,GPL-3,GPL-3 or any later version,LGPL-3
 > valid_odoo_versions=13.0
-21a24
+21a25
 >     development-status-allowed,
-28a32
+28a33
 >     license-allowed,
-30a35
+30a36
 >     manifest-required-author,
-37,38d41
+37,38d42
 <     missing-import-error,
 <     missing-manifest-dependency,
