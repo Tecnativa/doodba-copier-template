@@ -1,17 +1,53 @@
-7c7
+0a1,2
+> 
+> 
+7c9
 < manifest_required_authors=Tecnativa
 ---
 > manifest_required_authors=Odoo Community Association (OCA)
-10c10
+10c12
 < license_allowed=AGPL-3,GPL-2,GPL-2 or any later version,GPL-3,GPL-3 or any later version,LGPL-3,OPL-1,OEEL-1
 ---
 > license_allowed=AGPL-3,GPL-2,GPL-2 or any later version,GPL-3,GPL-3 or any later version,LGPL-3
-30a31
+30a33
 >     development-status-allowed,
-48,49d48
+48,49d50
 <     missing-import-error,
 <     missing-manifest-dependency,
-74a74
+67a69,100
+>     attribute-string-redundant,
+>     character-not-valid-in-resource-link,
+>     consider-merging-classes-inherited,
+>     context-overridden,
+>     create-user-wo-reset-password,
+>     dangerous-filter-wo-user,
+>     dangerous-qweb-replace-wo-priority,
+>     deprecated-data-xml-node,
+>     deprecated-openerp-xml-node,
+>     duplicate-po-message-definition,
+>     except-pass,
+>     file-not-used,
+>     invalid-commit,
+>     manifest-maintainers-list,
+>     missing-newline-extrafiles,
+>     missing-readme,
+>     missing-return,
+>     odoo-addons-relative-import,
+>     old-api7-method-defined,
+>     po-msgstr-variables,
+>     po-syntax-error,
+>     renamed-field-parameter,
+>     resource-not-exist,
+>     str-format-used,
+>     test-folder-imported,
+>     translation-contains-variable,
+>     translation-positional-used,
+>     unnecessary-utf8-coding-comment,
+>     website-manifest-key-not-valid-uri,
+>     xml-attribute-translatable,
+>     xml-deprecated-qweb-directive,
+>     xml-deprecated-tree-attribute,
+74a108
 >     missing-manifest-dependency,
-82a83
+82a117
 > 
