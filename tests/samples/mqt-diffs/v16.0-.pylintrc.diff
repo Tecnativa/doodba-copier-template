@@ -14,7 +14,7 @@
 48,49d50
 <     missing-import-error,
 <     missing-manifest-dependency,
-67a69,100
+67a69,101
 >     attribute-string-redundant,
 >     character-not-valid-in-resource-link,
 >     consider-merging-classes-inherited,
@@ -47,7 +47,8 @@
 >     xml-attribute-translatable,
 >     xml-deprecated-qweb-directive,
 >     xml-deprecated-tree-attribute,
-74a108
+>     external-request-timeout,
+74a109
 >     missing-manifest-dependency,
-82a117
+82a118
 > 

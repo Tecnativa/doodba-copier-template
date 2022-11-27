@@ -61,6 +61,8 @@ def test_multiple_domains(
             },
         ],
     }
+    if supported_odoo_version < 16:
+        data["postgres_version"] = 13
     dc = docker_compose["-f", f"{environment}.yaml"]
     with local.cwd(tmp_path):
         copy(

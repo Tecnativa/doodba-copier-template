@@ -1,19 +1,22 @@
-7c7
+0a1,2
+> 
+> 
+7c9
 < manifest_required_authors=Tecnativa
 ---
 > manifest_required_authors=Odoo Community Association (OCA)
-10,11c10,11
+10,11c12,13
 < license_allowed=AGPL-3,GPL-2,GPL-2 or any later version,GPL-3,GPL-3 or any later version,LGPL-3,OPL-1,OEEL-1
 < valid_odoo_versions=9.0
 ---
 > license_allowed=AGPL-3,GPL-2,GPL-2 or any later version,GPL-3,GPL-3 or any later version,LGPL-3
 > valid_odoo_versions=13.0
-30a31
+30a33
 >     development-status-allowed,
-48,49d48
+48,49d50
 <     missing-import-error,
 <     missing-manifest-dependency,
-74a74
+74a76
 >     missing-manifest-dependency,
-82a83
+82a85
 > 

@@ -1,20 +1,25 @@
-0a1,2
+0a1
 > 
-> 
-7c9
-< manifest_required_authors=Tecnativa
----
+6a8
 > manifest_required_authors=Odoo Community Association (OCA)
-10c12
-< license_allowed=AGPL-3,GPL-2,GPL-2 or any later version,GPL-3,GPL-3 or any later version,LGPL-3,OPL-1,OEEL-1
+8c10,11
+< manifest_deprecated_keys=active
 ---
+> manifest_deprecated_keys=description,active
 > license_allowed=AGPL-3,GPL-2,GPL-2 or any later version,GPL-3,GPL-3 or any later version,LGPL-3
-30a33
+21a25
 >     development-status-allowed,
-48,49d50
+28a33
+>     license-allowed,
+30a36
+>     manifest-required-author,
+37,38d42
 <     missing-import-error,
 <     missing-manifest-dependency,
-67a69,100
+56c60,93
+<     xml-syntax-error
+---
+>     xml-syntax-error,
 >     attribute-string-redundant,
 >     character-not-valid-in-resource-link,
 >     consider-merging-classes-inherited,
@@ -47,7 +52,4 @@
 >     xml-attribute-translatable,
 >     xml-deprecated-qweb-directive,
 >     xml-deprecated-tree-attribute,
-74a108
->     missing-manifest-dependency,
-82a117
-> 
+>     external-request-timeout
