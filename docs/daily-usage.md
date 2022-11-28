@@ -86,7 +86,6 @@ with VSCode to load all the features.
 Get Odoo and addons code with:
 
 ```bash
-invoke img-pull
 invoke img-build --pull
 invoke git-aggregate
 ```
@@ -113,7 +112,7 @@ invoke preparedb
 All of the above in one shot:
 
 ```bash
-invoke develop img-pull img-build git-aggregate resetdb start
+invoke develop img-build git-aggregate resetdb start
 ```
 
 See the other tasks we ship for you with:
