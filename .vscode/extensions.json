@@ -8,6 +8,7 @@
     "firefox-devtools.vscode-firefox-debug",
     "mrorz.language-gettext",
     "ms-azuretools.vscode-docker",
+    "ms-python.black-formatter",
     "ms-python.python",
     "msjsdiag.debugger-for-chrome",
     "redhat.vscode-xml",
