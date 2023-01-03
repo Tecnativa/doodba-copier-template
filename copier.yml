@@ -45,7 +45,7 @@ _tasks:
   - invoke develop
 
 _migrations:
-  - version: v0.0.1-0-0
+  - version: v0.0.1
     after:
       - - invoke
         - --search-root={{ _copier_conf.src_path }}
