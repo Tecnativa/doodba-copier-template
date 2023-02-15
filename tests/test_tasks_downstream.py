@@ -4,12 +4,13 @@ import time
 from pathlib import Path
 
 import pytest
-from copier import copy
+from copier.main import run_auto
 from plumbum import ProcessExecutionError, local
 from plumbum.cmd import docker_compose, invoke
 from plumbum.machines.local import LocalCommand
 
 from .conftest import (
+    DBVER_PER_ODOO,
     build_file_tree,
     generate_test_addon,
     safe_stop_env,
@@ -97,14 +98,18 @@ def test_resetdb(
     """
     try:
         with local.cwd(tmp_path):
-            data = {"odoo_version": supported_odoo_version}
+            data = {
+                "odoo_version": supported_odoo_version,
+                "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
+            }
             if supported_odoo_version < 16:
                 data["postgres_version"] = 13
-            copy(
+            run_auto(
                 src_path=str(cloned_template),
-                vcs_ref="HEAD",
-                force=True,
                 data=data,
+                vcs_ref="HEAD",
+                defaults=True,
+                overwrite=True,
             )
             # Imagine the user is in the src subfolder for these tasks
             with local.cwd(tmp_path / "odoo" / "custom" / "src"):
@@ -189,14 +194,18 @@ def test_start(
     """
     try:
         with local.cwd(tmp_path):
-            data = {"odoo_version": supported_odoo_version}
+            data = {
+                "odoo_version": supported_odoo_version,
+                "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
+            }
             if supported_odoo_version < 16:
                 data["postgres_version"] = 13
-            copy(
+            run_auto(
                 src_path=str(cloned_template),
-                vcs_ref="HEAD",
-                force=True,
                 data=data,
+                vcs_ref="HEAD",
+                defaults=True,
+                overwrite=True,
             )
             # Imagine the user is in the src subfolder for these tasks
             with local.cwd(tmp_path / "odoo" / "custom" / "src"):
@@ -237,14 +246,18 @@ def test_install_test(
     """
     try:
         with local.cwd(tmp_path):
-            data = {"odoo_version": supported_odoo_version}
+            data = {
+                "odoo_version": supported_odoo_version,
+                "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
+            }
             if supported_odoo_version < 16:
                 data["postgres_version"] = 13
-            copy(
+            run_auto(
                 src_path=str(cloned_template),
-                vcs_ref="HEAD",
-                force=True,
                 data=data,
+                vcs_ref="HEAD",
+                defaults=True,
+                overwrite=True,
             )
             # Imagine the user is in the src subfolder for these tasks
             # and the DB is clean
@@ -316,14 +329,18 @@ def test_test_tasks(
     """
     try:
         with local.cwd(tmp_path):
-            data = {"odoo_version": supported_odoo_version}
+            data = {
+                "odoo_version": supported_odoo_version,
+                "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
+            }
             if supported_odoo_version < 16:
                 data["postgres_version"] = 13
-            copy(
+            run_auto(
                 src_path=str(cloned_template),
-                vcs_ref="HEAD",
-                force=True,
                 data=data,
+                vcs_ref="HEAD",
+                defaults=True,
+                overwrite=True,
             )
             # Imagine the user is in the src subfolder for these tasks
             # and the DB is clean

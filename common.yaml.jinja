@@ -9,6 +9,9 @@ services:
     build:
       context: ./odoo
       args:
+        {%- if odoo_version >= 11 %}
+        DB_VERSION: "{{ postgres_version or 'latest' }}"
+        {%- endif %}
         ODOO_VERSION: "{{ macros.version_minor(odoo_version) }}"
         UID: "${UID:-1000}"
         GID: "${GID:-1000}"
@@ -80,7 +83,7 @@ services:
       }}"
       SRS_SENDER_CLASSES: envelope_sender,header_sender
   {%- endif %}
-  {%- if backup_dst %}
+  {%- if backup_dst and postgres_version|int >= 10 %}
 
   backup:
     image: ghcr.io/tecnativa/docker-duplicity-postgres{% if backup_dst.startswith(('boto3+s3://', 's3://', 's3+http://')) %}-s3{% endif %}:{{ backup_image_version }}
@@ -90,6 +93,7 @@ services:
     {%- endif %}
     init: true
     environment:
+      DB_VERSION: "{{ postgres_version or 'latest' }}"
       DBS_TO_INCLUDE: "{{ odoo_dbfilter }}"
       DST: "{{ backup_dst }}"
       {%- if smtp_relay_host %}
