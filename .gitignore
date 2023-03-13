@@ -15,12 +15,12 @@
 **.orig
 
 # User-specific or editor-specific development files and settings
+.vscode/*
 !/.vscode/*.jinja
 !/.vscode/extensions.json
 !/.vscode/launch.json
 !/.vscode/settings.json
 !/.vscode/tasks.json
-.vscode/*
 /odoo/custom/src/private/.vscode/*
 /.venv
 /doodba.*.code-workspace
