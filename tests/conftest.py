@@ -255,6 +255,8 @@ def generate_test_addon(
                                 docstring'''
                             _logger.info(models,join,get,io,sys,odoo)
                 """,
+                f"{addon_name}/README.rst": "",
+                f"{addon_name}/readme/DESCRIPTION.rst": addon_name,
             }
         )
     else:

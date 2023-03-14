@@ -361,6 +361,7 @@ def test_pre_commit_in_subproject(
         generate_test_addon("test_module", supported_odoo_version, ugly=True)
         git("add", "-A")
         git("commit", "-m", "added test_module", retcode=1)
+        git("add", "-A")
         git("commit", "-am", "added test_module")
         expected_samples = {
             f"test_module/{manifest}.py": f"""\
