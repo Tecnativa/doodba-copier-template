@@ -107,7 +107,7 @@ See the [contribution guidelines](CONTRIBUTING.md).
 
 This project is maintained by:
 
-[![Tecnativa](https://www.tecnativa.com/r/H3p)](https://www.tecnativa.com/r/rIN)
+[![Comunitea](https://comunitea.com/wp-content/uploads/2016/01/logocomunitea3.png)
 
 Also, special thanks to
 [our dear community contributors](https://github.com/Tecnativa/doodba-copier-template/graphs/contributors).
