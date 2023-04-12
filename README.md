@@ -107,7 +107,7 @@ See the [contribution guidelines](CONTRIBUTING.md).
 
 This project is maintained by:
 
-[![Comunitea](https://comunitea.com/wp-content/uploads/2016/01/logocomunitea3.png)
+![Comunitea](https://comunitea.com/wp-content/uploads/2016/01/logocomunitea3.png)
 
 Also, special thanks to
 [our dear community contributors](https://github.com/Tecnativa/doodba-copier-template/graphs/contributors).
