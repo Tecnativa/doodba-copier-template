@@ -430,7 +430,7 @@ def git_aggregate(c):
     """
     with c.cd(str(PROJECT_ROOT)):
         c.run(
-            "docker-compose --file setup-devel.yaml run --rm -T odoo",
+            "docker compose --file setup-devel.yaml run --rm -T odoo",
             env=UID_ENV,
         )
     write_code_workspace_file(c)
@@ -455,7 +455,7 @@ def closed_prs(c):
 @task()
 def img_build(c, pull=True):
     """Build docker images."""
-    cmd = "docker-compose build"
+    cmd = "docker compose build"
     if pull:
         cmd += " --pull"
     with c.cd(str(PROJECT_ROOT)):
@@ -466,7 +466,7 @@ def img_build(c, pull=True):
 def img_pull(c):
     """Pull docker images."""
     with c.cd(str(PROJECT_ROOT)):
-        c.run("docker-compose pull", pty=True)
+        c.run("docker compose pull", pty=True)
 
 
 @task()
@@ -482,7 +482,7 @@ def lint(c, verbose=False):
 @task()
 def start(c, detach=True, debugpy=False):
     """Start environment."""
-    cmd = "docker-compose up"
+    cmd = "docker compose up"
     with tempfile.NamedTemporaryFile(
         mode="w",
         suffix=".yaml",
@@ -490,7 +490,7 @@ def start(c, detach=True, debugpy=False):
         if debugpy:
             # Remove auto-reload
             cmd = (
-                "docker-compose -f docker-compose.yml "
+                "docker compose -f docker-compose.yml "
                 f"-f {tmp_docker_compose_file.name} up"
             )
             _remove_auto_reload(
@@ -553,7 +553,7 @@ def install(
                 " See --help for details."
             )
         modules = cur_module
-    cmd = "docker-compose run --rm odoo addons init"
+    cmd = "docker compose run --rm odoo addons init"
     if core:
         cmd += " --core"
     if extra:
@@ -565,7 +565,7 @@ def install(
     if modules:
         cmd += f" -w {modules}"
     with c.cd(str(PROJECT_ROOT)):
-        c.run("docker-compose stop odoo")
+        c.run("docker compose stop odoo")
         c.run(
             cmd,
             env=UID_ENV,
@@ -599,7 +599,7 @@ def uninstall(
             )
         modules = cur_module
     cmd = (
-        f"docker-compose run --rm odoo click-odoo-uninstall -m {modules or cur_module}"
+        f"docker compose run --rm odoo click-odoo-uninstall -m {modules or cur_module}"
     )
     with c.cd(str(PROJECT_ROOT)):
         c.run(
@@ -618,7 +618,7 @@ def _get_module_dependencies(
     unless other options are specified.
     """
     # Get list of dependencies for addon
-    cmd = "docker-compose run --rm odoo addons list --dependencies"
+    cmd = "docker compose run --rm odoo addons list --dependencies"
     if core:
         cmd += " --core"
     if extra:
@@ -643,7 +643,7 @@ def _test_in_debug_mode(c, odoo_command):
         mode="w", suffix=".yaml"
     ) as tmp_docker_compose_file:
         cmd = (
-            "docker-compose -f docker-compose.yml "
+            "docker compose -f docker-compose.yml "
             f"-f {tmp_docker_compose_file.name} up -d"
         )
         _override_docker_command(
@@ -680,7 +680,7 @@ def _get_module_list(
     unless other options are specified.
     """
     # Get list of dependencies for addon
-    cmd = "docker-compose run --rm odoo addons list"
+    cmd = "docker compose run --rm odoo addons list"
     if core:
         cmd += " --core"
     if extra:
@@ -781,7 +781,7 @@ def test(
     if debugpy:
         _test_in_debug_mode(c, odoo_command)
     else:
-        cmd = ["docker-compose", "run", "--rm"]
+        cmd = ["docker compose", "run", "--rm"]
         if db_filter:
             cmd.extend(["-e", "DB_FILTER='%s'" % db_filter])
         cmd.append("odoo")
@@ -799,7 +799,7 @@ def test(
 )
 def stop(c, purge=False):
     """Stop and (optionally) purge environment."""
-    cmd = "docker-compose down --remove-orphans"
+    cmd = "docker compose down --remove-orphans"
     if purge:
         cmd += " --rmi local --volumes"
     with c.cd(str(PROJECT_ROOT)):
@@ -843,8 +843,8 @@ def resetdb(
     else:
         modules = modules or "base"
     with c.cd(str(PROJECT_ROOT)):
-        c.run("docker-compose stop odoo", pty=True)
-        _run = "docker-compose run --rm -l traefik.enable=false odoo"
+        c.run("docker compose stop odoo", pty=True)
+        _run = "docker compose run --rm -l traefik.enable=false odoo"
         c.run(
             f"{_run} click-odoo-dropdb {dbname}",
             env=UID_ENV,
@@ -877,7 +877,7 @@ def preparedb(c):
         )
     with c.cd(str(PROJECT_ROOT)):
         c.run(
-            "docker-compose run --rm -l traefik.enable=false odoo preparedb",
+            "docker compose run --rm -l traefik.enable=false odoo preparedb",
             env=UID_ENV,
             pty=True,
         )
@@ -886,7 +886,7 @@ def preparedb(c):
 @task()
 def restart(c, quick=True):
     """Restart odoo container(s)."""
-    cmd = "docker-compose restart"
+    cmd = "docker compose restart"
     if quick:
         cmd = f"{cmd} -t0"
     cmd = f"{cmd} odoo odoo_proxy"
@@ -903,7 +903,7 @@ def restart(c, quick=True):
 )
 def logs(c, tail=10, follow=True, container=None):
     """Obtain last logs of current environment."""
-    cmd = "docker-compose logs"
+    cmd = "docker compose logs"
     if follow:
         cmd += " -f"
     if tail:
@@ -966,9 +966,9 @@ def snapshot(
             datetime.now().strftime("%Y_%m_%d-%H_%M"),
         )
     with c.cd(str(PROJECT_ROOT)):
-        cur_state = c.run("docker-compose stop odoo db", pty=True).stdout
+        cur_state = c.run("docker compose stop odoo db", pty=True).stdout
         _logger.info("Snapshoting current %s DB to %s" % (source_db, destination_db))
-        _run = "docker-compose run --rm -l traefik.enable=false odoo"
+        _run = "docker compose run --rm -l traefik.enable=false odoo"
         c.run(
             f"{_run} click-odoo-copydb {source_db} {destination_db}",
             env=UID_ENV,
@@ -976,7 +976,7 @@ def snapshot(
         )
         if "Stopping" in cur_state:
             # Restart services if they were previously active
-            c.run("docker-compose start odoo db", pty=True)
+            c.run("docker compose start odoo db", pty=True)
 
 
 @task(
@@ -997,11 +997,11 @@ def restore_snapshot(
     Uses click-odoo-copydb behind the scenes to restore a DB snapshot.
     """
     with c.cd(str(PROJECT_ROOT)):
-        cur_state = c.run("docker-compose stop odoo db", pty=True).stdout
+        cur_state = c.run("docker compose stop odoo db", pty=True).stdout
         if not snapshot_name:
             # List DBs
             res = c.run(
-                "docker-compose run --rm -e LOG_LEVEL=WARNING odoo psql -tc"
+                "docker compose run --rm -e LOG_LEVEL=WARNING odoo psql -tc"
                 " 'SELECT datname FROM pg_database;'",
                 env=UID_ENV,
                 hide="stdout",
@@ -1025,7 +1025,7 @@ def restore_snapshot(
                     "No snapshot found for destination_db %s" % destination_db
                 )
         _logger.info("Restoring snapshot %s to %s" % (snapshot_name, destination_db))
-        _run = "docker-compose run --rm -l traefik.enable=false odoo"
+        _run = "docker compose run --rm -l traefik.enable=false odoo"
         c.run(
             f"{_run} click-odoo-dropdb {destination_db}",
             env=UID_ENV,
@@ -1039,4 +1039,4 @@ def restore_snapshot(
         )
         if "Stopping" in cur_state:
             # Restart services if they were previously active
-            c.run("docker-compose start odoo db", pty=True)
+            c.run("docker compose start odoo db", pty=True)
