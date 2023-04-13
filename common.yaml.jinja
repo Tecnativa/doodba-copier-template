@@ -54,7 +54,7 @@ services:
 
   smtpreal:
     image: ghcr.io/docker-mailserver/docker-mailserver:{{ smtp_relay_version }}
-    domainname: "{{ smtp_canonical_default }}"
+    hostname: "smtp.{{ smtp_canonical_default }}"
     stop_grace_period: 1m
     volumes:
       - mailconfig:/tmp/docker-mailserver:z
@@ -87,10 +87,7 @@ services:
 
   backup:
     image: ghcr.io/tecnativa/docker-duplicity-postgres{% if backup_dst.startswith(('boto3+s3://', 's3://', 's3+http://')) %}-s3{% endif %}:{{ backup_image_version }}
-    hostname: backup
-    {%- if macros.first_main_domain(domains_prod) %}
-    domainname: {{ macros.first_main_domain(domains_prod) }}
-    {%- endif %}
+    hostname: backup{% if macros.first_main_domain(domains_prod) %}.{{ macros.first_main_domain(domains_prod) }}{% endif %}
     init: true
     environment:
       DB_VERSION: "{{ postgres_version or 'latest' }}"
