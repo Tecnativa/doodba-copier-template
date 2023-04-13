@@ -84,7 +84,7 @@ services:
           - smtplocal
     restart: unless-stopped
   {%- endif %}
-  {%- if backup_dst %}
+  {%- if backup_dst and postgres_version|int >= 10 %}
 
   backup:
     extends:

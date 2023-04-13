@@ -3,9 +3,11 @@ from typing import Union
 
 import pytest
 import yaml
-from copier.main import copy
+from copier.main import run_auto
 from plumbum import local
 from plumbum.cmd import docker_compose
+
+from .conftest import DBVER_PER_ODOO
 
 
 @pytest.mark.parametrize("backup_deletion", (False, True))
@@ -30,18 +32,20 @@ def test_backup_config(
         "backup_dst": backup_dst,
         "backup_image_version": backup_image_version,
         "odoo_version": supported_odoo_version,
+        "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
         "smtp_relay_host": smtp_relay_host,
     }
     # Remove parameter if False, to test this is the properly default value
     if not backup_deletion:
         del data["backup_deletion"]
     with local.cwd(tmp_path):
-        copy(
+        run_auto(
             src_path=str(cloned_template),
             dst_path=".",
-            vcs_ref="test",
-            force=True,
             data=data,
+            vcs_ref="test",
+            defaults=True,
+            overwrite=True,
         )
         prod = yaml.safe_load(docker_compose("-f", "prod.yaml", "config"))
     # Check backup service existence
@@ -89,12 +93,17 @@ def test_dbfilter_default(
 ):
     """Default DB filter inherits database name and is applied to prod only."""
     with local.cwd(tmp_path):
-        copy(
+        run_auto(
             src_path=str(cloned_template),
             dst_path=".",
+            data={
+                "odoo_version": supported_odoo_version,
+                "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
+                "backup_dst": "file:///here",
+            },
             vcs_ref="test",
-            force=True,
-            data={"odoo_version": supported_odoo_version, "backup_dst": "file:///here"},
+            defaults=True,
+            overwrite=True,
         )
         devel, test, prod = map(
             lambda env: yaml.safe_load(docker_compose("-f", f"{env}.yaml", "config")),

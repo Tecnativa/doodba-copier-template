@@ -69,6 +69,10 @@ copier copy gh:Tecnativa/doodba-copier-template ~/path/to/your/subproject
 
 Copier will ask you a lot of questions. Answer them to properly generate the template.
 
+Notes:
+
+- The backup service will not be deployed when using postgresql 9.6.
+
 ## Getting updates for your subproject
 
 ⚠️ If you come from
