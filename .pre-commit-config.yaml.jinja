@@ -1,3 +1,16 @@
+{#- This namespace holds repo versions #}
+{%- set proj_rev = namespace() %}
+
+{%- if odoo_version < 16 %}
+  {%- set proj_rev.pylint = "v2.13.5" %}
+  {%- set proj_rev.pylint_odoo = "8.0.0" %}
+  {%- set proj_rev.isort = "5.12.0" %}
+{%- else %}
+  {%- set proj_rev.pylint = "v2.15.10" %}
+  {%- set proj_rev.pylint_odoo = "8.0.20" %}
+  {%- set proj_rev.isort = "5.12.0" %}
+{%- endif %}
+
 {# We cannot use the same pre-commit config as MQT's because paths don't match
    and it's designed only for Odoo 13.0+, so we design our own version, which
    should be as close as possible to MQT's -#}
@@ -58,7 +71,7 @@ repos:
     rev: 20.8b1
     hooks:
       - id: black
-        additional_dependencies: ["click<8.1.0"]
+        additional_dependencies: ["click<=8.1.7"]
   - repo: https://github.com/asottile/pyupgrade
     rev: v2.7.2
     hooks:
@@ -79,10 +92,8 @@ repos:
         name: prettier + plugin-xml
         additional_dependencies:
           # HACK https://github.com/prettier/pre-commit/issues/16#issuecomment-713474520
-          - prettier@2.1.2
-          - "@prettier/plugin-xml@0.12.0"
-        args:
-          - --plugin=@prettier/plugin-xml
+          - prettier@3.0.2
+          - "@prettier/plugin-xml@v3.2.0"
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.2.0
     hooks:
@@ -107,35 +118,40 @@ repos:
     rev: 3.8.3
     hooks:
       - id: flake8
-        name: flake8 except __init__.py
-        exclude: /__init__\.py$
-        additional_dependencies: ["flake8-bugbear==20.1.4", "importlib-metadata<5.0.0"]
+        name: flake8 except __init__.py, __manifest__.py
+        exclude: /__(?:init|manifest)__\.py$
+        additional_dependencies: ["flake8-bugbear==23.7.10", "importlib-metadata<=6.8.0"]
       - id: flake8
         name: flake8 only __init__.py
         args: ["--extend-ignore=F401"] # ignore unused imports in __init__.py
         files: /__init__\.py$
-        additional_dependencies: ["flake8-bugbear==20.1.4", "importlib-metadata<5.0.0"]
+        additional_dependencies: ["flake8-bugbear==23.7.10", "importlib-metadata<=6.8.0"]
+      - id: flake8
+        name: flake8 only __manifest__.py
+        args: ["--extend-ignore=B018"] # ignore found useless expression in __manifest__.py
+        files: /__manifest__\.py$
+        additional_dependencies: ["flake8-bugbear==23.7.10", "importlib-metadata<=6.8.0"]
   - repo: https://github.com/pycqa/pylint
-    rev: v2.11.1
+    rev: {{ proj_rev.pylint }}
     hooks:
       - id: pylint
         name: pylint with optional checks
         args:
-          - --valid_odoo_versions={{ "%.1f"|format(odoo_version) }}
           - --rcfile=.pylintrc
           - --exit-zero
         verbose: true
         additional_dependencies:
-          - isort==4.3.21
-          - pylint-odoo==5.0.5
+          - isort=={{ proj_rev.isort }}
+          - pylint-odoo=={{ proj_rev.pylint_odoo }}
       - id: pylint
         name: pylint with mandatory checks
         args:
-          - --valid_odoo_versions={{ "%.1f"|format(odoo_version) }}
           - --rcfile=.pylintrc-mandatory
+          - odoo/auto/addons
+        verbose: true
         additional_dependencies:
-          - isort==4.3.21
-          - pylint-odoo==5.0.5
+          - isort=={{ proj_rev.isort }}
+          - pylint-odoo=={{ proj_rev.pylint_odoo }}
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: v7.8.1
     hooks:

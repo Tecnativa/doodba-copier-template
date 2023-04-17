@@ -1,6 +1,6 @@
 """Template maintenance tasks.
 
-These tasks are to be executed with https://www.pyinvoke.org/ in Python 3.6+
+These tasks are to be executed with https://www.pyinvoke.org/ in Python 3.8.1+
 and are related to the maintenance of this template project, not the child
 projects generated with it.
 """

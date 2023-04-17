@@ -1,16 +1,14 @@
 from pathlib import Path
 
-from copier.main import run_auto
-from plumbum import FG
-from plumbum.cmd import invoke
-from plumbum.machines.local import LocalCommand
+from copier import run_copy
+from python_on_whales import DockerClient
 
 from .conftest import DBVER_PER_ODOO
 
 
-def test_doodba_qa(tmp_path: Path, supported_odoo_version: float, docker: LocalCommand):
+def test_doodba_qa(tmp_path: Path, supported_odoo_version: float):
     """Test Doodba QA works fine with a scaffolding copy."""
-    run_auto(
+    run_copy(
         ".",
         tmp_path,
         data={
@@ -20,30 +18,36 @@ def test_doodba_qa(tmp_path: Path, supported_odoo_version: float, docker: LocalC
         vcs_ref="HEAD",
         defaults=True,
         overwrite=True,
+        unsafe=True,
     )
-    qa_run = docker[
-        "container",
-        "run",
-        "--rm",
-        "--privileged",
-        f"-v{tmp_path}:{tmp_path}:z",
-        "-v/var/run/docker.sock:/var/run/docker.sock:z",
-        f"-w{tmp_path}",
-        "-eADDON_CATEGORIES=-p",
-        "-eCOMPOSE_FILE=test.yaml",
-        f"-eODOO_MAJOR={int(supported_odoo_version)}",
-        f"-eODOO_MINOR={supported_odoo_version:.1f}",
-        "tecnativa/doodba-qa",
-    ]
+    docker = DockerClient()
+
+    def _execute_qa(cmd):
+        return docker.run(
+            "tecnativa/doodba-qa",
+            command=cmd,
+            envs={
+                "ADDON_CATEGORIES": "-p",
+                "COMPOSE_FILE": "test.yaml",
+                "ODOO_VERSION": supported_odoo_version,
+            },
+            privileged=True,
+            remove=True,
+            volumes=[
+                (tmp_path, tmp_path, "z"),
+                ("/var/run/docker.sock", "/var/run/docker.sock", "z"),
+            ],
+            workdir=tmp_path,
+        )
+
     try:
-        qa_run["secrets-setup"] & FG
-        qa_run["networks-autocreate"] & FG
-        qa_run["build"] & FG
-        qa_run["closed-prs"] & FG
-        qa_run["flake8"] & FG
-        qa_run["pylint"] & FG
-        qa_run["addons-install"] & FG
-        qa_run["coverage"] & FG
+        _execute_qa(["secrets-setup"])
+        _execute_qa(["networks-autocreate"])
+        _execute_qa(["build"])
+        _execute_qa(["closed-prs"])
+        _execute_qa(["flake8"])
+        _execute_qa(["pylint"])
+        _execute_qa(["addons-install"])
+        _execute_qa(["coverage"])
     finally:
-        qa_run["shutdown"] & FG
-        invoke["-r", tmp_path, "stop", "--purge"] & FG
+        _execute_qa(["shutdown"])

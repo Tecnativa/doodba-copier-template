@@ -10,7 +10,7 @@ repos:
         entry: poetry
         args: ["check"]
         files: pyproject\.toml$
-        pass_filenames: no
+        pass_filenames: false
         language: system
       - id: forbidden-files
         name: forbidden files

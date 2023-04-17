@@ -160,7 +160,7 @@ detach all containers from that network, remove the network, reatach all contain
 it, and possibly restart them. You can also just do:
 
 ```bash
-docker-compose down
+docker compose down
 invoke start
 ```
 
@@ -232,7 +232,7 @@ Once secrets are in place and you started the
 production environment with:
 
 ```bash
-docker-compose -f prod.yaml up -d
+docker compose -f prod.yaml up -d
 ```
 
 #### Backups
@@ -256,32 +256,32 @@ To make backup immediatly execute following command:
 ```sh
 # Executes all jobs scheduled for daily run.
 # With default configuration it's equal to making full backup
-docker-compose exec backup /etc/periodic/daily/jobrunner
+docker compose exec backup /etc/periodic/daily/jobrunner
 ```
 
 To restore backup:
 
 ```sh
 # stop odoo if it's running
-docker-compose stop odoo
+docker compose stop odoo
 
 # start backup and db
-docker-compose up -d backup
+docker compose up -d backup
 
 # switch to some version
-docker-compose exec backup restore --time TIME_IN_BACKUP_NAME --force
+docker compose exec backup restore --time TIME_IN_BACKUP_NAME --force
 
 # ⚠️ DELETE PRODUCTION database
-#docker-compose backup dropdb
+#docker compose backup dropdb
 
 # create new empty database
-docker-compose exec backup createdb
+docker compose exec backup createdb
 
 # restore database
-docker-compose exec backup sh -c 'psql -f $SRC/$PGDATABASE.sql'
+docker compose exec backup sh -c 'psql -f $SRC/$PGDATABASE.sql'
 
 # start odoo
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Testing
@@ -305,7 +305,7 @@ running the test environment.
 Test it in your machine with:
 
 ```bash
-docker-compose -f test.yaml up -d
+docker compose -f test.yaml up -d
 ```
 
 #### Global whitelist
@@ -463,7 +463,7 @@ command in a running container.
 ### Inspect the database
 
 ```bash
-docker-compose run --rm odoo psql
+docker compose run --rm odoo psql
 ```
 
 ### Restart Odoo
@@ -471,7 +471,7 @@ docker-compose run --rm odoo psql
 You will need to restart it whenever any Python code changes, so to do that:
 
 ```bash
-docker-compose restart odoo
+docker compose restart odoo
 ```
 
 In development mode odoo restarts by itself thanks to `--dev=reload` option.
@@ -481,11 +481,11 @@ In development mode odoo restarts by itself thanks to `--dev=reload` option.
 ```bash
 modules=addon1,addon2
 # Install their dependencies first
-docker-compose run --rm odoo addons init --dependencies --with $modules
+docker compose run --rm odoo addons init --dependencies --with $modules
 # Test them at install
-docker-compose run --rm odoo addons init --test --with $modules
+docker compose run --rm odoo addons init --test --with $modules
 # Test them again at update
-docker-compose run --rm odoo addons update --test --with $modules
+docker compose run --rm odoo addons update --test --with $modules
 ```
 
 \* Note: This replaces the old deprecated `unittest` script.
@@ -495,25 +495,25 @@ docker-compose run --rm odoo addons update --test --with $modules
 For all services in the environment:
 
 ```bash
-docker-compose logs -f --tail 10
+docker compose logs -f --tail 10
 ```
 
 Only Odoo's:
 
 ```bash
-docker-compose logs -f --tail 10 odoo
+docker compose logs -f --tail 10 odoo
 ```
 
 ### Install some addon without stopping current running process
 
 ```bash
-docker-compose run --rm odoo odoo -i addon1,addon2 --stop-after-init
+docker compose run --rm odoo odoo -i addon1,addon2 --stop-after-init
 ```
 
 ### Update some addon without stopping current running process
 
 ```bash
-docker-compose run --rm odoo odoo -u addon1,addon2 --stop-after-init
+docker compose run --rm odoo odoo -u addon1,addon2 --stop-after-init
 ```
 
 ### Update changed addons only
@@ -521,7 +521,7 @@ docker-compose run --rm odoo odoo -u addon1,addon2 --stop-after-init
 Just run:
 
 ```bash
-docker-compose run --rm odoo click-odoo-update --watcher-max-seconds 30
+docker compose run --rm odoo click-odoo-update --watcher-max-seconds 30
 ```
 
 This script is part of [click-odoo-contrib][]; check it for more details.
@@ -535,7 +535,7 @@ for docs.
 ### Export some addon's translations to stdout
 
 ```bash
-docker-compose run --rm odoo pot addon1[,addon2]
+docker compose run --rm odoo pot addon1[,addon2]
 ```
 
 Now copy the relevant parts to your `addon1.pot` file.
@@ -543,13 +543,13 @@ Now copy the relevant parts to your `addon1.pot` file.
 ### Open an odoo shell
 
 ```bash
-docker-compose run --rm odoo odoo shell
+docker compose run --rm odoo odoo shell
 ```
 
 ### Open another UI instance linked to same filestore and database
 
 ```bash
-docker-compose run --rm -p 127.0.0.1:$SomeFreePort:8069 odoo
+docker compose run --rm -p 127.0.0.1:$SomeFreePort:8069 odoo
 ```
 
 Then open `http://localhost:$SomeFreePort`.
