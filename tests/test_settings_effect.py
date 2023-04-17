@@ -5,9 +5,8 @@ import pytest
 import yaml
 from copier.main import run_auto
 from plumbum import local
-from plumbum.cmd import docker_compose
 
-from .conftest import DBVER_PER_ODOO
+from .conftest import DBVER_PER_ODOO, docker_compose
 
 
 @pytest.mark.parametrize("backup_deletion", (False, True))

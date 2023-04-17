@@ -263,7 +263,7 @@ volumes:
 Then boot it up with:
 
 ```bash
-docker-compose -p inverseproxy -f inverseproxy.yaml up -d
+docker compose -p inverseproxy -f inverseproxy.yaml up -d
 ```
 
 This will intercept all requests coming from port 80 (HTTP) and redirect them to port
@@ -496,7 +496,7 @@ LINE 1: SELECT latest_version FROM ir_module_module WHERE name='base...
 You can do as **the log is clearly telling you to do** (side note: READ THE LOGS! 😀):
 
 ```bash
-docker-compose run --rm odoo --stop-after-init -i base
+docker compose run --rm odoo --stop-after-init -i base
 invoke restart
 ```
 

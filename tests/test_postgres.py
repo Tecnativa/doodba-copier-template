@@ -4,9 +4,8 @@ from pathlib import Path
 import pytest
 from copier.main import run_auto
 from plumbum import local
-from plumbum.cmd import docker_compose
 
-from .conftest import DBVER_PER_ODOO
+from .conftest import DBVER_PER_ODOO, docker_compose
 
 
 @pytest.mark.parametrize("dbver", ("oldest", "latest"))
@@ -19,7 +18,7 @@ def test_postgresql_client_versions(
     """Test multiple postgresql-client versions in odoo, db and duplicity services"""
     dbver_raw = DBVER_PER_ODOO[supported_odoo_version][dbver]
     dbver_mver = dbver_raw.split(".")[0]
-    dc = docker_compose["-f", "prod.yaml"]
+    dc = docker_compose("-f", "prod.yaml")
     with local.cwd(tmp_path):
         print(str(cloned_template))
         assert True
@@ -39,7 +38,7 @@ def test_postgresql_client_versions(
         )
         try:
             dc("build")
-            _, odoo_pgdump_stdout, _ = docker_compose[
+            odoo_pgdump_stdout = docker_compose(
                 "-f",
                 "prod.yaml",
                 "run",
@@ -48,11 +47,11 @@ def test_postgresql_client_versions(
                 "pg_dump",
                 "odoo",
                 "--version",
-            ].run()
+            )
             odoo_pgdump_mver = (
                 odoo_pgdump_stdout.splitlines()[-1].strip().split(" ")[2].split(".")[0]
             )
-            _, db_pgdump_stdout, _ = docker_compose[
+            db_pgdump_stdout = docker_compose(
                 "-f",
                 "prod.yaml",
                 "run",
@@ -61,11 +60,11 @@ def test_postgresql_client_versions(
                 "pg_dump",
                 "db",
                 "--version",
-            ].run()
+            )
             db_pgdump_mver = (
                 db_pgdump_stdout.splitlines()[-1].strip().split(" ")[2].split(".")[0]
             )
-            _, backup_pgdump_stdout, _ = docker_compose[
+            backup_pgdump_stdout = docker_compose(
                 "-f",
                 "prod.yaml",
                 "run",
@@ -73,7 +72,7 @@ def test_postgresql_client_versions(
                 "backup",
                 "pg_dump",
                 "--version",
-            ].run()
+            )
             backup_pgdump_mver = (
                 backup_pgdump_stdout.splitlines()[-1]
                 .strip()

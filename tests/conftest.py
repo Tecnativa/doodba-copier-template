@@ -4,6 +4,7 @@ import os
 import shutil
 import socket
 import stat
+import subprocess
 import textwrap
 from contextlib import contextmanager
 from pathlib import Path
@@ -13,11 +14,10 @@ import pytest
 import yaml
 from packaging import version
 from plumbum import FG, ProcessExecutionError, local
-from plumbum.cmd import docker_compose, git, invoke
+from plumbum.cmd import git, invoke
 from plumbum.machines.local import LocalCommand
 
 _logger = logging.getLogger(__name__)
-
 
 with open("copier.yml") as copier_fd:
     COPIER_SETTINGS = yaml.safe_load(copier_fd)
@@ -67,6 +67,11 @@ DBVER_PER_ODOO = {
 
 # Traefik versions matrix
 ALL_TRAEFIK_VERSIONS = ("latest", "1.7")
+
+
+# we use the most recent version available for the tests
+# but the old one is still supported
+_has_docker_compose_v2 = subprocess.getstatusoutput("docker compose")[0] == 0
 
 
 @pytest.fixture(autouse=True)
@@ -133,16 +138,30 @@ def cloned_template(tmp_path_factory):
         yield dirty_template_clone
 
 
-@pytest.fixture()
-def docker(request) -> LocalCommand:
-    if request.config.getoption("--skip-docker-tests"):
-        pytest.skip("Skipping docker tests")
+def _import_docker():
     try:
         from plumbum.cmd import docker
     except ImportError:
         pytest.skip("Need docker CLI to run this test")
+    return docker
+
+
+@pytest.fixture()
+def docker(request) -> LocalCommand:
+    if request.config.getoption("--skip-docker-tests"):
+        pytest.skip("Skipping docker tests")
+    docker = _import_docker()
     docker["info"] & FG
     return docker
+
+
+def docker_compose(*args: str) -> LocalCommand:
+    if _has_docker_compose_v2:
+        docker = _import_docker()
+        return docker("compose", *args)
+    from plumbum.cmd import docker_compose as dc
+
+    return dc(*args)
 
 
 @pytest.fixture()

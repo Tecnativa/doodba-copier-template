@@ -7,12 +7,13 @@ import pytest
 import yaml
 from copier.main import run_auto
 from plumbum import ProcessExecutionError, local
-from plumbum.cmd import diff, docker_compose, git, invoke, pre_commit
+from plumbum.cmd import diff, git, invoke, pre_commit
 
 from .conftest import (
     DBVER_PER_ODOO,
     LAST_ODOO_VERSION,
     build_file_tree,
+    docker_compose,
     generate_test_addon,
 )
 

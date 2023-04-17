@@ -6,12 +6,13 @@ from pathlib import Path
 import pytest
 from copier.main import run_auto
 from plumbum import ProcessExecutionError, local
-from plumbum.cmd import docker_compose, invoke
+from plumbum.cmd import invoke
 from plumbum.machines.local import LocalCommand
 
 from .conftest import (
     DBVER_PER_ODOO,
     build_file_tree,
+    docker_compose,
     generate_test_addon,
     safe_stop_env,
     socket_is_open,
@@ -57,7 +58,7 @@ def _wait_for_test_to_start():
     # Wait for test to start
     for _i in range(10):
         time.sleep(2)
-        _ret_code, stdout, _stderr = docker_compose.run(("logs", "odoo"))
+        stdout = docker_compose("logs", "odoo")
         if "Executing odoo --test-enable" in stdout:
             break
     return stdout

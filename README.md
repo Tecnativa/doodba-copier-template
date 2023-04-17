@@ -39,7 +39,8 @@ This project itself is just the template, but you need to install these tools to
 
 - Linux<sup>1</sup>
 - [copier][]
-- [docker-compose](https://docs.docker.com/compose/install/)
+- [Docker](https://docs.docker.com/)
+  - [Compose V2 plugin](https://docs.docker.com/compose/)
 - [git](https://git-scm.com/) 2.24 or newer
 - [invoke](https://www.pyinvoke.org/) installed in Python 3.6+ (and the binary must be
   called `invoke` — beware if your distro installs it as `invoke3` or similar).
@@ -52,7 +53,6 @@ way to install Python CLI apps is [pipx](https://pipxproject.github.io/pipx/):
 
 ```bash
 python3 -m pip install --user pipx
-pipx install docker-compose
 pipx install copier
 pipx install invoke
 pipx install pre-commit

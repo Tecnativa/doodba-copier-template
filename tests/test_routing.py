@@ -8,9 +8,8 @@ from copier.main import run_auto
 from invoke.util import yaml
 from packaging import version
 from plumbum import local
-from plumbum.cmd import docker_compose
 
-from .conftest import DBVER_PER_ODOO
+from .conftest import DBVER_PER_ODOO, docker_compose
 
 
 @pytest.mark.parametrize("environment", ("test", "prod"))
@@ -66,7 +65,7 @@ def test_multiple_domains(
     }
     if supported_odoo_version < 16:
         data["postgres_version"] = 13
-    dc = docker_compose["-f", f"{environment}.yaml"]
+    dc = docker_compose("-f", f"{environment}.yaml")
     with local.cwd(tmp_path):
         run_auto(
             src_path=str(cloned_template),
@@ -80,7 +79,7 @@ def test_multiple_domains(
         _ret_code, _stdout, _stderr = dc.run(["config"])
         docker_compose_config = yaml.safe_load(
             _stdout or _stderr
-        )  # docker-compose sometimes prints to STDERR and others to STDOUT, so we check both
+        )  # docker compose sometimes prints to STDERR and others to STDOUT, so we check both
         assert (
             docker_compose_config["services"]["odoo"]["environment"]["LIST_DB"]
             == "true"
