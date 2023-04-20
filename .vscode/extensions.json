@@ -12,7 +12,6 @@
     "ms-python.python",
     "msjsdiag.debugger-for-chrome",
     "redhat.vscode-xml",
-    "samuelcolvin.jinjahtml",
-    "syler.sass-indented"
+    "samuelcolvin.jinjahtml"
   ]
 }
