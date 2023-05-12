@@ -579,7 +579,7 @@ backup_tz:
 backup_aws_access_key_id:
   secret: true
   type: str
-  default: null
+  default: ""
   when: &backup_aws "{{ 's3:' in backup_dst|string }}"
   help: >-
     If you're using AWS S3 to store backups, provide here your access key ID.
@@ -587,7 +587,7 @@ backup_aws_access_key_id:
 backup_aws_secret_access_key:
   secret: true
   type: str
-  default: null
+  default: ""
   when: *backup_aws
   help: >-
     If you're using AWS S3 to store backups, provide here your secret access key.
