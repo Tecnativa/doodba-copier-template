@@ -66,7 +66,7 @@ DBVER_PER_ODOO = {
 }
 
 # Traefik versions matrix
-ALL_TRAEFIK_VERSIONS = ("latest", "1.7")
+ALL_TRAEFIK_VERSIONS = ("latest", "1.7", "2.10")
 
 
 @pytest.fixture(autouse=True)

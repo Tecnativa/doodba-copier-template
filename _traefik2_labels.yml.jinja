@@ -92,8 +92,9 @@
       traefik.http.middlewares.{{ key }}-forceSecure.redirectScheme.scheme: https
       traefik.http.middlewares.{{ key }}-forceSecure.redirectScheme.permanent: "true"
       {%- if cidr_whitelist %}
+      {%- set whilelist_middleware_name = 'IPWhiteList' if traefik_version == 2 else 'IPAllowList' -%}
       {#- Declare whitelist middleware #}
-      ? traefik.http.middlewares.{{ key }}-whitelist.IPWhiteList.sourceRange
+      ? traefik.http.middlewares.{{ key }}-whitelist.{{ whilelist_middleware_name }}.sourceRange
       : {% for cidr in cidr_whitelist -%}
         {{ cidr }}{% if not loop.last %}, {% endif %}
         {%- endfor %}
@@ -213,8 +214,9 @@
       traefik.tcp.services.{{ key }}-database.loadbalancer.server.port: 5432
 
       {%- if cidr_whitelist %}
+      {%- set whilelist_middleware_name = 'IPWhiteList' if traefik_version == 2 else 'IPAllowList' -%}
       {#- Declare whitelist middleware #}
-      ? traefik.tcp.middlewares.{{ key }}-whitelist.IPWhiteList.sourceRange
+      ? traefik.tcp.middlewares.{{ key }}-whitelist.{{ whilelist_middleware_name }}.sourceRange
       : {% for cidr in cidr_whitelist -%}
         {{ cidr }}{% if not loop.last %}, {% endif %}
         {%- endfor %}
