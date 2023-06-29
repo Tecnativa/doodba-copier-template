@@ -64,10 +64,16 @@ pipx ensurepath
 Once you installed everything, you can now use Copier to copy this template:
 
 ```bash
-copier copy gh:Tecnativa/doodba-copier-template ~/path/to/your/subproject
+copier copy --UNSAFE gh:Tecnativa/doodba-copier-template ~/path/to/your/subproject
 ```
 
 Copier will ask you a lot of questions. Answer them to properly generate the template.
+
+The `--UNSAFE` flag is necessary since
+[Copier v8](https://copier.readthedocs.io/en/stable/configuring/#unsafe) to use features
+such as Jinja extensions, Migrations and Tasks.
+
+Make sure you trust the code you're executing!
 
 Notes:
 
@@ -83,13 +89,13 @@ If you always used Copier with this project, getting last updates with Copier is
 
 ```bash
 cd ~/path/to/your/downstream/scaffolding
-copier update
+copier update --UNSAFE
 ```
 
 Copier will ask you all questions again, but default values will be those you answered
 last time. Just hit <kbd>Enter</kbd> to accept those defaults, or change them if
-needed... or you can use `copier --force update` instead to avoid answering again all
-things.
+needed... or you can use `copier update --force --UNSAFE` instead to avoid answering
+everything again.
 
 Basically, read Copier docs and `copier --help-all` to know how to use it.
 
@@ -124,6 +130,6 @@ VM to work with doodba without problems. If you use other systems and find a way
 these tools work, please consider [opening a PR](#contributing) to add some docs that
 might help others with your situation.
 
-[copier]: https://github.com/pykong/copier
+[copier]: https://github.com/copier-org/copier
 [doodba]: https://github.com/Tecnativa/doodba
 [odoo]: https://www.odoo.com/
