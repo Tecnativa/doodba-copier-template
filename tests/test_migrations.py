@@ -3,9 +3,11 @@ from pathlib import Path
 
 # import pytest
 # import yaml
-from copier.main import run_auto
+from copier import run_update
 from plumbum import local
 from plumbum.cmd import git, invoke
+
+from .conftest import DBVER_PER_ODOO
 
 # from typing import Optional
 
@@ -17,7 +19,7 @@ MISSING = object()
 
 
 def test_transtion_to_copier(
-    tmp_path: Path, cloned_template: Path, any_odoo_version: float
+    tmp_path: Path, cloned_template: Path, supported_odoo_version: float
 ):
     """Test transition from old git-clone-based workflow to new copier-based."""
     tag = "v999999.99.99"
@@ -31,10 +33,10 @@ def test_transtion_to_copier(
         env_file = tmp_path / ".env"
         env_contents = env_file.read_text()
         env_contents = env_contents.replace(
-            "ODOO_MAJOR=11", f"ODOO_MAJOR={int(any_odoo_version)}"
+            "ODOO_MAJOR=11", f"ODOO_MAJOR={int(supported_odoo_version)}"
         )
         env_contents = env_contents.replace(
-            "ODOO_MINOR=11.0", f"ODOO_MINOR={any_odoo_version:.1f}"
+            "ODOO_MINOR=11.0", f"ODOO_MINOR={supported_odoo_version:.1f}"
         )
         env_contents = env_contents.replace(
             "ODOO_IMAGE=docker.io/myuser/myproject-odoo",
@@ -65,19 +67,22 @@ def test_transtion_to_copier(
         git("add", ".")
         git("commit", "-m", "update")
         # Emulate user upgrading to copier, passing the right variables
-        run_auto(
+        dbver = DBVER_PER_ODOO[supported_odoo_version]["latest"]
+        run_update(
             dst_path=str(tmp_path),
             data={
-                "odoo_version": any_odoo_version,
+                "odoo_version": supported_odoo_version,
                 "odoo_oci_image": "registry.example.com/custom-team/custom-project-odoo",
+                "postgres_version": dbver,
             },
             vcs_ref=tag,
             defaults=True,
             overwrite=True,
+            unsafe=True,
         )
         env_contents = env_file.read_text()
-        assert f"ODOO_MAJOR={int(any_odoo_version)}" in env_contents
-        assert f"ODOO_MINOR={any_odoo_version:.1f}" in env_contents
+        assert f"ODOO_MAJOR={int(supported_odoo_version)}" in env_contents
+        assert f"ODOO_MINOR={supported_odoo_version:.1f}" in env_contents
         assert (tmp_path / ".copier-answers.yml").is_file()
         assert 'server-tools: ["*"]' in addons_file.read_text()
         for dep_file in map(Path, dep_files):

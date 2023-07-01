@@ -1,4 +1,6 @@
 {%- import "_macros.jinja" as macros -%}
+{%- import "_traefik_common_labels.yml.jinja" as traefik_common_labels -%}
+
 {#
   Note: indentation of 6 spaces is important because that's the depth level
   of container labels in a docker-compose file.
@@ -78,26 +80,6 @@
       {{- router(domain_group, key, "%s-secure" % suffix, rule, service, middlewares) }}
       {%- endif %}
 
-      {%- endif %}
-{%- endmacro %}
-
-{%- macro common_middlewares(key, cidr_whitelist) %}
-      {#- Common middlewares #}
-      traefik.http.middlewares.{{ key }}-buffering.buffering.retryExpression:
-        IsNetworkError() && Attempts() < 5
-      traefik.http.middlewares.{{ key }}-compress.compress: "true"
-      ? traefik.http.middlewares.{{ key }}-forbid-crawlers.headers.customResponseHeaders.X-Robots-Tag
-      : "noindex, nofollow"
-      traefik.http.middlewares.{{ key }}-addSTS.headers.forceSTSHeader: "true"
-      traefik.http.middlewares.{{ key }}-forceSecure.redirectScheme.scheme: https
-      traefik.http.middlewares.{{ key }}-forceSecure.redirectScheme.permanent: "true"
-      {%- if cidr_whitelist %}
-      {%- set whilelist_middleware_name = 'IPWhiteList' if traefik_version == 2 else 'IPAllowList' -%}
-      {#- Declare whitelist middleware #}
-      ? traefik.http.middlewares.{{ key }}-whitelist.{{ whilelist_middleware_name }}.sourceRange
-      : {% for cidr in cidr_whitelist -%}
-        {{ cidr }}{% if not loop.last %}, {% endif %}
-        {%- endfor %}
       {%- endif %}
 {%- endmacro %}
 
@@ -209,18 +191,11 @@
       {%- endif %}
 {%- endmacro %}
 
-{%- macro database(domain_groups_list, cidr_whitelist, key, port, project_name) %}
+{%- macro database(domain_groups_list, cidr_whitelist, key, port, project_name, traefik_version) %}
       {#- Service #}
       traefik.tcp.services.{{ key }}-database.loadbalancer.server.port: 5432
 
-      {%- if cidr_whitelist %}
-      {%- set whilelist_middleware_name = 'IPWhiteList' if traefik_version == 2 else 'IPAllowList' -%}
-      {#- Declare whitelist middleware #}
-      ? traefik.tcp.middlewares.{{ key }}-whitelist.{{ whilelist_middleware_name }}.sourceRange
-      : {% for cidr in cidr_whitelist -%}
-        {{ cidr }}{% if not loop.last %}, {% endif %}
-        {%- endfor %}
-      {%- endif %}
+      {{- traefik_common_labels.middleware_ipallowlist(key, cidr_whitelist, traefik_version) }}
 
       {%- call(domain_group) macros.domains_loop_grouped(domain_groups_list) %}
       {#- Remember basic middlewares for this domain group #}

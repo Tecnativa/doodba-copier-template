@@ -4,6 +4,7 @@ import os
 import shutil
 import socket
 import stat
+import tempfile
 import textwrap
 from contextlib import contextmanager
 from pathlib import Path
@@ -41,11 +42,11 @@ LATEST_PSQL_VER = ALL_PSQL_VERSIONS[-1]
 DBVER_PER_ODOO = {
     11.0: {
         "oldest": "10",  # Odoo supports 9.6, but that version is not supported by the backup service and is necessary to be able to perform all tests
-        "latest": "14",  # Debian stretch limitation: https://apt-archive.postgresql.org/pub/repos/apt/dists/stretch-pgdg/main/binary-amd64/Packages
+        "latest": "13",  # DB Authentication method limitation
     },
     12.0: {
         "oldest": "10",  # Odoo supports 9.6, but that version is not supported by the backup service and is necessary to be able to perform all tests
-        "latest": "14",  # Debian stretch limitation
+        "latest": "13",
     },
     13.0: {
         "oldest": "10",  # Odoo supports 9.6, but that version is not supported by the backup service and is necessary to be able to perform all tests
@@ -66,7 +67,8 @@ DBVER_PER_ODOO = {
 }
 
 # Traefik versions matrix
-ALL_TRAEFIK_VERSIONS = ("latest", "1.7", "2.10")
+ALL_TRAEFIK_VERSIONS = ("latest", "2.10", "1.7")
+LATEST_TRAEFIK_VERSION_MAJOR = 3
 
 
 @pytest.fixture(autouse=True)
@@ -115,7 +117,7 @@ def cloned_template(tmp_path_factory):
     It returns the local `Path` to the clone.
     """
     patches = [git("diff", "--cached"), git("diff")]
-    with tmp_path_factory.mktemp("cloned_template_") as dirty_template_clone:
+    with tempfile.TemporaryDirectory("cloned_template_") as dirty_template_clone:
         git("clone", ".", dirty_template_clone)
         with local.cwd(dirty_template_clone):
             git("config", "commit.gpgsign", "false")
@@ -269,7 +271,8 @@ def generate_test_addon(
                     'version':'{odoo_version}.1.0.0',
                     'depends': {dependencies or '["base"]'},
                     'installable': {installable},
-                    'auto_install': False
+                    'auto_install': False,
+                    'author': 'Tecnativa',
                     {"}"}
                 """,
                 f"{addon_name}/models/res_partner.py": """\
@@ -300,6 +303,7 @@ def generate_test_addon(
                         "depends": {dependencies or '["base"]'},
                         "installable": {installable},
                         "auto_install": False,
+                        "author": "Tecnativa",
                     {"}"}
                 """,
                 f"{addon_name}/models/res_partner.py": '''\

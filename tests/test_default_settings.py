@@ -3,7 +3,7 @@ from shutil import rmtree
 
 import pytest
 import yaml
-from copier.main import run_auto
+from copier import run_copy
 from plumbum import local
 from plumbum.cmd import git, invoke
 
@@ -11,17 +11,18 @@ from .conftest import DBVER_PER_ODOO
 
 
 def test_default_settings(
-    tmp_path: Path, any_odoo_version: float, cloned_template: Path
+    tmp_path: Path, supported_odoo_version: float, cloned_template: Path
 ):
     """Test that a template can be rendered from zero for each version."""
     with local.cwd(cloned_template):
-        run_auto(
+        run_copy(
             ".",
             str(tmp_path),
-            data={"odoo_version": any_odoo_version},
+            data={"odoo_version": supported_odoo_version},
             vcs_ref="test",
             defaults=True,
             overwrite=True,
+            unsafe=True,
         )
     with local.cwd(tmp_path):
         # TODO When copier runs pre-commit before extracting diff, make sure
@@ -46,7 +47,7 @@ def test_pre_commit_autoinstall(
     """
     if supported_odoo_version not in {10.0, 13.0}:
         pytest.skip("this test is only tested with other odoo versions")
-    run_auto(
+    run_copy(
         str(cloned_template),
         str(tmp_path),
         data={
@@ -56,6 +57,7 @@ def test_pre_commit_autoinstall(
         vcs_ref="HEAD",
         defaults=True,
         overwrite=True,
+        unsafe=True,
     )
     with local.cwd(tmp_path):
         with (tmp_path / "odoo" / "custom" / "src" / "addons.yaml").open("w") as fd:

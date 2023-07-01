@@ -10,7 +10,7 @@ _envops:
   variable_start_string: "{{"
 
 # Other Copier configurations
-_min_copier_version: "7.0.1"
+_min_copier_version: "8.0.0"
 _exclude:
   - _macros
   - _traefik*_labels.yml
@@ -179,6 +179,7 @@ odoo_oci_image:
     you are not using a registry.
 
     Example: docker.io/myteam/example-odoo
+  default: ""
 
 project_author:
   type: str
@@ -226,6 +227,7 @@ gitlab_url:
     💡 If you don't use Gitlab, leave this empty and ignore all other Gitlab questions.
 
     Example: `https://gitlab.com/Tecnativa/your-doodba-project`.
+  default: ""
 
 domains_prod:
   type: yaml
@@ -281,6 +283,7 @@ domains_prod:
 
     💡 The 1st host from the 1st domain that has no `path_prefixes` will be considered
     the main one. In the example above, it'd be `www.main.com`.
+  default: ""
 
 domains_test:
   type: yaml
@@ -336,6 +339,7 @@ domains_test:
 
     💡 The 1st host from the 1st domain that has no `path_prefixes` will be considered
     the main one. In the example above, it'd be `demo1.main.com`.
+  default: ""
 
 paths_without_crawlers:
   multiline: true
@@ -377,10 +381,10 @@ postgres_version:
     "14": "14"
     "15": "15"
   validator: >-
-    {% if postgres_version|int > 0 %}  {% if (odoo_version >= 16.0 and
+    {% if postgres_version|int > 0 %} {% if (odoo_version >= 16.0 and
     postgres_version|int < 12) or (odoo_version >= 14.0 and postgres_version|int < 10)
     %}  The postgres version is too low for the selected Odoo version. {% elif
-    odoo_version <= 12.0 and postgres_version|int > 14 %}  The postgres version is too
+    odoo_version <= 12.0 and postgres_version|int > 13 %} The postgres version is too
     high for the selected Odoo version. {% endif %} {% endif %}
 
 postgres_username:
@@ -444,6 +448,7 @@ smtp_default_from:
 
     In case an email coming out from odoo doesn't have a valid `From:` header address,
     which address should be the default one that sends the email?
+  default: ""
 
 smtp_relay_host:
   type: str
@@ -459,6 +464,7 @@ smtp_relay_host:
     So, what is your SMTP host?
 
     Example: mail.example.com
+  default: ""
 
 smtp_relay_port:
   type: int
@@ -476,6 +482,7 @@ smtp_relay_user:
     Indicate the user to connect in the SMTP server you just defined.
 
     For Odoo to work fine, this user needs to be able to do mail spoofing.
+  default: ""
 
 smtp_relay_password:
   secret: true
@@ -511,6 +518,7 @@ smtp_canonical_default:
     (https://en.wikipedia.org/wiki/SRS).
 
     What's your canonical domain?
+  default: ""
 
 smtp_canonical_domains:
   when: *has_smtp
@@ -522,6 +530,7 @@ smtp_canonical_domains:
     You do not need to repeat the canonical domain you indicated above.
 
     Example: [examplemail.com, example.org]
+  default: ""
 
 backup_dst:
   type: str
@@ -537,6 +546,7 @@ backup_dst:
     If you don't want backups, leave this empty.
 
     Where should the backups be stored?
+  default: ""
 
 backup_image_version:
   type: str
@@ -559,12 +569,14 @@ backup_email_from:
     configured.
 
     What email address should it use to send them?
+  default: ""
 
 backup_email_to:
   type: str
   when: *backup_present
   help: >-
     Where to send those backup reports?
+  default: ""
 
 backup_deletion:
   default: false

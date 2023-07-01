@@ -4,15 +4,16 @@ from pathlib import Path
 
 import pytest
 import requests
-from copier.main import run_auto
+from copier import run_copy
 from invoke.util import yaml
 from packaging import version
 from plumbum import local
 from plumbum.cmd import docker_compose
 
-from .conftest import DBVER_PER_ODOO
+from .conftest import DBVER_PER_ODOO, LATEST_TRAEFIK_VERSION_MAJOR
 
 
+@pytest.mark.sequential
 @pytest.mark.parametrize("environment", ("test", "prod"))
 def test_multiple_domains(
     cloned_template: Path,
@@ -24,9 +25,17 @@ def test_multiple_domains(
     """Test multiple domains are produced properly."""
     base_domain = traefik_host["hostname"]
     base_path = f"{base_domain}/web/login"
+    traefik_config_ver = traefik_host["traefik_version"]
+    traefik_ver = (
+        LATEST_TRAEFIK_VERSION_MAJOR
+        if traefik_config_ver == "latest"
+        else version.parse(traefik_config_ver).major
+    )
     # XXX Remove traefik1 specific stuff some day
-    is_traefik1 = version.parse(traefik_host["traefik_version"]) < version.parse("2")
+    is_traefik1 = traefik_ver == 1
     data = {
+        "odoo_proxy": "traefik",
+        "traefik_version": traefik_ver,
         "odoo_listdb": True,
         "odoo_version": supported_odoo_version,
         "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
@@ -64,17 +73,16 @@ def test_multiple_domains(
             },
         ],
     }
-    if supported_odoo_version < 16:
-        data["postgres_version"] = 13
     dc = docker_compose["-f", f"{environment}.yaml"]
     with local.cwd(tmp_path):
-        run_auto(
+        run_copy(
             src_path=str(cloned_template),
             dst_path=".",
             data=data,
             vcs_ref="test",
             defaults=True,
             overwrite=True,
+            unsafe=True,
         )
         # Check if Odoo options were passed correctly
         _ret_code, _stdout, _stderr = dc.run(["config"])
