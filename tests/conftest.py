@@ -23,7 +23,7 @@ with open("copier.yml") as copier_fd:
     COPIER_SETTINGS = yaml.safe_load(copier_fd)
 
 # Different tests test different Odoo versions
-OLDEST_SUPPORTED_ODOO_VERSION = 8.0
+OLDEST_SUPPORTED_ODOO_VERSION = 11.0
 ALL_ODOO_VERSIONS = tuple(COPIER_SETTINGS["odoo_version"]["choices"])
 SUPPORTED_ODOO_VERSIONS = tuple(
     v for v in ALL_ODOO_VERSIONS if v >= OLDEST_SUPPORTED_ODOO_VERSION
@@ -34,6 +34,36 @@ SELECTED_ODOO_VERSIONS = (
     or ALL_ODOO_VERSIONS
 )
 PRERELEASE_ODOO_VERSIONS = {16.0}
+
+# Postgres versions
+ALL_PSQL_VERSIONS = tuple(COPIER_SETTINGS["postgres_version"]["choices"])
+LATEST_PSQL_VER = ALL_PSQL_VERSIONS[-1]
+DBVER_PER_ODOO = {
+    11.0: {
+        "oldest": "10",  # Odoo supports 9.6, but that version is not supported by the backup service and is necessary to be able to perform all tests
+        "latest": "14",  # Debian stretch limitation: https://apt-archive.postgresql.org/pub/repos/apt/dists/stretch-pgdg/main/binary-amd64/Packages
+    },
+    12.0: {
+        "oldest": "10",  # Odoo supports 9.6, but that version is not supported by the backup service and is necessary to be able to perform all tests
+        "latest": "14",  # Debian stretch limitation
+    },
+    13.0: {
+        "oldest": "10",  # Odoo supports 9.6, but that version is not supported by the backup service and is necessary to be able to perform all tests
+        "latest": LATEST_PSQL_VER,
+    },
+    14.0: {
+        "oldest": "10",
+        "latest": LATEST_PSQL_VER,
+    },
+    15.0: {
+        "oldest": "10",
+        "latest": LATEST_PSQL_VER,
+    },
+    16.0: {
+        "oldest": "12",
+        "latest": LATEST_PSQL_VER,
+    },
+}
 
 # Traefik versions matrix
 ALL_TRAEFIK_VERSIONS = ("latest", "1.7")
@@ -255,6 +285,8 @@ def generate_test_addon(
                                 docstring'''
                             _logger.info(models,join,get,io,sys,odoo)
                 """,
+                f"{addon_name}/README.rst": "",
+                f"{addon_name}/readme/DESCRIPTION.rst": addon_name,
             }
         )
     else:

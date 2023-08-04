@@ -766,7 +766,7 @@ def test(
     for m_to_skip in skip.split(","):
         if not m_to_skip:
             continue
-        if m_to_skip not in modules:
+        if m_to_skip not in modules_list:
             _logger.warn(
                 "%s not found in the list of addons to test: %s" % (m_to_skip, modules)
             )

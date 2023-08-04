@@ -4,11 +4,13 @@ from pathlib import Path
 
 import pytest
 import requests
-from copier import copy
+from copier.main import run_auto
 from invoke.util import yaml
 from packaging import version
 from plumbum import local
 from plumbum.cmd import docker_compose
+
+from .conftest import DBVER_PER_ODOO
 
 
 @pytest.mark.parametrize("environment", ("test", "prod"))
@@ -27,6 +29,7 @@ def test_multiple_domains(
     data = {
         "odoo_listdb": True,
         "odoo_version": supported_odoo_version,
+        "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
         "paths_without_crawlers": ["/web/login", "/web/database"],
         "project_name": uuid.uuid4().hex,
         f"domains_{environment}": [
@@ -65,12 +68,13 @@ def test_multiple_domains(
         data["postgres_version"] = 13
     dc = docker_compose["-f", f"{environment}.yaml"]
     with local.cwd(tmp_path):
-        copy(
+        run_auto(
             src_path=str(cloned_template),
             dst_path=".",
-            vcs_ref="test",
-            force=True,
             data=data,
+            vcs_ref="test",
+            defaults=True,
+            overwrite=True,
         )
         # Check if Odoo options were passed correctly
         _ret_code, _stdout, _stderr = dc.run(["config"])

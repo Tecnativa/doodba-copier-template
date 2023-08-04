@@ -10,7 +10,7 @@ _envops:
   variable_start_string: "{{"
 
 # Other Copier configurations
-_min_copier_version: "4.1.0"
+_min_copier_version: "7.0.1"
 _exclude:
   - _macros
   - _traefik*_labels.yml
@@ -352,9 +352,10 @@ cidr_whitelist:
     ⚠️ It must be a list. And this is only supported if you deploy with Traefik 2+.
 
 postgres_version:
-  default: "14"
+  default: "15"
   help: >-
-    Which PostgreSQL version do you want to deploy?
+    Which PostgreSQL version do you want to deploy? (Recommended: for new instances
+    always use the latest version. Version 9.6 has no backup support.)
   choices:
     I will use an external PostgreSQL server: ""
     "9.6": "9.6"
@@ -363,6 +364,13 @@ postgres_version:
     "12": "12"
     "13": "13"
     "14": "14"
+    "15": "15"
+  validator: >-
+    {% if postgres_version|int > 0 %}  {% if (odoo_version >= 16.0 and
+    postgres_version|int < 12) or (odoo_version >= 14.0 and postgres_version|int < 10)
+    %}  The postgres version is too low for the selected Odoo version. {% elif
+    odoo_version <= 12.0 and postgres_version|int > 14 %}  The postgres version is too
+    high for the selected Odoo version. {% endif %} {% endif %}
 
 postgres_username:
   type: str
@@ -506,6 +514,7 @@ smtp_canonical_domains:
 
 backup_dst:
   type: str
+  when: "{{ postgres_version|int >= 10 }}"
   help: >-
     If you want to use an Amazon S3 bucket, write its URL like
     `boto3+s3://example_bucket[/example/path]` to make sure it works fine.
@@ -570,7 +579,7 @@ backup_tz:
 backup_aws_access_key_id:
   secret: true
   type: str
-  default: null
+  default: ""
   when: &backup_aws "{{ 's3:' in backup_dst|string }}"
   help: >-
     If you're using AWS S3 to store backups, provide here your access key ID.
@@ -578,7 +587,7 @@ backup_aws_access_key_id:
 backup_aws_secret_access_key:
   secret: true
   type: str
-  default: null
+  default: ""
   when: *backup_aws
   help: >-
     If you're using AWS S3 to store backups, provide here your secret access key.
