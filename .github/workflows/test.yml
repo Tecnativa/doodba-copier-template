@@ -32,10 +32,10 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - 3.7
           - 3.8
           - 3.9
           - "3.10"
+          - 3.11
         odoo-version:
           - 7.0
           - 8.0
@@ -51,7 +51,7 @@ jobs:
       # Shared steps
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 0Fetch all history for all tags and branches
+          fetch-depth: 0
       - name: Install python
         uses: actions/setup-python@v4
         with:
