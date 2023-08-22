@@ -449,7 +449,7 @@ def test_pre_commit_in_subproject(
         # Module should now be ignored by pre-commit and give no problems in commit
         git("commit", "-am", "start migration of test_module")
         # Load pre-commit config
-        with open(tmp_path / ".pre-commit-config.yaml", "r") as fd:
+        with open(tmp_path / ".pre-commit-config.yaml") as fd:
             pre_commit_config = yaml.safe_load(fd.read())
         assert "^odoo/custom/src/private/test_module/|" in pre_commit_config["exclude"]
         # Make sure uninstallable addon was ignored by pre-commit
@@ -466,7 +466,7 @@ def test_pre_commit_in_subproject(
         with pytest.raises(ProcessExecutionError):
             git("commit", "-am", "Mark test_module as installable again")
         # Load pre-commit config
-        with open(tmp_path / ".pre-commit-config.yaml", "r") as fd:
+        with open(tmp_path / ".pre-commit-config.yaml") as fd:
             pre_commit_config = yaml.safe_load(fd.read())
         assert (
             "^odoo/custom/src/private/test_module/|" not in pre_commit_config["exclude"]
