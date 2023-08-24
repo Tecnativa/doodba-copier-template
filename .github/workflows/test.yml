@@ -32,10 +32,10 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - 3.7
           - 3.8
           - 3.9
           - "3.10"
+          - 3.11
         odoo-version:
           - 7.0
           - 8.0
@@ -59,6 +59,7 @@ jobs:
       - name: Install Compose
         uses: ndeloof/install-compose-action@c036dce35dc2a23597c03aa05f32347b2cfa0437
         with:
+          version: v2.20.3
           legacy: false # force V2
       - name: Generate cache key CACHE
         run:
