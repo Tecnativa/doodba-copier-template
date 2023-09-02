@@ -49,6 +49,16 @@ ODOO_VERSION = float(
 _logger = getLogger(__name__)
 
 
+def find_odoo_modules(path):
+    """Recursively search for Odoo modules in the given path."""
+    for child in path.iterdir():
+        if child.is_dir():
+            if (child / "__manifest__.py").is_file() or (child / "__openerp__.py").is_file():
+                yield child
+            else:
+                yield from find_odoo_modules(child)
+
+
 def _override_docker_command(service, command, file, orig_file=None):
     # Read config from main file
     if orig_file:
@@ -222,7 +232,8 @@ def write_code_workspace_file(c, cw_path=None):
             cw_config["folders"].append(
                 {"path": str(subrepo.relative_to(PROJECT_ROOT))}
             )
-        for addon in chain(subrepo.glob("*"), subrepo.glob("addons/*")):
+
+        for addon in find_odoo_modules(subrepo):
             if (addon / "__manifest__.py").is_file() or (
                 addon / "__openerp__.py"
             ).is_file():
@@ -232,7 +243,7 @@ def write_code_workspace_file(c, cw_path=None):
                         addon.name,
                     )
                 else:
-                    local_path = "${workspaceFolder:%s}/%s" % (subrepo.name, addon.name)
+                    local_path = "${workspaceFolder:%s}/%s" % (subrepo.name, addon.relative_to(SRC_PATH.joinpath(subrepo.name)))
                 debugpy_configuration["pathMappings"].append(
                     {
                         "localRoot": local_path,
