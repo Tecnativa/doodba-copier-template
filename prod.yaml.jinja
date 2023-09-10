@@ -101,6 +101,12 @@ services:
       {%- endif %}
   {%- endif %}
 
+  wkhtmltopdf:
+    extends:
+      file: common.yaml
+      service: wkhtmltopdf
+    restart: unless-stopped
+
 networks:
   default:
     driver_opts:

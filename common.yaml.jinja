@@ -21,6 +21,7 @@ services:
       PGUSER: &dbuser "{{ postgres_username }}"
       PROXY_MODE: "{% if odoo_proxy %}true{% else %}false{% endif %}"
       LIST_DB: "{{ odoo_listdb | tojson }}"
+      KWKHTMLTOPDF_SERVER_URL: "http://wkhtmltopdf:8080"
     {%- if smtp_canonical_default %}
     hostname: "{{ smtp_canonical_default }}"
     {%- endif %}
@@ -113,3 +114,6 @@ services:
       - backup_cache:/root:z
       - filestore:/mnt/backup/src/odoo:z
   {%- endif %}
+
+  wkhtmltopdf:
+    image: acsone/kwkhtmltopdf

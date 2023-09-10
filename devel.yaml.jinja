@@ -111,6 +111,12 @@ services:
     # HACK https://github.com/Kozea/wdb/issues/136
     init: true
 
+  wkhtmltopdf:
+    networks: *public
+    extends:
+      file: common.yaml
+      service: wkhtmltopdf
+
   # Whitelist outgoing traffic for tests, reports, etc.
 {%- for host in whitelisted_hosts %}
   proxy_{{ host|replace(".", "_") }}:
