@@ -138,14 +138,13 @@ def test_mqt_configs_synced(
         unsafe=True,
     )
     tmp_oca_path = tmp_path / ".." / "oca-addons-repo-files"
+    shutil.rmtree(tmp_oca_path, ignore_errors=True)
     tmp_oca_path.mkdir()
     run_copy(
         str(Path("vendor", "oca-addons-repo-template")),
         tmp_oca_path,
         data={
-            "odoo_version": supported_odoo_version
-            if supported_odoo_version >= 13
-            else 13.0,
+            "odoo_version": supported_odoo_version,
             "repo_description": "Testing",
             "repo_slug": "vendor-test",
             "repo_name": "Vendor Test",
@@ -161,7 +160,6 @@ def test_mqt_configs_synced(
         good = (good_diffs / f"v{supported_odoo_version}-{conf}.diff").read_text()
         tested = diff(tmp_path / conf, tmp_oca_path / conf, retcode=1)
         assert good == tested
-    shutil.rmtree(tmp_path / ".." / "oca-addons-repo-files", ignore_errors=True)
 
 
 def test_pre_commit_in_template():
