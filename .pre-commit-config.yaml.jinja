@@ -1,3 +1,7 @@
+{# We cannot use the same pre-commit config as MQT's because paths don't match
+   and it's designed only for Odoo 13.0+, so we design our own version, which
+   should be as close as possible to MQT's -#}
+
 {#- This namespace holds repo versions #}
 {%- set proj_rev = namespace() %}
 
@@ -7,9 +11,6 @@
   {%- set proj_rev.pylint_odoo = "v8.0.20" %}
 {%- endif %}
 
-{# We cannot use the same pre-commit config as MQT's because paths don't match
-   and it's designed only for Odoo 13.0+, so we design our own version, which
-   should be as close as possible to MQT's -#}
 exclude: |
   (?x)
   # NOT INSTALLABLE ADDONS
@@ -127,27 +128,18 @@ repos:
         args: ["--extend-ignore=B018"] # ignore found useless expression in __manifest__.py
         files: /__manifest__\.py$
         additional_dependencies: ["flake8-bugbear==23.7.10", "importlib-metadata<=6.8.0"]
-  - repo: https://github.com/pycqa/pylint
-    rev: {{ proj_rev.pylint }}
+  - repo: https://github.com/OCA/pylint-odoo
+    rev: {{ proj_rev.pylint_odoo }}
     hooks:
-      - id: pylint
+      - id: pylint_odoo
         name: pylint with optional checks
         args:
           - --rcfile=.pylintrc
           - --exit-zero
         verbose: true
-        additional_dependencies:
-          - isort=={{ proj_rev.isort }}
-          - pylint-odoo=={{ proj_rev.pylint_odoo }}
-      - id: pylint
-        name: pylint with mandatory checks
+      - id: pylint_odoo
         args:
           - --rcfile=.pylintrc-mandatory
-          - odoo/auto/addons
-        verbose: true
-        additional_dependencies:
-          - isort=={{ proj_rev.isort }}
-          - pylint-odoo=={{ proj_rev.pylint_odoo }}
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: v8.49.0
     hooks:
