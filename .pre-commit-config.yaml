@@ -1,6 +1,6 @@
 default_language_version:
   python: python3
-  node: "14.14.0"
+  node: "18.16.1"
 exclude: ^tests/samples/mqt-diffs/.*
 repos:
   - repo: local
@@ -10,7 +10,7 @@ repos:
         entry: poetry
         args: ["check"]
         files: pyproject\.toml$
-        pass_filenames: no
+        pass_filenames: false
         language: system
       - id: forbidden-files
         name: forbidden files
@@ -18,12 +18,11 @@ repos:
         language: fail
         files: "\\.rej$"
   - repo: https://github.com/psf/black
-    rev: 20.8b1
+    rev: 23.3.0
     hooks:
       - id: black
-        additional_dependencies: ["click<8.1.0"]
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.7.2
+    rev: v3.3.2
     hooks:
       - id: pyupgrade
         args:
@@ -33,16 +32,17 @@ repos:
     hooks:
       - id: isort
   - repo: https://github.com/pycqa/flake8
-    rev: 3.8.3
+    rev: 5.0.4
     hooks:
       - id: flake8
-        additional_dependencies: ["flake8-bugbear==20.1.4", "importlib-metadata<5.0.0"]
+        additional_dependencies:
+          ["flake8-bugbear==23.3.12", "importlib-metadata==4.2.0"]
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v2.1.2
+    rev: v2.4.1
     hooks:
       - id: prettier
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0
+    rev: v4.4.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -56,7 +56,7 @@ repos:
       - id: mixed-line-ending
         args: ["--fix=lf"]
   - repo: https://github.com/thlorenz/doctoc
-    rev: v1.4.0
+    rev: v2.2.0
     hooks:
       - id: doctoc
         args:

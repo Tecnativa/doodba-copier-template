@@ -4,7 +4,7 @@ import time
 from pathlib import Path
 
 import pytest
-from copier.main import run_auto
+from copier import run_copy
 from plumbum import ProcessExecutionError, local
 from plumbum.cmd import docker_compose, invoke
 from plumbum.machines.local import LocalCommand
@@ -104,12 +104,13 @@ def test_resetdb(
             }
             if supported_odoo_version < 16:
                 data["postgres_version"] = 13
-            run_auto(
+            run_copy(
                 src_path=str(cloned_template),
                 data=data,
                 vcs_ref="HEAD",
                 defaults=True,
                 overwrite=True,
+                unsafe=True,
             )
             # Imagine the user is in the src subfolder for these tasks
             with local.cwd(tmp_path / "odoo" / "custom" / "src"):
@@ -200,12 +201,13 @@ def test_start(
             }
             if supported_odoo_version < 16:
                 data["postgres_version"] = 13
-            run_auto(
+            run_copy(
                 src_path=str(cloned_template),
                 data=data,
                 vcs_ref="HEAD",
                 defaults=True,
                 overwrite=True,
+                unsafe=True,
             )
             # Imagine the user is in the src subfolder for these tasks
             with local.cwd(tmp_path / "odoo" / "custom" / "src"):
@@ -252,12 +254,13 @@ def test_install_test(
             }
             if supported_odoo_version < 16:
                 data["postgres_version"] = 13
-            run_auto(
+            run_copy(
                 src_path=str(cloned_template),
                 data=data,
                 vcs_ref="HEAD",
                 defaults=True,
                 overwrite=True,
+                unsafe=True,
             )
             # Imagine the user is in the src subfolder for these tasks
             # and the DB is clean
@@ -335,12 +338,13 @@ def test_test_tasks(
             }
             if supported_odoo_version < 16:
                 data["postgres_version"] = 13
-            run_auto(
+            run_copy(
                 src_path=str(cloned_template),
                 data=data,
                 vcs_ref="HEAD",
                 defaults=True,
                 overwrite=True,
+                unsafe=True,
             )
             # Imagine the user is in the src subfolder for these tasks
             # and the DB is clean

@@ -1,4 +1,5 @@
 {%- import "_macros.jinja" as macros -%}
+{%- import "_traefik_common_labels.yml.jinja" as traefik_common_labels -%}
 {%- import "_traefik1_labels.yml.jinja" as traefik1_labels -%}
 {%- import "_traefik2_labels.yml.jinja" as traefik2_labels -%}
 {%- set _key = traefik2_labels.key(project_name, odoo_version, "prod") -%}
@@ -34,8 +35,11 @@ services:
       doodba.domain.main: {{ macros.first_main_domain(domains_prod)|tojson }}
       {%- if odoo_proxy == "traefik" and domains_prod %}
       traefik.enable: "true"
+      {%- if traefik_version == 1 %}
       {{- traefik1_labels.odoo(domains_prod, paths_without_crawlers) }}
-      {{- traefik2_labels.common_middlewares(_key, cidr_whitelist) }}
+      {%- endif %}
+      {%- if traefik_version == 2 or traefik_version == 3 %}
+      {{- traefik_common_labels.common_middlewares(_key, cidr_whitelist, traefik_version) }}
       {{- traefik2_labels.odoo(
         domains_prod,
         cidr_whitelist,
@@ -44,6 +48,7 @@ services:
         paths_without_crawlers,
         project_name,
       ) }}
+      {%- endif %}
       {%- endif %}
 
   {% if postgres_version -%}
@@ -61,13 +66,16 @@ services:
     labels:
       traefik.enable: "true"
       traefik.docker.network: "inverseproxy_shared"
+      {%- if traefik_version == 2 or traefik_version == 3 %}
       {{- traefik2_labels.database(
         domains_prod,
         postgres_cidr_whitelist,
         _key,
         postgres_exposed_port,
         project_name,
+        traefik_version,
       ) }}
+      {%- endif %}
     {%- endif %}
   {%- endif %}
 

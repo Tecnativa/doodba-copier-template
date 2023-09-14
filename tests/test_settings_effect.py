@@ -1,9 +1,8 @@
 from pathlib import Path
-from typing import Union
 
 import pytest
 import yaml
-from copier.main import run_auto
+from copier import run_copy
 from plumbum import local
 from plumbum.cmd import docker_compose
 
@@ -13,16 +12,16 @@ from .conftest import DBVER_PER_ODOO
 @pytest.mark.parametrize("backup_deletion", (False, True))
 @pytest.mark.parametrize(
     "backup_dst",
-    (None, "s3://example", "s3+http://example", "boto3+s3://example", "sftp://example"),
+    ("", "s3://example", "s3+http://example", "boto3+s3://example", "sftp://example"),
 )
 @pytest.mark.parametrize("backup_image_version", ("latest"))
-@pytest.mark.parametrize("smtp_relay_host", (None, "example"))
+@pytest.mark.parametrize("smtp_relay_host", ("", "example"))
 def test_backup_config(
     backup_deletion: bool,
-    backup_dst: Union[None, str],
+    backup_dst: str,
     backup_image_version: str,
     cloned_template: Path,
-    smtp_relay_host: Union[None, str],
+    smtp_relay_host: str,
     supported_odoo_version: float,
     tmp_path: Path,
 ):
@@ -39,13 +38,14 @@ def test_backup_config(
     if not backup_deletion:
         del data["backup_deletion"]
     with local.cwd(tmp_path):
-        run_auto(
+        run_copy(
             src_path=str(cloned_template),
             dst_path=".",
             data=data,
             vcs_ref="test",
             defaults=True,
             overwrite=True,
+            unsafe=True,
         )
         prod = yaml.safe_load(docker_compose("-f", "prod.yaml", "config"))
     # Check backup service existence
@@ -93,7 +93,7 @@ def test_dbfilter_default(
 ):
     """Default DB filter inherits database name and is applied to prod only."""
     with local.cwd(tmp_path):
-        run_auto(
+        run_copy(
             src_path=str(cloned_template),
             dst_path=".",
             data={
@@ -104,6 +104,7 @@ def test_dbfilter_default(
             vcs_ref="test",
             defaults=True,
             overwrite=True,
+            unsafe=True,
         )
         devel, test, prod = map(
             lambda env: yaml.safe_load(docker_compose("-f", f"{env}.yaml", "config")),

@@ -1,4 +1,5 @@
 {%- import "_macros.jinja" as macros -%}
+{%- import "_traefik_common_labels.yml.jinja" as traefik_common_labels -%}
 {%- import "_traefik1_labels.yml.jinja" as traefik1_labels -%}
 {%- import "_traefik2_labels.yml.jinja" as traefik2_labels -%}
 {%- set _key = traefik2_labels.key(project_name, odoo_version, "test") -%}
@@ -32,7 +33,10 @@ services:
       doodba.domain.main: {{ macros.first_main_domain(domains_test)|tojson }}
       {%- if odoo_proxy == "traefik" and domains_test %}
       traefik.enable: "true"
+      {%- if traefik_version == 1 %}
       {{- traefik1_labels.odoo(domains_test, ["/"]) }}
+      {%- endif %}
+      {%- if traefik_version == 2 or traefik_version == 3 %}
       {{- traefik2_labels.odoo(
         domains_test,
         cidr_whitelist,
@@ -41,6 +45,7 @@ services:
         ["/"],
         project_name,
       ) }}
+      {%- endif %}
     {%- endif %}
     command:
       - odoo
@@ -76,6 +81,7 @@ services:
       traefik.enable: "true"
       {#- Traefik v1 labels #}
       traefik.frontend.passHostHeader: "true"
+      {%- if traefik_version == 1 %}
       {%- call(domain_group) macros.domains_loop_grouped(domains_test|rejectattr("redirect_to")|rejectattr("path_prefixes")) %}
       {{-
         traefik1_labels.router(
@@ -89,11 +95,14 @@ services:
         )
       }}
       {%- endcall %}
+      {%- endif %}
       {#- Traefik v2 labels #}
       # Mailhog service
       traefik.http.middlewares.{{ _key }}-mailhog-stripprefix.stripPrefix.prefixes: /smtpfake/
       traefik.http.services.{{ _key }}-mailhog.loadbalancer.server.port: 8025
-      {{- traefik2_labels.common_middlewares(_key, cidr_whitelist) }}
+      {%- if traefik_version == 2 or traefik_version == 3 %}
+      {{- traefik_common_labels.common_middlewares(_key, cidr_whitelist, traefik_version) }}
+      {%- endif %}
       {%- call(domain_group) macros.domains_loop_grouped(domains_test|rejectattr("redirect_to")|rejectattr("path_prefixes")) %}
       {#- Remember basic middlewares for this domain group #}
       {%- set _ns = namespace(basic_middlewares=[]) -%}
@@ -103,6 +112,7 @@ services:
       {%- if domain_group.cert_resolver %}
         {%- set _ns.basic_middlewares = _ns.basic_middlewares + ["addSTS", "forceSecure"] %}
       {%- endif %}
+      {%- if traefik_version == 2 or traefik_version == 3 %}
       {{-
         traefik2_labels.router(
           domain_group=domain_group,
@@ -118,6 +128,7 @@ services:
           ],
         )
       }}
+      {%- endif %}
       {%- endcall %}
       {%- endif %}
     volumes:

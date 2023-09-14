@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from copier.main import run_auto
+from copier import run_copy
 from plumbum import FG
 from plumbum.cmd import invoke
 from plumbum.machines.local import LocalCommand
@@ -10,7 +10,7 @@ from .conftest import DBVER_PER_ODOO
 
 def test_doodba_qa(tmp_path: Path, supported_odoo_version: float, docker: LocalCommand):
     """Test Doodba QA works fine with a scaffolding copy."""
-    run_auto(
+    run_copy(
         ".",
         tmp_path,
         data={
@@ -20,6 +20,7 @@ def test_doodba_qa(tmp_path: Path, supported_odoo_version: float, docker: LocalC
         vcs_ref="HEAD",
         defaults=True,
         overwrite=True,
+        unsafe=True,
     )
     qa_run = docker[
         "container",

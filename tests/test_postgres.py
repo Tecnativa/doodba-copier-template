@@ -2,13 +2,14 @@ import uuid
 from pathlib import Path
 
 import pytest
-from copier.main import run_auto
+from copier import run_copy
 from plumbum import local
 from plumbum.cmd import docker_compose
 
 from .conftest import DBVER_PER_ODOO
 
 
+@pytest.mark.sequential
 @pytest.mark.parametrize("dbver", ("oldest", "latest"))
 def test_postgresql_client_versions(
     cloned_template: Path,
@@ -23,7 +24,7 @@ def test_postgresql_client_versions(
     with local.cwd(tmp_path):
         print(str(cloned_template))
         assert True
-        run_auto(
+        run_copy(
             str(cloned_template),
             dst_path=".",
             data={
@@ -36,6 +37,7 @@ def test_postgresql_client_versions(
             vcs_ref="test",
             defaults=True,
             overwrite=True,
+            unsafe=True,
         )
         try:
             dc("build")
