@@ -154,12 +154,13 @@
 
       {#- Longpolling router #}
       {%- if not domain_group.path_prefixes %}
+      {%- set longpolling_route = "/longpoling/" if odoo_version < 16 else "/websocket" -%}
       {{-
         router(
           domain_group=domain_group,
           key=key,
           suffix="longpolling",
-          rule="%s && PathPrefix(`/longpolling/`)" % domains_rule(domain_group),
+          rule="%s && PathPrefix(`%s`)" % (domains_rule(domain_group), longpolling_route),
           service="longpolling",
           middlewares=_ns.basic_middlewares,
         )
