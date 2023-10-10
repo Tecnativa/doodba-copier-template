@@ -87,7 +87,7 @@
       }}
       {%- endif %}
       {%- if not domain_group.path_prefixes %}
-      {%- set longpolling_route = "/longpoling/" if odoo_version < 16 else "/websocket" -%}
+      {%- set longpolling_route = "/longpolling/" if odoo_version < 16 else "/websocket" -%}
       {{-
         router(
           prefix="longpolling",
