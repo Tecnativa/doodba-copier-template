@@ -20,15 +20,9 @@ services:
     ports:
       - "127.0.0.1:{{ macros.version_major(odoo_version) }}899:6899"
       - "127.0.0.1:{{ macros.version_major(odoo_version) }}069:8069"
-      {%- if odoo_version >= 16 %}
       - "127.0.0.1:{{ macros.version_major(odoo_version) }}072:8072"
-      {%- endif %}
     environment:
-      {%- if odoo_version < 16 %}
-      PORT: "6899 8069"
-      {%- else %}
       PORT: "6899 8069 8072"
-      {%- endif %}
       TARGET: odoo
 
   odoo:
