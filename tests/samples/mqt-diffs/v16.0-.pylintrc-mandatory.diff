@@ -1,29 +1,67 @@
 0a1
 > 
-6a8
-> manifest_required_authors=Odoo Community Association (OCA)
-8c10,11
-< manifest_deprecated_keys=active
+6,9c7,12
+< readme-template-url="https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"
+< manifest-required-keys=license
+< manifest-deprecated-keys=active
+< valid-odoo-versions=16.0
 ---
+> readme_template_url="https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"
+> manifest_required_authors=Odoo Community Association (OCA)
+> manifest_required_keys=license
 > manifest_deprecated_keys=description,active
 > license_allowed=AGPL-3,GPL-2,GPL-2 or any later version,GPL-3,GPL-3 or any later version,LGPL-3
-21a25
->     development-status-allowed,
-28a33
->     license-allowed,
-30a36
->     manifest-required-author,
-37,38d42
-<     missing-import-error,
-<     missing-manifest-dependency,
-56c60,93
-<     xml-syntax-error
+> valid_odoo_versions=16.0
+14,15c17,33
+< 
+< enable=attribute-deprecated,
 ---
+> enable=anomalous-backslash-in-string,
+>     api-one-deprecated,
+>     api-one-multi-together,
+>     assignment-from-none,
+>     attribute-deprecated,
+>     class-camelcase,
+>     dangerous-default-value,
+>     dangerous-view-replace-wo-priority,
+>     development-status-allowed,
+>     duplicate-id-csv,
+>     duplicate-key,
+>     duplicate-xml-fields,
+>     duplicate-xml-record-id,
+>     eval-referenced,
+>     eval-used,
+>     incoherent-interpreter-exec-perm,
+>     license-allowed,
+17a36
+>     manifest-required-author,
+23a43,45
+>     openerp-exception-warning,
+>     pointless-statement,
+>     pointless-string-statement,
+24a47,52
+>     redundant-keyword-arg,
+>     redundant-modulename-xml,
+>     reimported,
+>     relative-import,
+>     return-in-init,
+>     rst-syntax-error,
+25a54
+>     too-few-format-args,
+27a57
+>     unreachable,
+28a59,60
+>     wrong-tabs-instead-of-spaces,
 >     xml-syntax-error,
->     attribute-string-redundant,
+30c62,63
+<     bad-builtin-groupby,
+---
 >     character-not-valid-in-resource-link,
 >     consider-merging-classes-inherited,
->     context-overridden,
+32,33c65,76
+<     external-request-timeout,
+<     manifest-data-duplicated,
+---
 >     create-user-wo-reset-password,
 >     dangerous-filter-wo-user,
 >     dangerous-qweb-replace-wo-priority,
@@ -36,17 +74,28 @@
 >     manifest-maintainers-list,
 >     missing-newline-extrafiles,
 >     missing-readme,
->     missing-return,
+35,38c78,81
+<     no-raise-unlink,
+<     no-wizard-in-models,
+<     no-write-in-compute,
+<     odoo-exception-warning,
+---
 >     odoo-addons-relative-import,
 >     old-api7-method-defined,
 >     po-msgstr-variables,
 >     po-syntax-error,
->     renamed-field-parameter,
->     resource-not-exist,
+40a84
 >     str-format-used,
->     test-folder-imported,
->     translation-contains-variable,
->     translation-positional-used,
+43,46d86
+<     translation-format-interpolation,
+<     translation-format-truncated,
+<     translation-fstring-interpolation,
+<     translation-not-lazy,
+48,50c88,93
+<     translation-too-few-args,
+<     translation-too-many-args,
+<     translation-unsupported-format
+---
 >     unnecessary-utf8-coding-comment,
 >     website-manifest-key-not-valid-uri,
 >     xml-attribute-translatable,

@@ -10,6 +10,9 @@ services:
       file: common.yaml
       service: odoo
     restart: unless-stopped
+    {%- if domains_prod %}
+    hostname: {{ macros.first_main_domain(domains_prod)|tojson }}
+    {%- endif %}
     env_file:
       - .docker/odoo.env
       - .docker/db-access.env
