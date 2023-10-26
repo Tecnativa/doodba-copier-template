@@ -107,6 +107,8 @@ repos:
       - id: check-docstring-first
       - id: check-executables-have-shebangs
       - id: check-merge-conflict
+        args: [--assume-in-merge]
+        exclude: \.rst$ # HACK https://github.com/pre-commit/pre-commit-hooks/issues/985
       - id: check-symlinks
       - id: check-xml
       - id: mixed-line-ending

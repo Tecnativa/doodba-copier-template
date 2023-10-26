@@ -48,7 +48,8 @@
 {{- fragment('HISTORY', 'Changelog') -}}
 
 Credits
-=======
+{#- HACK Avoid conflicts with pre-commit's check-merge-conflict #}
+{{ "=======" }}
 
 {% if authors -%}
 Authors
