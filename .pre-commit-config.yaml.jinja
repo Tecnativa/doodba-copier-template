@@ -34,7 +34,8 @@ repos:
         entry: found forbidden files; remove them
         language: fail
         files: "\\.rej$"
-  - repo: https://github.com/oca/maintainer-tools
+  - &maintainer_tools
+    repo: https://github.com/oca/maintainer-tools
     rev: 1070863d1298b1bf373a0e69458dd8a88ab91578
     hooks:
       # update the NOT INSTALLABLE ADDONS section above
@@ -42,17 +43,6 @@ repos:
         args:
           - --addons-dir
           - odoo/custom/src/private
-  - repo: https://github.com/oca/maintainer-tools
-    rev: 1070863d1298b1bf373a0e69458dd8a88ab91578
-    hooks:
-      - id: oca-gen-addon-readme
-        args:
-          - --addons-dir=odoo/custom/src/private
-          - --org-name={{ project_author }}
-          - --repo-name={{ project_name }}
-          - --gen-html
-          - --branch={{ odoo_version }}
-          - --template-filename=.module-readme.rst.j2
   - repo: https://github.com/myint/autoflake
     rev: v2.2.0
     hooks:
@@ -148,3 +138,14 @@ repos:
         args:
           - --color
           - --fix
+  - <<: *maintainer_tools
+    hooks:
+      # Generate readme is last, so its digest includes changes from above
+      - id: oca-gen-addon-readme
+        args:
+          - --addons-dir=odoo/custom/src/private
+          - --org-name={{ project_author }}
+          - --repo-name={{ project_name }}
+          - --gen-html
+          - --branch={{ odoo_version }}
+          - --template-filename=.module-readme.rst.j2
