@@ -43,6 +43,14 @@ repos:
         args:
           - --addons-dir
           - odoo/custom/src/private
+  {% if odoo_version >= 14 -%}
+  - repo: https://github.com/OCA/odoo-pre-commit-hooks
+    rev: v0.0.29
+    hooks:
+      - id: oca-checks-odoo-module
+      - id: oca-checks-po
+        args: ["--fix"]
+  {% endif -%}
   - repo: https://github.com/myint/autoflake
     rev: v2.2.0
     hooks:
