@@ -51,7 +51,7 @@ services:
 
   smtpreal:
     image: ghcr.io/docker-mailserver/docker-mailserver:{{ smtp_relay_version }}
-    hostname: "{{ smtp_canonical_default }}"
+    hostname: "smtp.{{ smtp_canonical_default }}"
     stop_grace_period: 1m
     volumes:
       - mailconfig:/tmp/docker-mailserver:z
