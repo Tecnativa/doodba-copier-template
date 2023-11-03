@@ -953,7 +953,9 @@ def after_update(c):
 @task(
     help={
         "source_db": "The source DB name. Default: 'devel'.",
-        "destination_db": "The destination DB name. Default: '[SOURCE_DB_NAME]-[CURRENT_DATE]'",
+        "destination_db": (
+            "The destination DB name. Default: '[SOURCE_DB_NAME]-[CURRENT_DATE]'"
+        ),
     },
 )
 def snapshot(
