@@ -49,7 +49,7 @@ jobs:
           - 16.0
     steps:
       # Shared steps
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0Fetch all history for all tags and branches
       - name: Install python
