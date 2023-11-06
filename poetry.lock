@@ -904,21 +904,24 @@ testing = ["filelock"]
 
 [[package]]
 name = "python-on-whales"
-version = "0.64.3"
+version = "0.66.0"
 description = "A Docker client for Python, designed to be fun and intuitive!"
 optional = false
-python-versions = ">=3.8, <4"
+python-versions = "<4,>=3.8"
 files = [
-    {file = "python-on-whales-0.64.3.tar.gz", hash = "sha256:075fcd89ca6018c274f13791e5579bf2fa7c46808a3161c2686a4984510c3d1c"},
-    {file = "python_on_whales-0.64.3-py3-none-any.whl", hash = "sha256:6adb4ac0486dbdab663c491952c1b1007e6599f9db333fbf07e2ad943f7bc847"},
+    {file = "python-on-whales-0.66.0.tar.gz", hash = "sha256:f7511cf2c1c103cfaf09385623cb97fc57c4fe29ef3f2d3148ea6e64e8d85927"},
+    {file = "python_on_whales-0.66.0-py3-none-any.whl", hash = "sha256:20e86fa650545779d4104d938cb994dfb27103b2ab2a97c559cc788547b56cdb"},
 ]
 
 [package.dependencies]
-pydantic = ">=1.5,<2.0.dev0 || >=2.1.dev0,<3"
+pydantic = ">=1.9,<2.0.dev0 || >=2.1.dev0,<3"
 requests = "*"
 tqdm = "*"
 typer = ">=0.4.1"
 typing-extensions = "*"
+
+[package.extras]
+test = ["pytest"]
 
 [[package]]
 name = "pywin32"
@@ -1195,4 +1198,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.1"
-content-hash = "99def2ae5b8ea4969054d5181ebd057b6113aba59671e6f70f342f03e29fe898"
+content-hash = "f0e124872d3cd12b00e929f54222d90676118a14949eded282a0ea24d9d37e8b"
