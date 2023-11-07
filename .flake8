@@ -2,6 +2,6 @@
 # HACK https://gitlab.com/pycqa/flake8/issues/428
 [flake8]
 # See https://github.com/psf/black#line-length
-ignore = E203, E501, W503, B950
+ignore = E203, E501, W503, B950, B023
 max-line-length = 88
 select = C,E,F,W,B
