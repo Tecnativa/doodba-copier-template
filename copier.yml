@@ -1,16 +1,8 @@
 # Configure jinja2 defaults to make syntax highlighters lives easier
 _templates_suffix: .jinja
-_envops:
-  block_end_string: "%}"
-  block_start_string: "{%"
-  comment_end_string: "#}"
-  comment_start_string: "{#"
-  keep_trailing_newline: true
-  variable_end_string: "}}"
-  variable_start_string: "{{"
 
 # Other Copier configurations
-_min_copier_version: "8.3.0"
+_min_copier_version: "9"
 _exclude:
   - _macros
   - _traefik*_labels.yml
