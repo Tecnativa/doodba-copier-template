@@ -6,7 +6,7 @@ name = "doodba-copier-template"
 version = "0.1.0"
 
 [tool.poetry.dependencies]
-copier = ">=8.3.0"
+copier = ">=9"
 plumbum = "^1.8.2"
 python = "^3.8.1"
 
