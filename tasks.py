@@ -116,13 +116,15 @@ def update_test_samples(c):
                 prefix="oca-samples"
             ) as oca_copy_path:
                 c.run(
-                    "poetry run copier -fr HEAD -x '**' -x '!.pylintrc*' -x '!tasks.py' -x '!common.yaml' "
-                    f"-d odoo_version={odoo_version} copy . {dct_copy_path}"
+                    "poetry run copier copy --trust -fr HEAD -x '**' -x '!.pylintrc*' -x '!tasks.py' -x '!common.yaml' "
+                    f"-d odoo_version={odoo_version} . {dct_copy_path}"
                 )
                 oca_template_version = odoo_version if odoo_version >= 13 else 13.0
                 c.run(
-                    "poetry run copier -fr HEAD -x '**' -x '!.pylintrc*' "
-                    f"-d odoo_version={oca_template_version} copy vendor/oca-addons-repo-template {oca_copy_path}"
+                    "poetry run copier copy --trust -fr HEAD -x '**' -x '!.pylintrc*' "
+                    f"-d odoo_version={oca_template_version}"
+                    " -d repo_slug=test -d repo_name=test -d repo_description=test"
+                    f" vendor/oca-addons-repo-template {oca_copy_path}"
                 )
                 for file_name in (".pylintrc", ".pylintrc-mandatory"):
                     with open(

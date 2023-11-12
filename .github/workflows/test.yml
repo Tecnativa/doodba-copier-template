@@ -47,6 +47,12 @@ jobs:
           - 14.0
           - 15.0
           - 16.0
+        include:
+          - python-version: "3.10"
+            odoo-version: 17.0
+          - python-version: 3.11
+            odoo-version: 17.0
+
     steps:
       # Shared steps
       - uses: actions/checkout@v4
