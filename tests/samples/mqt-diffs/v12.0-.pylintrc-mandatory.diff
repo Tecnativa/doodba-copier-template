@@ -1,29 +1,16 @@
-6a7
+0a1
+> 
+6a8
 > manifest_required_authors=Odoo Community Association (OCA)
-8c9,10
+8,9c10,12
 < manifest_deprecated_keys=active
+< valid_odoo_versions=12.0
 ---
 > manifest_deprecated_keys=description,active
 > license_allowed=AGPL-3,GPL-2,GPL-2 or any later version,GPL-3,GPL-3 or any later version,LGPL-3
-13a16,32
-> # Enable message and code:
-> #   anomalous-backslash-in-string - W1401
-> #   assignment-from-none - W1111
-> #   dangerous-default-value - W0102
-> #   duplicate-key - W0109
-> #   missing-import-error - W7935
-> #   missing-manifest-dependency - W7936
-> #   pointless-statement - W0104
-> #   pointless-string-statement - W0105
-> #   print-statement - E1601
-> #   redundant-keyword-arg - E1124
-> #   reimported - W0404
-> #   relative-import - W0403
-> #   return-in-init - E0101
-> #   rst-syntax-error - E7901
-> #   too-few-format-args - E1306
-> #   unreachable - W0101
-15,31c34,36
+> valid_odoo_versions=13.0
+14,29c17
+< 
 < enable=attribute-deprecated,
 <     manifest-author-string,
 <     manifest-deprecated-key,
@@ -39,46 +26,32 @@
 <     translation-required,
 <     use-vim-comment,
 <     anomalous-backslash-in-string,
-<     api-one-deprecated,
-<     api-one-multi-together,
 ---
-> 
-> 
 > enable=anomalous-backslash-in-string,
-33d37
-<     class-camelcase,
-35,36c39
-<     dangerous-view-replace-wo-priority,
-<     duplicate-id-csv,
----
+32a21
+>     attribute-deprecated,
+35a25
 >     development-status-allowed,
-38,42c41
-<     duplicate-xml-fields,
-<     duplicate-xml-record-id,
-<     eval-referenced,
-<     eval-used,
-<     incoherent-interpreter-exec-perm,
+43,44c33,42
+<     missing-import-error,
+<     missing-manifest-dependency,
 ---
->     duplicate-po-message-definition,
-45c44,45
-<     openerp-exception-warning,
----
->     po-msgstr-variables,
->     po-syntax-error,
-47a48
->     print-used,
-49d49
-<     redundant-modulename-xml,
-56,57c56,62
-<     wrong-tabs-instead-of-spaces,
-<     xml-syntax-error
----
->     eval-used,
->     eval-referenced,
 >     license-allowed,
 >     manifest-author-string,
+>     manifest-deprecated-key,
 >     manifest-required-author,
 >     manifest-required-key,
->     manifest-version-format
-62a68
-> 
+>     manifest-version-format,
+>     method-compute,
+>     method-inverse,
+>     method-required-super,
+>     method-search,
+47a46
+>     print-used,
+53a53
+>     sql-injection,
+54a55,56
+>     translation-field,
+>     translation-required,
+55a58
+>     use-vim-comment,

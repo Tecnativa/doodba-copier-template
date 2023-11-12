@@ -1,33 +1,25 @@
-0a1,2
+0a1
 > 
-> 
-7c9
-< manifest_required_authors=Tecnativa
----
+6a8
 > manifest_required_authors=Odoo Community Association (OCA)
-10,11c12,13
-< license_allowed=AGPL-3,GPL-2,GPL-2 or any later version,GPL-3,GPL-3 or any later version,LGPL-3,OPL-1,OEEL-1
-< valid_odoo_versions=12.0
+8,9c10,12
+< manifest_deprecated_keys=active
+< valid_odoo_versions=10.0
 ---
+> manifest_deprecated_keys=description,active
 > license_allowed=AGPL-3,GPL-2,GPL-2 or any later version,GPL-3,GPL-3 or any later version,LGPL-3
 > valid_odoo_versions=13.0
-23,44c25
-< # messages that do not cause the lint step to fail
+14,29c17
+< 
 < enable=attribute-deprecated,
-<     consider-merging-classes-inherited,
-<     invalid-commit,
-<     license-allowed,
 <     manifest-author-string,
 <     manifest-deprecated-key,
-<     manifest-required-author,
 <     manifest-required-key,
 <     manifest-version-format,
 <     method-compute,
 <     method-inverse,
 <     method-required-super,
 <     method-search,
-<     missing-readme,
-<     odoo-addons-relative-import,
 <     print-used,
 <     sql-injection,
 <     translation-field,
@@ -36,11 +28,11 @@
 <     anomalous-backslash-in-string,
 ---
 > enable=anomalous-backslash-in-string,
-47a29
+32a21
 >     attribute-deprecated,
-50a33
+35a25
 >     development-status-allowed,
-58,59c41,50
+43,44c33,42
 <     missing-import-error,
 <     missing-manifest-dependency,
 ---
@@ -54,24 +46,12 @@
 >     method-inverse,
 >     method-required-super,
 >     method-search,
-62a54
+47a46
 >     print-used,
-68a61
+53a53
 >     sql-injection,
-69a63,64
+54a55,56
 >     translation-field,
 >     translation-required,
-70a66
+55a58
 >     use-vim-comment,
-72a69,70
->     # messages that do not cause the lint step to fail
->     consider-merging-classes-inherited,
-76a75,76
->     invalid-commit,
->     missing-manifest-dependency,
-77a78
->     missing-readme,
-78a80
->     odoo-addons-relative-import,
-82a85
-> 

@@ -7,7 +7,7 @@
 > manifest_required_authors=Odoo Community Association (OCA)
 10,11c12,13
 < license_allowed=AGPL-3,GPL-2,GPL-2 or any later version,GPL-3,GPL-3 or any later version,LGPL-3,OPL-1,OEEL-1
-< valid_odoo_versions=12.0
+< valid_odoo_versions=8.0
 ---
 > license_allowed=AGPL-3,GPL-2,GPL-2 or any later version,GPL-3,GPL-3 or any later version,LGPL-3
 > valid_odoo_versions=13.0
