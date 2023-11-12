@@ -34,3 +34,14 @@ use_parentheses = true
 [build-system]
 build-backend = "poetry.masonry.api"
 requires = ["poetry>=0.12"]
+
+# ruff
+
+[tool.ruff]
+fix = true
+
+[tool.ruff.lint]
+extend-select = [
+    "UP",  # pyupgrade
+    "I",  # isort
+]
