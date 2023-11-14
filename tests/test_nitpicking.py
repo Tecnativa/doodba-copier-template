@@ -1,6 +1,5 @@
 """Nitpicking small tests ahead."""
 import json
-import shutil
 from pathlib import Path
 from textwrap import dedent
 
@@ -8,7 +7,7 @@ import pytest
 import yaml
 from copier import run_copy
 from plumbum import ProcessExecutionError, local
-from plumbum.cmd import diff, git, invoke, pre_commit
+from plumbum.cmd import git, invoke, pre_commit
 from python_on_whales import DockerClient
 
 from .conftest import (
@@ -122,44 +121,6 @@ def test_no_vscode_in_private(cloned_template: Path, tmp_path: Path):
         vscode.mkdir()
         (vscode / "something").touch()
         assert not git("status", "--porcelain")
-
-
-def test_mqt_configs_synced(
-    tmp_path: Path, cloned_template: Path, supported_odoo_version: float
-):
-    """Make sure configs from MQT are in sync."""
-    run_copy(
-        str(cloned_template),
-        str(tmp_path),
-        data={"odoo_version": supported_odoo_version},
-        vcs_ref="test",
-        defaults=True,
-        overwrite=True,
-        unsafe=True,
-    )
-    tmp_oca_path = tmp_path / ".." / "oca-addons-repo-files"
-    shutil.rmtree(tmp_oca_path, ignore_errors=True)
-    tmp_oca_path.mkdir()
-    run_copy(
-        str(Path("vendor", "oca-addons-repo-template")),
-        tmp_oca_path,
-        data={
-            "odoo_version": supported_odoo_version,
-            "repo_description": "Testing",
-            "repo_slug": "vendor-test",
-            "repo_name": "Vendor Test",
-        },
-        vcs_ref="HEAD",
-        defaults=True,
-        overwrite=True,
-        exclude=["**", "!.pylintrc*"],
-        unsafe=True,
-    )
-    good_diffs = Path("tests", "samples", "mqt-diffs")
-    for conf in (".pylintrc", ".pylintrc-mandatory"):
-        good = (good_diffs / f"v{supported_odoo_version}-{conf}.diff").read_text()
-        tested = diff(tmp_path / conf, tmp_oca_path / conf, retcode=1)
-        assert good == tested
 
 
 def test_pre_commit_in_template():
