@@ -62,6 +62,10 @@ DBVER_PER_ODOO = {
         "oldest": "12",
         "latest": LATEST_PSQL_VER,
     },
+    17.0: {
+        "oldest": "12",
+        "latest": LATEST_PSQL_VER,
+    },
 }
 
 # Traefik versions matrix
