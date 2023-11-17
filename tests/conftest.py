@@ -32,7 +32,7 @@ SELECTED_ODOO_VERSIONS = (
     frozenset(map(float, os.environ.get("SELECTED_ODOO_VERSIONS", "").split()))
     or ALL_ODOO_VERSIONS
 )
-PRERELEASE_ODOO_VERSIONS = {16.0}
+PRERELEASE_ODOO_VERSIONS = {17.0}
 
 # Postgres versions
 ALL_PSQL_VERSIONS = tuple(COPIER_SETTINGS["postgres_version"]["choices"])
