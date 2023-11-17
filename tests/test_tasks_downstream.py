@@ -279,25 +279,26 @@ def test_install_test(
                     stdout = invoke("install")
                 assert _install_status("mail") == "installed"
                 assert _install_status("utm") == "installed"
-            # Test "note" simple call in init mode (default)
-            assert _install_status("note") == "uninstalled"
-            stdout = invoke("test", "-m", "note", "--mode", "init", retcode=None)
-            # Ensure "note" was installed and tests ran
-            assert _install_status("note") == "installed"
-            _tests_ran(stdout, supported_odoo_version, "note")
-            # Test "note" simple call in update mode
-            stdout = invoke("test", "-m", "note", "--mode", "update", retcode=None)
-            _tests_ran(stdout, supported_odoo_version, "note")
-            # Change to "note" subfolder and test
+            # Test "note" or "project_todo" simple call in init mode (default)
+            module_name = "note" if supported_odoo_version < 17 else "project_todo"
+            assert _install_status(module_name) == "uninstalled"
+            stdout = invoke("test", "-m", module_name, "--mode", "init", retcode=None)
+            # Ensure module was installed and tests ran
+            assert _install_status(module_name) == "installed"
+            _tests_ran(stdout, supported_odoo_version, module_name)
+            # Test module simple call in update mode
+            stdout = invoke("test", "-m", module_name, "--mode", "update", retcode=None)
+            _tests_ran(stdout, supported_odoo_version, module_name)
+            # Change to subfolder and test
             with local.cwd(
-                tmp_path / "odoo" / "custom" / "src" / "odoo" / "addons" / "note"
+                tmp_path / "odoo" / "custom" / "src" / "odoo" / "addons" / module_name
             ):
-                # Test "note" based on current folder
+                # Test module based on current folder
                 stdout = invoke("test", retcode=None)
-                _tests_ran(stdout, supported_odoo_version, "note")
+                _tests_ran(stdout, supported_odoo_version, module_name)
             # Test --debugpy and wait time call with
             safe_stop_env(tmp_path, purge=False)
-            invoke("test", "-m", "note", "--debugpy", retcode=None)
+            invoke("test", "-m", module_name, "--debugpy", retcode=None)
             assert socket_is_open("127.0.0.1", int(supported_odoo_version) * 1000 + 899)
             stdout = _wait_for_test_to_start()
             assert "python -m debugpy" in stdout
@@ -345,15 +346,16 @@ def test_test_tasks(
             with local.cwd(tmp_path / "odoo" / "custom" / "src"):
                 invoke("img-build")
                 invoke("git-aggregate")
-            # Prepare environment with "note" dependencies
-            invoke("resetdb", "-m", "note", "--dependencies")
+            module_name = "note" if supported_odoo_version < 17 else "project_todo"
+            # Prepare environment with "note" or "project_todo" dependencies
+            invoke("resetdb", "-m", module_name, "--dependencies")
             assert _install_status("mail") == "installed"
-            # Test "note" simple call in init mode (default)
-            assert _install_status("note") == "uninstalled"
-            stdout = invoke("test", "-m", "note", retcode=None)
-            # Ensure "note" was installed and tests ran
-            assert _install_status("note") == "installed"
-            _tests_ran(stdout, supported_odoo_version, "note")
+            # Test module simple call in init mode (default)
+            assert _install_status(module_name) == "uninstalled"
+            stdout = invoke("test", "-m", module_name, retcode=None)
+            # Ensure module was installed and tests ran
+            assert _install_status(module_name) == "installed"
+            _tests_ran(stdout, supported_odoo_version, module_name)
             if supported_odoo_version >= 11:
                 # Prepare environment for all private addons and "test" them
                 with local.cwd(tmp_path / "odoo" / "custom" / "src" / "private"):
