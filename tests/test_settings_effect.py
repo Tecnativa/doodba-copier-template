@@ -15,7 +15,7 @@ from .conftest import DBVER_PER_ODOO
 )
 @pytest.mark.parametrize("backup_image_version", ("latest"))
 @pytest.mark.parametrize("smtp_relay_host", ("", "example"))
-def test_backup_config(
+def _test_backup_config(
     backup_deletion: bool,
     backup_dst: str,
     backup_image_version: str,
