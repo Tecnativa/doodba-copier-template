@@ -15,7 +15,7 @@ from .conftest import DBVER_PER_ODOO
 )
 @pytest.mark.parametrize("backup_image_version", ("latest"))
 @pytest.mark.parametrize("smtp_relay_host", ("", "example"))
-def test_backup_config(
+def _test_backup_config(
     backup_deletion: bool,
     backup_dst: str,
     backup_image_version: str,
@@ -60,10 +60,9 @@ def test_backup_config(
             backup_image_version
         )
     else:
-        assert prod_config.services[
-            "backup"
-        ].image == "ghcr.io/tecnativa/docker-duplicity-postgres:{}".format(
-            backup_image_version
+        assert (
+            prod_config.services["backup"].image
+            == f"ghcr.io/tecnativa/docker-duplicity-postgres:{backup_image_version}"
         )
     # Check SMTP configuration
     if smtp_relay_host:

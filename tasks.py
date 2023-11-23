@@ -5,7 +5,6 @@ and are related to the maintenance of this template project, not the child
 projects generated with it.
 """
 import re
-import tempfile
 from pathlib import Path
 from unittest import mock
 
@@ -85,50 +84,3 @@ def test(c, verbose=False, sequential=False, docker=True):
     cmd = f"poetry run pytest {flags} tests"
     with c.cd(str(TEMPLATE_ROOT)):
         c.run(cmd)
-
-
-@task(develop)
-def update_test_samples(c):
-    """Update test samples renderings.
-
-    Since this project is just a template, some render results are stored as
-    tests to be able to check the templates produce the right results.
-
-    However, when something changes, the samples must be properly updated and
-    reviewed to make sure they are still OK.
-
-    This job updates all those samples.
-    """
-    with c.cd(str(TEMPLATE_ROOT)):
-        # Make sure git repo is clean
-        try:
-            c.run("git diff --quiet --exit-code")
-        except Exception:
-            print("git repo is dirty; clean it and repeat")
-            raise
-        copier_conf = _load_copier_conf()
-        odoo_versions = copier_conf["odoo_version"]["choices"]
-        samples = Path("tests", "samples")
-        for odoo_version in odoo_versions:
-            with tempfile.TemporaryDirectory(
-                prefix="dct-samples"
-            ) as dct_copy_path, tempfile.TemporaryDirectory(
-                prefix="oca-samples"
-            ) as oca_copy_path:
-                c.run(
-                    "poetry run copier -fr HEAD -x '**' -x '!.pylintrc*' -x '!tasks.py' -x '!common.yaml' "
-                    f"-d odoo_version={odoo_version} copy . {dct_copy_path}"
-                )
-                oca_template_version = odoo_version if odoo_version >= 13 else 13.0
-                c.run(
-                    "poetry run copier -fr HEAD -x '**' -x '!.pylintrc*' "
-                    f"-d odoo_version={oca_template_version} copy vendor/oca-addons-repo-template {oca_copy_path}"
-                )
-                for file_name in (".pylintrc", ".pylintrc-mandatory"):
-                    with open(
-                        samples / "mqt-diffs" / f"v{odoo_version}-{file_name}.diff", "w"
-                    ) as fd:
-                        copied = Path(dct_copy_path, file_name)
-                        mqt = Path(oca_copy_path, file_name)
-                        fd.write(c.run(f"diff {copied} {mqt}", warn=True).stdout)
-        c.run("poetry run pre-commit run -a", warn=True)
