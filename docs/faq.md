@@ -31,6 +31,7 @@ Maybe not so frequent, but interesting anyway. 🤷
 - [Why won't my program stop on the specified breakpoints when using Firefox?](#why-wont-my-program-stop-on-the-specified-breakpoints-when-using-firefox)
 - [When upgrading from an old template, prettier fails badly. How to update?](#when-upgrading-from-an-old-template-prettier-fails-badly-how-to-update)
 - [When upgrading from an old template, pre-commit fails to install. What can I do?](#when-upgrading-from-an-old-template-pre-commit-fails-to-install-what-can-i-do)
+- [When upgrading from an old template, copier fails with 'Invalid answer "None"'. How to update?](#when-upgrading-from-an-old-template-copier-fails-with-invalid-answer-none-how-to-update)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 <!-- prettier-ignore-end -->
@@ -263,7 +264,7 @@ volumes:
 Then boot it up with:
 
 ```bash
-docker-compose -p inverseproxy -f inverseproxy.yaml up -d
+docker compose -p inverseproxy -f inverseproxy.yaml up -d
 ```
 
 This will intercept all requests coming from port 80 (HTTP) and redirect them to port
@@ -496,7 +497,7 @@ LINE 1: SELECT latest_version FROM ir_module_module WHERE name='base...
 You can do as **the log is clearly telling you to do** (side note: READ THE LOGS! 😀):
 
 ```bash
-docker-compose run --rm odoo --stop-after-init -i base
+docker compose run --rm odoo --stop-after-init -i base
 invoke restart
 ```
 
@@ -648,3 +649,34 @@ version, you cannot update anymore. Where is what you can do to avoid it:
 Once all your doodba subprojects are on template v2.6.1 or later, you shouldn't have
 this problem, as the pre-commit hook's versions and dependencies where tailored to work
 with these new constraints.
+
+## When upgrading from an old template, copier fails with 'Invalid answer "None"'. How to update?
+
+When you're updating from an older template to a newer, Copier will try to produce a
+vanilla project with the old template before updating it, to be able to extract a smart
+diff and apply the required changes to your subproject.
+
+Since old versions of the template are broken due to this copier problem, you cannot
+update anymore. Well, here's the workaround:
+
+1. Launch 'recopy': `copier recopy --trust -f .`
+2. Save the name of the question that gives the problem (for example 'odoo_oci_image')
+3. Launch 'recopy' again but with an empty string as the default value for the
+   problematic question: `copier recopy --trust -f -d odoo_oci_image='' .`
+4. Repeat the steps expanding in point 4 with as many questions as you need:
+   `-d var1='' -d var2=[] ...`
+
+For example, getting this error:
+`copier.errors.InvalidTypeError: Invalid answer "None" of type "<class 'NoneType'>" to question "gitlab_url" of type "str"`
+You can see the name of the problematic question (gitlab_url) and its type (str).
+
+Normally the conversion would look something like this:
+
+| Question Type | New value to use with -d |
+| ------------- | ------------------------ |
+| str           | ''                       |
+| yaml          | {}                       |
+| int           | 0                        |
+| float         | 0                        |
+| json          | {}                       |
+| bool          | false                    |

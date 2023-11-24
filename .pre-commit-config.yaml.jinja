@@ -1,6 +1,18 @@
 {# We cannot use the same pre-commit config as MQT's because paths don't match
    and it's designed only for Odoo 13.0+, so we design our own version, which
    should be as close as possible to MQT's -#}
+
+{#- This namespace holds repo versions #}
+{%- set proj_rev = namespace() %}
+
+{%- if odoo_version < 16 %}
+  {%- set proj_rev.pylint_odoo = "v8.0.0" %}
+{%- elif odoo_version < 17 %}
+  {%- set proj_rev.pylint_odoo = "v8.0.20" %}
+{%- else %}
+  {%- set proj_rev.pylint_odoo = "v9.0.4" %}
+{%- endif -%}
+
 exclude: |
   (?x)
   # NOT INSTALLABLE ADDONS
@@ -15,7 +27,7 @@ exclude: |
   (LICENSE.*|COPYING.*)
 default_language_version:
   python: python3
-  node: "14.14.0"
+  node: "18.17.1"
 repos:
   - repo: local
     hooks:
@@ -24,27 +36,25 @@ repos:
         entry: found forbidden files; remove them
         language: fail
         files: "\\.rej$"
-  - repo: https://github.com/oca/maintainer-tools
-    rev: b9c963d
+  - &maintainer_tools
+    repo: https://github.com/oca/maintainer-tools
+    rev: 1070863d1298b1bf373a0e69458dd8a88ab91578
     hooks:
       # update the NOT INSTALLABLE ADDONS section above
       - id: oca-update-pre-commit-excluded-addons
         args:
           - --addons-dir
           - odoo/custom/src/private
-  - repo: https://github.com/oca/maintainer-tools
-    rev: 05e2174
+  {% if odoo_version >= 14 -%}
+  - repo: https://github.com/OCA/odoo-pre-commit-hooks
+    rev: v0.0.29
     hooks:
-      - id: oca-gen-addon-readme
-        args:
-          - --addons-dir=odoo/custom/src/private
-          - --org-name={{ project_author }}
-          - --repo-name={{ project_name }}
-          - --gen-html
-          - --branch={{ odoo_version }}
-          - --template-filename=.module-readme.rst.j2
+      - id: oca-checks-odoo-module
+      - id: oca-checks-po
+        args: ["--fix"]
+  {% endif -%}
   - repo: https://github.com/myint/autoflake
-    rev: v1.4
+    rev: v2.2.0
     hooks:
       - id: autoflake
         args:
@@ -54,37 +64,29 @@ repos:
           - --remove-all-unused-imports
           - --remove-duplicate-keys
           - --remove-unused-variables
-  - repo: https://github.com/psf/black
-    rev: 20.8b1
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.3
     hooks:
-      - id: black
-        additional_dependencies: ["click<8.1.0"]
+      - id: ruff
+        args: [--exit-non-zero-on-fix]
+      - id: ruff-format
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.7.2
+    rev: v3.10.1
     hooks:
       - id: pyupgrade
         args:
           - --keep-percent-format
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.11.5
-    hooks:
-      - id: isort
-        name: isort except __init__.py
-        args: [--settings, .]
-        exclude: /__init__\.py$
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v2.1.2
+    rev: v3.0.2
     hooks:
       - id: prettier
         name: prettier + plugin-xml
         additional_dependencies:
           # HACK https://github.com/prettier/pre-commit/issues/16#issuecomment-713474520
-          - prettier@2.1.2
-          - "@prettier/plugin-xml@0.12.0"
-        args:
-          - --plugin=@prettier/plugin-xml
+          - prettier@3.0.2
+          - "@prettier/plugin-xml@v3.2.0"
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0
+    rev: v4.5.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -99,48 +101,40 @@ repos:
       - id: check-docstring-first
       - id: check-executables-have-shebangs
       - id: check-merge-conflict
+        args: [--assume-in-merge]
+        exclude: \.rst$ # HACK https://github.com/pre-commit/pre-commit-hooks/issues/985
       - id: check-symlinks
       - id: check-xml
       - id: mixed-line-ending
         args: ["--fix=lf"]
-  - repo: https://github.com/pycqa/flake8
-    rev: 3.8.3
+  - repo: https://github.com/OCA/pylint-odoo
+    rev: {{ proj_rev.pylint_odoo }}
     hooks:
-      - id: flake8
-        name: flake8 except __init__.py
-        exclude: /__init__\.py$
-        additional_dependencies: ["flake8-bugbear==20.1.4", "importlib-metadata<5.0.0"]
-      - id: flake8
-        name: flake8 only __init__.py
-        args: ["--extend-ignore=F401"] # ignore unused imports in __init__.py
-        files: /__init__\.py$
-        additional_dependencies: ["flake8-bugbear==20.1.4", "importlib-metadata<5.0.0"]
-  - repo: https://github.com/pycqa/pylint
-    rev: v2.11.1
-    hooks:
-      - id: pylint
+      - id: pylint_odoo
         name: pylint with optional checks
         args:
-          - --valid_odoo_versions={{ "%.1f"|format(odoo_version) }}
           - --rcfile=.pylintrc
           - --exit-zero
         verbose: true
-        additional_dependencies:
-          - isort==4.3.21
-          - pylint-odoo==5.0.5
-      - id: pylint
-        name: pylint with mandatory checks
+      - id: pylint_odoo
         args:
-          - --valid_odoo_versions={{ "%.1f"|format(odoo_version) }}
           - --rcfile=.pylintrc-mandatory
-        additional_dependencies:
-          - isort==4.3.21
-          - pylint-odoo==5.0.5
   - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v7.8.1
+    rev: v8.49.0
     hooks:
       - id: eslint
         verbose: true
         args:
           - --color
           - --fix
+  - <<: *maintainer_tools
+    hooks:
+      # Generate readme is last, so its digest includes changes from above
+      - id: oca-gen-addon-readme
+        args:
+          - --addons-dir=odoo/custom/src/private
+          - --org-name={{ project_author }}
+          - --repo-name={{ project_name }}
+          - --gen-html
+          - --branch={{ odoo_version }}
+          - --template-filename=.module-readme.rst.j2

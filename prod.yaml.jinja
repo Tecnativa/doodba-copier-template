@@ -10,6 +10,9 @@ services:
       file: common.yaml
       service: odoo
     restart: unless-stopped
+    {%- if domains_prod %}
+    hostname: {{ macros.first_main_domain(domains_prod)|tojson }}
+    {%- endif %}
     env_file:
       - .docker/odoo.env
       - .docker/db-access.env
@@ -34,7 +37,7 @@ services:
       doodba.domain.main: {{ macros.first_main_domain(domains_prod)|tojson }}
       {%- if odoo_proxy == "traefik" and domains_prod %}
       traefik.enable: "true"
-      {{- traefik1_labels.odoo(domains_prod, paths_without_crawlers) }}
+      {{- traefik1_labels.odoo(domains_prod, paths_without_crawlers, odoo_version) }}
       {{- traefik2_labels.common_middlewares(_key, cidr_whitelist) }}
       {{- traefik2_labels.odoo(
         domains_prod,
@@ -72,6 +75,7 @@ services:
   {%- endif %}
 
   {%- if smtp_relay_host %}
+
   smtp:
     extends:
       file: common.yaml

@@ -4,11 +4,10 @@ from pathlib import Path
 
 import pytest
 import requests
-from copier.main import run_auto
-from invoke.util import yaml
+from copier import run_copy
 from packaging import version
 from plumbum import local
-from plumbum.cmd import docker_compose
+from python_on_whales import DockerClient
 
 from .conftest import DBVER_PER_ODOO
 
@@ -66,36 +65,28 @@ def test_multiple_domains(
     }
     if supported_odoo_version < 16:
         data["postgres_version"] = 13
-    dc = docker_compose["-f", f"{environment}.yaml"]
+    dc = DockerClient(compose_files=[f"{environment}.yaml"])
     with local.cwd(tmp_path):
-        run_auto(
+        run_copy(
             src_path=str(cloned_template),
             dst_path=".",
             data=data,
             vcs_ref="test",
             defaults=True,
             overwrite=True,
+            unsafe=True,
         )
         # Check if Odoo options were passed correctly
-        _ret_code, _stdout, _stderr = dc.run(["config"])
-        docker_compose_config = yaml.safe_load(
-            _stdout or _stderr
-        )  # docker-compose sometimes prints to STDERR and others to STDOUT, so we check both
-        assert (
-            docker_compose_config["services"]["odoo"]["environment"]["LIST_DB"]
-            == "true"
-        )
+        docker_compose_config = dc.compose.config()
+        assert docker_compose_config.services["odoo"].environment["LIST_DB"] == "true"
         try:
-            dc("build")
-            dc(
-                "run",
-                "--rm",
+            dc.compose.build()
+            dc.compose.run(
                 "odoo",
-                "--stop-after-init",
-                "-i",
-                "base",
+                command=["--stop-after-init", "-i", "base"],
+                remove=True,
             )
-            dc("up", "-d")
+            dc.compose.up(detach=True)
             time.sleep(10)
             # XXX Remove all Traefik 1 tests once it disappears
             if is_traefik1:
@@ -195,4 +186,4 @@ def test_multiple_domains(
             assert bad_response.status_code == 404
             assert "Server" not in bad_response.headers
         finally:
-            dc("down", "--volumes", "--remove-orphans")
+            dc.compose.down(remove_images="local", remove_orphans=True)

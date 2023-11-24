@@ -1,9 +1,9 @@
-import json
 import logging
 import os
 import shutil
 import socket
 import stat
+import tempfile
 import textwrap
 from contextlib import contextmanager
 from pathlib import Path
@@ -12,12 +12,11 @@ from typing import Dict, Union
 import pytest
 import yaml
 from packaging import version
-from plumbum import FG, ProcessExecutionError, local
-from plumbum.cmd import docker_compose, git, invoke
-from plumbum.machines.local import LocalCommand
+from plumbum import ProcessExecutionError, local
+from plumbum.cmd import git, invoke
+from python_on_whales import DockerClient
 
 _logger = logging.getLogger(__name__)
-
 
 with open("copier.yml") as copier_fd:
     COPIER_SETTINGS = yaml.safe_load(copier_fd)
@@ -33,7 +32,7 @@ SELECTED_ODOO_VERSIONS = (
     frozenset(map(float, os.environ.get("SELECTED_ODOO_VERSIONS", "").split()))
     or ALL_ODOO_VERSIONS
 )
-PRERELEASE_ODOO_VERSIONS = {16.0}
+PRERELEASE_ODOO_VERSIONS = {17.0}
 
 # Postgres versions
 ALL_PSQL_VERSIONS = tuple(COPIER_SETTINGS["postgres_version"]["choices"])
@@ -41,11 +40,11 @@ LATEST_PSQL_VER = ALL_PSQL_VERSIONS[-1]
 DBVER_PER_ODOO = {
     11.0: {
         "oldest": "10",  # Odoo supports 9.6, but that version is not supported by the backup service and is necessary to be able to perform all tests
-        "latest": "14",  # Debian stretch limitation: https://apt-archive.postgresql.org/pub/repos/apt/dists/stretch-pgdg/main/binary-amd64/Packages
+        "latest": "13",  # DB Authentication method limitation
     },
     12.0: {
         "oldest": "10",  # Odoo supports 9.6, but that version is not supported by the backup service and is necessary to be able to perform all tests
-        "latest": "14",  # Debian stretch limitation
+        "latest": "13",
     },
     13.0: {
         "oldest": "10",  # Odoo supports 9.6, but that version is not supported by the backup service and is necessary to be able to perform all tests
@@ -60,6 +59,10 @@ DBVER_PER_ODOO = {
         "latest": LATEST_PSQL_VER,
     },
     16.0: {
+        "oldest": "12",
+        "latest": LATEST_PSQL_VER,
+    },
+    17.0: {
         "oldest": "12",
         "latest": LATEST_PSQL_VER,
     },
@@ -107,7 +110,7 @@ def supported_odoo_version(request) -> float:
 
 
 @pytest.fixture()
-def cloned_template(tmp_path_factory):
+def cloned_template():
     """This repo cloned to a temporary destination.
 
     The clone will include dirty changes, and it will have a 'test' tag in its HEAD.
@@ -115,7 +118,7 @@ def cloned_template(tmp_path_factory):
     It returns the local `Path` to the clone.
     """
     patches = [git("diff", "--cached"), git("diff")]
-    with tmp_path_factory.mktemp("cloned_template_") as dirty_template_clone:
+    with tempfile.TemporaryDirectory("_cloned_template") as dirty_template_clone:
         git("clone", ".", dirty_template_clone)
         with local.cwd(dirty_template_clone):
             git("config", "commit.gpgsign", "false")
@@ -134,18 +137,6 @@ def cloned_template(tmp_path_factory):
 
 
 @pytest.fixture()
-def docker(request) -> LocalCommand:
-    if request.config.getoption("--skip-docker-tests"):
-        pytest.skip("Skipping docker tests")
-    try:
-        from plumbum.cmd import docker
-    except ImportError:
-        pytest.skip("Need docker CLI to run this test")
-    docker["info"] & FG
-    return docker
-
-
-@pytest.fixture()
 def versionless_odoo_autoskip(request):
     """Fixture to automatically skip tests when testing for older odoo versions."""
     is_version_specific_test = (
@@ -157,22 +148,17 @@ def versionless_odoo_autoskip(request):
 
 
 @pytest.fixture(params=ALL_TRAEFIK_VERSIONS)
-def traefik_host(docker: LocalCommand, request):
+def traefik_host(request):
     """Fixture to indicate where to find a running traefik instance."""
-    traefik_run = docker[
-        "container",
-        "run",
-        "--detach",
-        "--privileged",
-        "--network=inverseproxy_shared",
-        "--volume=/var/run/docker.sock:/var/run/docker.sock:ro",
-        f"traefik:{request.param}",
-    ]
-    try:
-        if request.param == "latest" or version.parse(request.param) >= version.parse(
-            "2"
-        ):
-            traefik_container = traefik_run(
+    docker = DockerClient()
+    if request.param == "latest" or version.parse(request.param) >= version.parse("2"):
+        traefik_container = docker.run(
+            f"traefik:{request.param}",
+            detach=True,
+            privileged=True,
+            networks=["inverseproxy_shared"],
+            volumes=[("/var/run/docker.sock", "/var/run/docker.sock", "ro")],
+            command=[
                 "--accessLog=true",
                 "--entrypoints.web-alt.address=:8080",
                 "--entrypoints.web-insecure.address=:80",
@@ -181,9 +167,16 @@ def traefik_host(docker: LocalCommand, request):
                 "--providers.docker.exposedByDefault=false",
                 "--providers.docker.network=inverseproxy_shared",
                 "--providers.docker=true",
-            ).strip()
-        else:
-            traefik_container = traefik_run(
+            ],
+        )
+    else:
+        traefik_container = docker.run(
+            f"traefik:{request.param}",
+            detach=True,
+            privileged=True,
+            networks=["inverseproxy_shared"],
+            volumes=[("/var/run/docker.sock", "/var/run/docker.sock", "ro")],
+            command=[
                 "--defaultEntryPoints=web-insecure,web-main",
                 "--docker.exposedByDefault=false",
                 "--docker.watch",
@@ -192,28 +185,24 @@ def traefik_host(docker: LocalCommand, request):
                 "--entryPoints=Name:web-insecure Address::80 Redirect.EntryPoint:web-main",
                 "--entryPoints=Name:web-main Address::443 Compress:on TLS TLS.minVersion:VersionTLS12",
                 "--logLevel=debug",
-            ).strip()
-        traefik_details = json.loads(docker("container", "inspect", traefik_container))
-        assert (
-            len(traefik_details) == 1
-        ), "Impossible... did you trigger a race condition?"
-        interesting_details = {
-            "ip": traefik_details[0]["NetworkSettings"]["Networks"][
-                "inverseproxy_shared"
-            ]["IPAddress"],
-            "traefik_version": traefik_details[0]["Config"]["Labels"][
-                "org.opencontainers.image.version"
             ],
-            "traefik_image": traefik_details[0]["Image"],
-        }
-        interesting_details["hostname"] = f"{interesting_details['ip']}.sslip.io"
-        yield interesting_details
-        # Make sure there were no errors or warnings in logs
-        traefik_logs = docker("container", "logs", traefik_container)
-        assert " level=error " not in traefik_logs
-        assert " level=warn " not in traefik_logs
-    finally:
-        docker("container", "rm", "--force", traefik_container)
+        )
+    interesting_details = {
+        "ip": traefik_container.network_settings.networks[
+            "inverseproxy_shared"
+        ].ip_address,
+        "traefik_version": traefik_container.config.labels[
+            "org.opencontainers.image.version"
+        ],
+        "traefik_image": traefik_container.config.image,
+    }
+    interesting_details["hostname"] = f"{interesting_details['ip']}.sslip.io"
+    yield interesting_details
+    # Make sure there were no errors or warnings in logs
+    traefik_logs = docker.logs(traefik_container)
+    docker.remove(traefik_container, force=True)
+    assert " level=error " not in traefik_logs
+    assert " level=warn " not in traefik_logs
 
 
 def teardown_function(function):
@@ -269,7 +258,8 @@ def generate_test_addon(
                     'version':'{odoo_version}.1.0.0',
                     'depends': {dependencies or '["base"]'},
                     'installable': {installable},
-                    'auto_install': False
+                    'auto_install': False,
+                    'author': 'Tecnativa',
                     {"}"}
                 """,
                 f"{addon_name}/models/res_partner.py": """\
@@ -300,6 +290,7 @@ def generate_test_addon(
                         "depends": {dependencies or '["base"]'},
                         "installable": {installable},
                         "auto_install": False,
+                        "author": "Tecnativa",
                     {"}"}
                 """,
                 f"{addon_name}/models/res_partner.py": '''\
@@ -331,8 +322,10 @@ def generate_test_addon(
 
 def _containers_running(exec_path):
     with local.cwd(exec_path):
-        if len(docker_compose("ps", "-aq").splitlines()) > 0:
-            _logger.error(docker_compose("ps", "-a"))
+        docker = DockerClient()
+        containers_list = docker.container.list(all=True)
+        if len(containers_list) > 0:
+            _logger.error(containers_list)
             return True
         return False
 
