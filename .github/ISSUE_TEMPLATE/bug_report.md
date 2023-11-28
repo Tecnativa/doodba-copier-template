@@ -7,7 +7,7 @@ assignees: ""
 ---
 
 <!-- Provide a general summary of the issue in the Title above.
-Before opening the issue, please check that you are using the latest version of the template: https://github.com/Tecnativa/doodba-copier-template/releases/latest and that there isn't another issue adressing the same problem already created -->
+Before opening the issue, please check that you are using the latest version of the template: https://github.com/Comunitea/doodba-copier-template/releases/latest and that there isn't another issue adressing the same problem already created -->
 
 ## Describe the bug
 

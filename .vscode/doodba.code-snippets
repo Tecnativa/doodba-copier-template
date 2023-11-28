@@ -1,6 +1,6 @@
 // See spec in https://code.visualstudio.com/docs/editor/userdefinedsnippets
 {
-  // See https://github.com/Tecnativa/doodba#optodoocustomsrcreposyaml
+  // See https://github.com/Comunitea/doodba#optodoocustomsrcreposyaml
   "Git aggregator repo": {
     "prefix": "repo",
     "scope": "yaml",
@@ -17,7 +17,7 @@
     ],
     "description": "Git-aggregator repo definition with merges"
   },
-  // See https://github.com/Tecnativa/doodba-copier-template/blob/main/docs/faq.md#how-can-i-whitelist-a-service-and-allow-external-access-to-it
+  // See https://github.com/Comunitea/doodba-copier-template/blob/main/docs/faq.md#how-can-i-whitelist-a-service-and-allow-external-access-to-it
   "Docker Whitelist Proxy": {
     "prefix": "proxy",
     "scope": "yaml",

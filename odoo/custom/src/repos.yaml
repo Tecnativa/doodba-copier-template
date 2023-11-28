@@ -1,4 +1,4 @@
-# See https://github.com/Tecnativa/doodba#optodoocustomsrcreposyaml
+# See https://github.com/Comunitea/doodba#optodoocustomsrcreposyaml
 ./odoo:
   defaults:
     # Shallow repositories ($DEPTH_DEFAULT=1) are faster & thinner

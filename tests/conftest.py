@@ -259,7 +259,7 @@ def generate_test_addon(
                     'depends': {dependencies or '["base"]'},
                     'installable': {installable},
                     'auto_install': False,
-                    'author': 'Tecnativa',
+                    'author': 'Comunitea',
                     {"}"}
                 """,
                 f"{addon_name}/models/res_partner.py": """\
@@ -290,7 +290,7 @@ def generate_test_addon(
                         "depends": {dependencies or '["base"]'},
                         "installable": {installable},
                         "auto_install": False,
-                        "author": "Tecnativa",
+                        "author": "Comunitea",
                     {"}"}
                 """,
                 f"{addon_name}/models/res_partner.py": '''\

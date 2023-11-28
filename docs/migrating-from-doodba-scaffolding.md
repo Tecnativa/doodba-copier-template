@@ -15,7 +15,7 @@
 </details>
 
 Welcome to the migration guide for previous
-[doodba-scaffolding](https://github.com/Tecnativa/doodba-scaffolding) users.
+[doodba-scaffolding](https://github.com/Comunitea/doodba-scaffolding) users.
 
 I know, I know... you are used to do `git pull scaffolding master` to update your
 templates, and now you wonder why now all is more complicated... Let me explain.
@@ -23,7 +23,7 @@ templates, and now you wonder why now all is more complicated... Let me explain.
 ## Why we needed something better
 
 Before we started using [Copier](https://github.com/pykong/copier),
-[the official instructions](https://github.com/Tecnativa/doodba/blob/dbaaa2782a2d00e093063ebee3478c1d4093def3/README.md#skip-the-boring-parts)
+[the official instructions](https://github.com/Comunitea/doodba/blob/dbaaa2782a2d00e093063ebee3478c1d4093def3/README.md#skip-the-boring-parts)
 were, basically:
 
 1. Git-clone the scaffolding.
@@ -42,7 +42,7 @@ This presented a lot of problems that Copier solves:
    file, so no way to include that 🤷.
 1. No way to update a default value without breaking some production deployments.
    Example:
-   [when we upgraded the default postgres version](https://github.com/Tecnativa/doodba/issues/67#issuecomment-413460188).
+   [when we upgraded the default postgres version](https://github.com/Comunitea/doodba/issues/67#issuecomment-413460188).
 1. Adding a good README to this project would mean replicating it everywhere, so
    sometimes the barrier between doodba and doodba-scaffolding projects was blurry.
 1. Possibly more problems.
@@ -59,7 +59,7 @@ easier_.
 ```bash
 # In case you didn't do these before...
 cd ~/path/to/your/downstream/scaffolding
-git remote add scaffolding https://github.com/Tecnativa/doodba-scaffolding.git
+git remote add scaffolding https://github.com/Comunitea/doodba-scaffolding.git
 # The important one
 git pull scaffolding master
 ```
@@ -113,7 +113,7 @@ endless. Inspect its code to understand the environment variables that can alter
 behavior. Run it like this:
 
 ```bash
-bash -c 'source <(curl -sSL https://raw.githubusercontent.com/Tecnativa/doodba-copier-template/stable/docs/scaffolding2copier.sh)'
+bash -c 'source <(curl -sSL https://raw.githubusercontent.com/Comunitea/doodba-copier-template/stable/docs/scaffolding2copier.sh)'
 ```
 
 If anything goes wrong, reset and use the manual way:

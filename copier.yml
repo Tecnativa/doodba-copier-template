@@ -208,7 +208,7 @@ gitlab_url:
 
     💡 If you don't use Gitlab, leave this empty and ignore all other Gitlab questions.
 
-    Example: `https://gitlab.com/Tecnativa/your-doodba-project`.
+    Example: `https://gitlab.com/Comunitea/your-doodba-project`.
   default: ""
 
 domains_prod:
@@ -539,9 +539,9 @@ backup_image_version:
 
     Which version of the image do you want to use? You can check which ones are
     available in
-    https://github.com/orgs/Tecnativa/packages/container/docker-duplicity-postgres/versions
+    https://github.com/orgs/Comunitea/packages/container/docker-duplicity-postgres/versions
     and
-    https://github.com/orgs/Tecnativa/packages/container/docker-duplicity-postgres-s3/versions
+    https://github.com/orgs/Comunitea/packages/container/docker-duplicity-postgres-s3/versions
 
 backup_email_from:
   type: str

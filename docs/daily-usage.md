@@ -50,7 +50,7 @@ We try to make it as easy as possible for you, but we don't try to make you stup
 should know your toolbox, specifically these tools:
 
 - [copier](https://github.com/pykong/copier)
-- [Doodba](https://github.com/Tecnativa/doodba) and the tools it includes
+- [Doodba](https://github.com/Comunitea/doodba) and the tools it includes
 - [Docker Compose](https://docs.docker.com/compose/overview/)
 - [Docker Engine](https://www.docker.com/products/docker-engine)
 - [Git](https://git-scm.com/)
@@ -238,7 +238,7 @@ docker compose -f prod.yaml up -d
 #### Backups
 
 Backups are only available in the production environment. They are provided by
-[docker-duplicity](https://github.com/Tecnativa/docker-duplicity). The structure of the
+[docker-duplicity](https://github.com/Comunitea/docker-duplicity). The structure of the
 backed up folder:
 
 ```

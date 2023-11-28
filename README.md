@@ -1,9 +1,9 @@
 [![Doodba deployment](https://img.shields.io/badge/deployment-doodba-informational)][doodba]
 [![Copier template](https://img.shields.io/badge/template%20engine-copier-informational)][copier]
 [![Boost Software License 1.0](https://img.shields.io/badge/license-bsl--1.0-important)](COPYING)
-![latest version](https://img.shields.io/github/v/release/Tecnativa/doodba-copier-template?sort=semver)
-![test](https://github.com/Tecnativa/doodba-copier-template/workflows/test/badge.svg)
-![lint](https://github.com/Tecnativa/doodba-copier-template/workflows/lint/badge.svg)
+![latest version](https://img.shields.io/github/v/release/Comunitea/doodba-copier-template?sort=semver)
+![test](https://github.com/Comunitea/doodba-copier-template/workflows/test/badge.svg)
+![lint](https://github.com/Comunitea/doodba-copier-template/workflows/lint/badge.svg)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
 
 # Doodba Copier Template
@@ -76,7 +76,7 @@ Notes:
 ## Getting updates for your subproject
 
 ⚠️ If you come from
-[doodba-scaffolding](https://github.com/Tecnativa/doodba-scaffolding), please follow
+[doodba-scaffolding](https://github.com/Comunitea/doodba-scaffolding), please follow
 [the migration guide](docs/migrating-from-doodba-scaffolding.md).
 
 If you always used Copier with this project, getting last updates with Copier is simple:
@@ -100,7 +100,7 @@ This is a big topic [documented separately](docs/daily-usage.md).
 # Getting help
 
 If your question is not answered in [our FAQ](docs/faq.md) or
-[Doodba's FAQ](https://github.com/Tecnativa/doodba#faq),
+[Doodba's FAQ](https://github.com/Comunitea/doodba#faq),
 [open an issue](CONTRIBUTING.md#issues)
 
 # Contributing
@@ -114,7 +114,7 @@ This project is maintained by:
 ![Comunitea](https://comunitea.com/wp-content/uploads/2016/01/logocomunitea3.png)
 
 Also, special thanks to
-[our dear community contributors](https://github.com/Tecnativa/doodba-copier-template/graphs/contributors).
+[our dear community contributors](https://github.com/Comunitea/doodba-copier-template/graphs/contributors).
 
 # Footnotes
 
@@ -125,5 +125,5 @@ these tools work, please consider [opening a PR](#contributing) to add some docs
 might help others with your situation.
 
 [copier]: https://github.com/pykong/copier
-[doodba]: https://github.com/Tecnativa/doodba
+[doodba]: https://github.com/Comunitea/doodba
 [odoo]: https://www.odoo.com/

@@ -134,7 +134,7 @@ def test_gitlab_badges(cloned_template: Path, tmp_path: Path):
     run_copy(
         str(cloned_template),
         str(tmp_path),
-        data={"gitlab_url": "https://gitlab.example.com/Tecnativa/my-badged-odoo"},
+        data={"gitlab_url": "https://gitlab.example.com/Comunitea/my-badged-odoo"},
         vcs_ref="HEAD",
         defaults=True,
         overwrite=True,
@@ -142,8 +142,8 @@ def test_gitlab_badges(cloned_template: Path, tmp_path: Path):
     )
     expected_badges = dedent(
         f"""
-        [![pipeline status](https://gitlab.example.com/Tecnativa/my-badged-odoo/badges/{LAST_ODOO_VERSION}/pipeline.svg)](https://gitlab.example.com/Tecnativa/my-badged-odoo/commits/{LAST_ODOO_VERSION})
-        [![coverage report](https://gitlab.example.com/Tecnativa/my-badged-odoo/badges/{LAST_ODOO_VERSION}/coverage.svg)](https://gitlab.example.com/Tecnativa/my-badged-odoo/commits/{LAST_ODOO_VERSION})
+        [![pipeline status](https://gitlab.example.com/Comunitea/my-badged-odoo/badges/{LAST_ODOO_VERSION}/pipeline.svg)](https://gitlab.example.com/Comunitea/my-badged-odoo/commits/{LAST_ODOO_VERSION})
+        [![coverage report](https://gitlab.example.com/Comunitea/my-badged-odoo/badges/{LAST_ODOO_VERSION}/coverage.svg)](https://gitlab.example.com/Comunitea/my-badged-odoo/commits/{LAST_ODOO_VERSION})
         """
     )
     assert expected_badges.strip() in (tmp_path / "README.md").read_text()
@@ -222,7 +222,7 @@ def test_code_workspace_file(
         data={
             "odoo_version": supported_odoo_version,
             "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
-            "project_author": "Tecnativa",
+            "project_author": "Comunitea",
         },
         vcs_ref="HEAD",
         defaults=True,
@@ -245,7 +245,7 @@ def test_code_workspace_file(
                     'version':'{supported_odoo_version}.1.0.0',
                     'installable': True,
                     'auto_install': False,
-                    'author': 'Tecnativa',
+                    'author': 'Comunitea',
                     {"}"}
                 """,
                 "test_module_static/static/index.html": """\
@@ -329,7 +329,7 @@ def test_template_update_badge(tmp_path: Path, cloned_template: Path):
         overwrite=True,
         unsafe=True,
     )
-    expected = "[![Last template update](https://img.shields.io/badge/last%20template%20update-v99999.0.0--99999--bye--bye-informational)](https://github.com/Tecnativa/doodba-copier-template/tree/v99999.0.0-99999-bye-bye)"
+    expected = "[![Last template update](https://img.shields.io/badge/last%20template%20update-v99999.0.0--99999--bye--bye-informational)](https://github.com/Comunitea/doodba-copier-template/tree/v99999.0.0-99999-bye-bye)"
     assert expected in (tmp_path / "README.md").read_text()
 
 
@@ -343,7 +343,7 @@ def test_pre_commit_in_subproject(
         data={
             "odoo_version": supported_odoo_version,
             "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
-            "project_author": "Tecnativa",
+            "project_author": "Comunitea",
         },
         vcs_ref="HEAD",
         defaults=True,
@@ -392,7 +392,7 @@ def test_pre_commit_in_subproject(
                     "depends": ["base"],
                     "installable": True,
                     "auto_install": False,
-                    "author": "Tecnativa",
+                    "author": "Comunitea",
                 {"}"}
             """,
             "test_module/__init__.py": """\

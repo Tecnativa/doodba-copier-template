@@ -45,7 +45,7 @@ Just make sure to use a separate answers file so both don't mix:
 
 ```bash
 # For the 1st copy
-copier --answers-file .copier-answers.private.yml copy gh:Tecnativa/private-template .
+copier --answers-file .copier-answers.private.yml copy gh:Comunitea/private-template .
 # For updates
 copier --answers-file .copier-answers.private.yml update .
 ```

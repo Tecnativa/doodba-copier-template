@@ -1,6 +1,6 @@
 {%- import "_macros.jinja" as macros -%}
-[![Doodba deployment](https://img.shields.io/badge/deployment-doodba-informational)](https://github.com/Tecnativa/doodba)
-[![Last template update](https://img.shields.io/badge/last%20template%20update-{{ _copier_answers._commit|replace('-', '--') }}-informational)](https://github.com/Tecnativa/doodba-copier-template/tree/{{ _copier_answers._commit }})
+[![Doodba deployment](https://img.shields.io/badge/deployment-doodba-informational)](https://github.com/Comunitea/doodba)
+[![Last template update](https://img.shields.io/badge/last%20template%20update-{{ _copier_answers._commit|replace('-', '--') }}-informational)](https://github.com/Comunitea/doodba-copier-template/tree/{{ _copier_answers._commit }})
 [![Odoo](https://img.shields.io/badge/odoo-v{{ odoo_version }}-a3478a)](https://github.com/odoo/odoo/tree/{{ odoo_version }})
 {%- if gitlab_url %}
 [![pipeline status]({{ gitlab_url }}/badges/{{ odoo_version }}/pipeline.svg)]({{ gitlab_url }}/commits/{{ odoo_version }})
@@ -21,18 +21,18 @@
 
 This project is a Doodba scaffolding. Check upstream docs on the matter:
 
-- [General Doodba docs](https://github.com/Tecnativa/doodba).
-- [Doodba copier template docs](https://github.com/Tecnativa/doodba-copier-template)
-- [Doodba QA docs](https://github.com/Tecnativa/doodba-qa)
+- [General Doodba docs](https://github.com/Comunitea/doodba).
+- [Doodba copier template docs](https://github.com/Comunitea/doodba-copier-template)
+- [Doodba QA docs](https://github.com/Comunitea/doodba-qa)
 
 # Credits
 
 This project is maintained by:
-{%- if project_author == "Tecnativa" %}
+{%- if project_author == "Comunitea" %}
 
-[![Tecnativa](https://www.tecnativa.com/r/H3p)](https://www.tecnativa.com/r/bb4)
+[![Comunitea](https://www.tecnativa.com/r/H3p)](https://www.tecnativa.com/r/bb4)
 
 Also, special thanks to
-[our dear community contributors](https://github.com/Tecnativa/doodba-copier-template/graphs/contributors).
+[our dear community contributors](https://github.com/Comunitea/doodba-copier-template/graphs/contributors).
 
 {%- else %} {{ project_author }}{% endif %}

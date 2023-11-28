@@ -24,7 +24,7 @@ def test_transtion_to_copier(
         git("tag", "--delete", "test")
         git("tag", "--force", tag)
     # Emulate user cloning scaffolding using the old workflow
-    git("clone", "https://github.com/Tecnativa/doodba-scaffolding", tmp_path)
+    git("clone", "https://github.com/Comunitea/doodba-scaffolding", tmp_path)
     with local.cwd(tmp_path):
         # Emulate user modifying some basic variables and committing
         env_file = tmp_path / ".env"
@@ -46,7 +46,7 @@ def test_transtion_to_copier(
         answers_file = tmp_path / ".copier-answers.yml"
         answers_file_contents = answers_file.read_text()
         answers_file_contents = answers_file_contents.replace(
-            "_src_path: https://github.com/Tecnativa/doodba-copier-template.git",
+            "_src_path: https://github.com/Comunitea/doodba-copier-template.git",
             f"_src_path: {cloned_template}",
         )
         answers_file_contents = answers_file_contents.replace(

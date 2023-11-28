@@ -27,11 +27,11 @@ else here: issues and pull requests.
 
 ## General Discussion
 
-Please make use of [Doodba discussions](https://github.com/Tecnativa/doodba/discussions)
+Please make use of [Doodba discussions](https://github.com/Comunitea/doodba/discussions)
 to share knowledge, ideas or make questions.
 
 There's one concrete
-[channel for stuff specifically related to this template](https://github.com/Tecnativa/doodba/discussions?discussions_q=category%3A%22Doodba+-+The+template%22).
+[channel for stuff specifically related to this template](https://github.com/Comunitea/doodba/discussions?discussions_q=category%3A%22Doodba+-+The+template%22).
 
 ## Issues
 
@@ -56,7 +56,7 @@ make sure you have installed the essential dependencies:
 Then, execute:
 
 ```bash
-git clone https://github.com/Tecnativa/doodba-copier-template.git
+git clone https://github.com/Comunitea/doodba-copier-template.git
 cd doodba-copier-template
 invoke develop
 ```
