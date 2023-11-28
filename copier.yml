@@ -1,16 +1,8 @@
 # Configure jinja2 defaults to make syntax highlighters lives easier
 _templates_suffix: .jinja
-_envops:
-  block_end_string: "%}"
-  block_start_string: "{%"
-  comment_end_string: "#}"
-  comment_start_string: "{#"
-  keep_trailing_newline: true
-  variable_end_string: "}}"
-  variable_start_string: "{{"
 
 # Other Copier configurations
-_min_copier_version: "7.0.1"
+_min_copier_version: "9"
 _exclude:
   - _macros
   - _traefik*_labels.yml
@@ -45,7 +37,7 @@ _tasks:
   - invoke develop
 
 _migrations:
-  - version: v0.0.1
+  - version: v1.0.0
     after:
       - - invoke
         - --search-root={{ _copier_conf.src_path }}
@@ -107,7 +99,7 @@ _migrations:
 odoo_version:
   help: On which odoo version is it based?
   type: float
-  default: 16.0
+  default: 17.0
   choices:
     - 7.0
     - 8.0
@@ -119,6 +111,7 @@ odoo_version:
     - 14.0
     - 15.0
     - 16.0
+    - 17.0
 
 odoo_proxy:
   default: traefik
@@ -168,6 +161,7 @@ odoo_oci_image:
     you are not using a registry.
 
     Example: docker.io/myteam/example-odoo
+  default: ""
 
 project_author:
   type: str
@@ -215,10 +209,12 @@ gitlab_url:
     💡 If you don't use Gitlab, leave this empty and ignore all other Gitlab questions.
 
     Example: `https://gitlab.com/Tecnativa/your-doodba-project`.
+  default: ""
 
 domains_prod:
   type: yaml
   multiline: true
+  default: {}
   placeholder: |
     # Main domains, with TLS and cert resolved with "letsencrypt" resolver
     - hosts:
@@ -274,6 +270,7 @@ domains_prod:
 domains_test:
   type: yaml
   multiline: true
+  default: {}
   placeholder: |
     # Main domains, with TLS and cert resolved with "letsencrypt" resolver
     - hosts:
@@ -366,10 +363,10 @@ postgres_version:
     "14": "14"
     "15": "15"
   validator: >-
-    {% if postgres_version|int > 0 %}  {% if (odoo_version >= 16.0 and
+    {% if postgres_version|int > 0 %} {% if (odoo_version >= 16.0 and
     postgres_version|int < 12) or (odoo_version >= 14.0 and postgres_version|int < 10)
     %}  The postgres version is too low for the selected Odoo version. {% elif
-    odoo_version <= 12.0 and postgres_version|int > 14 %}  The postgres version is too
+    odoo_version <= 12.0 and postgres_version|int > 13 %}  The postgres version is too
     high for the selected Odoo version. {% endif %} {% endif %}
 
 postgres_username:
@@ -433,6 +430,7 @@ smtp_default_from:
 
     In case an email coming out from odoo doesn't have a valid `From:` header address,
     which address should be the default one that sends the email?
+  default: ""
 
 smtp_relay_host:
   type: str
@@ -448,6 +446,7 @@ smtp_relay_host:
     So, what is your SMTP host?
 
     Example: mail.example.com
+  default: ""
 
 smtp_relay_port:
   type: int
@@ -465,6 +464,7 @@ smtp_relay_user:
     Indicate the user to connect in the SMTP server you just defined.
 
     For Odoo to work fine, this user needs to be able to do mail spoofing.
+  default: ""
 
 smtp_relay_password:
   secret: true
@@ -500,6 +500,7 @@ smtp_canonical_default:
     (https://en.wikipedia.org/wiki/SRS).
 
     What's your canonical domain?
+  default: ""
 
 smtp_canonical_domains:
   when: *has_smtp
@@ -511,6 +512,7 @@ smtp_canonical_domains:
     You do not need to repeat the canonical domain you indicated above.
 
     Example: [examplemail.com, example.org]
+  default: []
 
 backup_dst:
   type: str
@@ -526,6 +528,7 @@ backup_dst:
     If you don't want backups, leave this empty.
 
     Where should the backups be stored?
+  default: ""
 
 backup_image_version:
   type: str
@@ -548,12 +551,14 @@ backup_email_from:
     configured.
 
     What email address should it use to send them?
+  default: ""
 
 backup_email_to:
   type: str
   when: *backup_present
   help: >-
     Where to send those backup reports?
+  default: ""
 
 backup_deletion:
   default: false

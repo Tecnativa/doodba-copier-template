@@ -1,13 +1,13 @@
-import logging
 import re
 import time
 from pathlib import Path
 
 import pytest
-from copier.main import run_auto
+from copier import run_copy
 from plumbum import ProcessExecutionError, local
-from plumbum.cmd import docker_compose, invoke
-from plumbum.machines.local import LocalCommand
+from plumbum.cmd import invoke
+from python_on_whales import DockerClient
+from python_on_whales.exceptions import DockerException
 
 from .conftest import (
     DBVER_PER_ODOO,
@@ -17,47 +17,49 @@ from .conftest import (
     socket_is_open,
 )
 
-_logger = logging.getLogger(__name__)
 
-
-def _install_status(module, dbname="devel"):
-    return docker_compose(
-        "run",
-        "--rm",
-        "-e",
-        "LOG_LEVEL=WARNING",
-        "-e",
-        f"PGDATABASE={dbname}",
+def _install_status(module):
+    docker = DockerClient(compose_files=["devel.yaml"])
+    return docker.compose.run(
         "odoo",
-        "psql",
-        "-tc",
-        f"select state from ir_module_module where name='{module}'",
+        command=[
+            "psql",
+            "-tc",
+            f"select state from ir_module_module where name='{module}'",
+        ],
+        # envs={
+        #     'LOG_LEVEL': 'WARNING',
+        #     'PGDATABASE': dbname,
+        # },
+        remove=True,
+        tty=False,
     ).strip()
 
 
-def _get_config_param(key, dbname="devel"):
-    return (
-        docker_compose(
-            "run",
-            "--rm",
-            "-e",
-            "LOG_LEVEL=WARNING",
-            "-e",
-            f"PGDATABASE={dbname}",
-            "odoo",
+def _get_config_param(key):
+    docker = DockerClient(compose_files=["devel.yaml"])
+    return docker.compose.run(
+        "odoo",
+        command=[
             "psql",
             "-tc",
             f"select value from ir_config_parameter where key='{key}'",
-        ).strip()
-        or False
-    )
+        ],
+        # envs={
+        #     'LOG_LEVEL': 'WARNING',
+        #     'PGDATABASE': dbname,
+        # },
+        remove=True,
+        tty=False,
+    ).strip()
 
 
 def _wait_for_test_to_start():
+    docker = DockerClient(compose_files=["devel.yaml"])
     # Wait for test to start
     for _i in range(10):
         time.sleep(2)
-        _ret_code, stdout, _stderr = docker_compose.run(("logs", "odoo"))
+        stdout = docker.compose.logs("odoo")
         if "Executing odoo --test-enable" in stdout:
             break
     return stdout
@@ -82,7 +84,6 @@ def _tests_ran(stdout, odoo_version, addon_name):
 @pytest.mark.sequential
 def test_resetdb(
     cloned_template: Path,
-    docker: LocalCommand,
     supported_odoo_version: float,
     tmp_path: Path,
 ):
@@ -101,22 +102,22 @@ def test_resetdb(
             data = {
                 "odoo_version": supported_odoo_version,
                 "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
+                "postgres_dbname": "devel",
             }
-            if supported_odoo_version < 16:
-                data["postgres_version"] = 13
-            run_auto(
+            run_copy(
                 src_path=str(cloned_template),
                 data=data,
                 vcs_ref="HEAD",
                 defaults=True,
                 overwrite=True,
+                unsafe=True,
             )
             # Imagine the user is in the src subfolder for these tasks
             with local.cwd(tmp_path / "odoo" / "custom" / "src"):
                 invoke("img-build")
                 invoke("git-aggregate")
             # No ir_module_module table exists yet
-            with pytest.raises(ProcessExecutionError):
+            with pytest.raises(DockerException):
                 _install_status("base")
             # Imagine the user is in the odoo subrepo for these tasks
             with local.cwd(tmp_path / "odoo" / "custom" / "src" / "odoo"):
@@ -142,9 +143,10 @@ def test_resetdb(
             assert _install_status("base") == "installed"
             assert _install_status("purchase") == "installed"
             assert _install_status("sale") == "uninstalled"
-            assert _install_status("base", "sale_only") == "installed"
-            assert _install_status("purchase", "sale_only") == "uninstalled"
-            assert _install_status("sale", "sale_only") == "installed"
+            # FIXME: See https://github.com/gabrieldemarmiesse/python-on-whales/pull/380
+            # assert _install_status("base", "sale_only") == "installed"
+            # assert _install_status("purchase", "sale_only") == "uninstalled"
+            # assert _install_status("sale", "sale_only") == "installed"
             # Install "sale" in main database
             stdout = invoke("resetdb", "-m", "sale")
             assert "Creating database devel from template cache" in stdout
@@ -180,7 +182,6 @@ def test_resetdb(
 @pytest.mark.sequential
 def test_start(
     cloned_template: Path,
-    docker: LocalCommand,
     supported_odoo_version: float,
     tmp_path: Path,
 ):
@@ -197,15 +198,15 @@ def test_start(
             data = {
                 "odoo_version": supported_odoo_version,
                 "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
+                "postgres_dbname": "devel",
             }
-            if supported_odoo_version < 16:
-                data["postgres_version"] = 13
-            run_auto(
+            run_copy(
                 src_path=str(cloned_template),
                 data=data,
                 vcs_ref="HEAD",
                 defaults=True,
                 overwrite=True,
+                unsafe=True,
             )
             # Imagine the user is in the src subfolder for these tasks
             with local.cwd(tmp_path / "odoo" / "custom" / "src"):
@@ -221,7 +222,8 @@ def test_start(
             stdout = invoke("start", "--debugpy")
             assert socket_is_open("127.0.0.1", int(supported_odoo_version) * 1000 + 899)
             # Check if auto-reload is disabled
-            container_logs = docker_compose("logs", "odoo")
+            docker = DockerClient()
+            container_logs = docker.compose.logs("odoo")
             assert "dev=reload" not in container_logs
     finally:
         safe_stop_env(
@@ -232,7 +234,6 @@ def test_start(
 @pytest.mark.sequential
 def test_install_test(
     cloned_template: Path,
-    docker: LocalCommand,
     supported_odoo_version: float,
     tmp_path: Path,
 ):
@@ -250,14 +251,13 @@ def test_install_test(
                 "odoo_version": supported_odoo_version,
                 "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
             }
-            if supported_odoo_version < 16:
-                data["postgres_version"] = 13
-            run_auto(
+            run_copy(
                 src_path=str(cloned_template),
                 data=data,
                 vcs_ref="HEAD",
                 defaults=True,
                 overwrite=True,
+                unsafe=True,
             )
             # Imagine the user is in the src subfolder for these tasks
             # and the DB is clean
@@ -279,25 +279,26 @@ def test_install_test(
                     stdout = invoke("install")
                 assert _install_status("mail") == "installed"
                 assert _install_status("utm") == "installed"
-            # Test "note" simple call in init mode (default)
-            assert _install_status("note") == "uninstalled"
-            stdout = invoke("test", "-m", "note", "--mode", "init", retcode=None)
-            # Ensure "note" was installed and tests ran
-            assert _install_status("note") == "installed"
-            _tests_ran(stdout, supported_odoo_version, "note")
-            # Test "note" simple call in update mode
-            stdout = invoke("test", "-m", "note", "--mode", "update", retcode=None)
-            _tests_ran(stdout, supported_odoo_version, "note")
-            # Change to "note" subfolder and test
+            # Test "note" or "project_todo" simple call in init mode (default)
+            module_name = "note" if supported_odoo_version < 17 else "project_todo"
+            assert _install_status(module_name) == "uninstalled"
+            stdout = invoke("test", "-m", module_name, "--mode", "init", retcode=None)
+            # Ensure module was installed and tests ran
+            assert _install_status(module_name) == "installed"
+            _tests_ran(stdout, supported_odoo_version, module_name)
+            # Test module simple call in update mode
+            stdout = invoke("test", "-m", module_name, "--mode", "update", retcode=None)
+            _tests_ran(stdout, supported_odoo_version, module_name)
+            # Change to subfolder and test
             with local.cwd(
-                tmp_path / "odoo" / "custom" / "src" / "odoo" / "addons" / "note"
+                tmp_path / "odoo" / "custom" / "src" / "odoo" / "addons" / module_name
             ):
-                # Test "note" based on current folder
+                # Test module based on current folder
                 stdout = invoke("test", retcode=None)
-                _tests_ran(stdout, supported_odoo_version, "note")
+                _tests_ran(stdout, supported_odoo_version, module_name)
             # Test --debugpy and wait time call with
             safe_stop_env(tmp_path, purge=False)
-            invoke("test", "-m", "note", "--debugpy", retcode=None)
+            invoke("test", "-m", module_name, "--debugpy", retcode=None)
             assert socket_is_open("127.0.0.1", int(supported_odoo_version) * 1000 + 899)
             stdout = _wait_for_test_to_start()
             assert "python -m debugpy" in stdout
@@ -311,7 +312,6 @@ def test_install_test(
 @pytest.mark.skip_for_prereleases
 def test_test_tasks(
     cloned_template: Path,
-    docker: LocalCommand,
     supported_odoo_version: float,
     tmp_path: Path,
 ):
@@ -333,42 +333,42 @@ def test_test_tasks(
                 "odoo_version": supported_odoo_version,
                 "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
             }
-            if supported_odoo_version < 16:
-                data["postgres_version"] = 13
-            run_auto(
+            run_copy(
                 src_path=str(cloned_template),
                 data=data,
                 vcs_ref="HEAD",
                 defaults=True,
                 overwrite=True,
+                unsafe=True,
             )
             # Imagine the user is in the src subfolder for these tasks
             # and the DB is clean
             with local.cwd(tmp_path / "odoo" / "custom" / "src"):
                 invoke("img-build")
                 invoke("git-aggregate")
-            # Prepare environment with "note" dependencies
-            invoke("resetdb", "-m", "note", "--dependencies")
+            module_name = "note" if supported_odoo_version < 17 else "project_todo"
+            # Prepare environment with "note" or "project_todo" dependencies
+            invoke("resetdb", "-m", module_name, "--dependencies")
             assert _install_status("mail") == "installed"
-            # Test "note" simple call in init mode (default)
-            assert _install_status("note") == "uninstalled"
-            stdout = invoke("test", "-m", "note", retcode=None)
-            # Ensure "note" was installed and tests ran
-            assert _install_status("note") == "installed"
-            _tests_ran(stdout, supported_odoo_version, "note")
+            # Test module simple call in init mode (default)
+            assert _install_status(module_name) == "uninstalled"
+            stdout = invoke("test", "-m", module_name, retcode=None)
+            # Ensure module was installed and tests ran
+            assert _install_status(module_name) == "installed"
+            _tests_ran(stdout, supported_odoo_version, module_name)
             if supported_odoo_version >= 11:
                 # Prepare environment for all private addons and "test" them
                 with local.cwd(tmp_path / "odoo" / "custom" / "src" / "private"):
                     generate_test_addon(
                         "test_module", supported_odoo_version, dependencies='["mail"]'
                     )
-                    invoke("resetdb", "--private", "--dependencies")
-                    assert _install_status("mail") == "installed"
-                    # Test "test_module" simple call in init mode (default)
-                    assert _install_status("test_module") == "uninstalled"
-                    stdout = invoke("test", "--private", retcode=None)
-                    # Ensure "test_module" was installed and tests ran
-                    assert _install_status("test_module") == "installed"
+                invoke("resetdb", "--private", "--dependencies")
+                assert _install_status("mail") == "installed"
+                # Test "test_module" simple call in init mode (default)
+                assert _install_status("test_module") == "uninstalled"
+                stdout = invoke("test", "--private", retcode=None)
+                # Ensure "test_module" was installed and tests ran
+                assert _install_status("test_module") == "installed"
                 # Prepare environment for OCA addons and test them
                 with local.cwd(tmp_path / "odoo" / "custom" / "src"):
                     build_file_tree(
@@ -379,26 +379,24 @@ def test_test_tasks(
                         """,
                         }
                     )
-                    invoke("git-aggregate")
-                    invoke("resetdb", "--extra", "--private", "--dependencies")
-                    assert (
-                        _install_status("mail") == "installed"
-                    )  # dependency of test_module
-                    assert (
-                        _install_status("account") == "installed"
-                    )  # dependency of account_invoice_refund_link
-                    # Test "account_invoice_refund_link"
-                    assert _install_status("test_module") == "uninstalled"
-                    assert (
-                        _install_status("account_invoice_refund_link") == "uninstalled"
-                    )
-                    stdout = invoke("test", "--private", "--extra", retcode=None)
-                    # Ensure "test_module" and "account_invoice_refund_link" were installed
-                    assert _install_status("test_module") == "installed"
-                    assert _install_status("account_invoice_refund_link") == "installed"
-                    _tests_ran(
-                        stdout, supported_odoo_version, "account_invoice_refund_link"
-                    )
+                invoke("git-aggregate")
+                invoke("resetdb", "--extra", "--private", "--dependencies")
+                assert (
+                    _install_status("mail") == "installed"
+                )  # dependency of test_module
+                assert (
+                    _install_status("account") == "installed"
+                )  # dependency of account_invoice_refund_link
+                # Test "account_invoice_refund_link"
+                assert _install_status("test_module") == "uninstalled"
+                assert _install_status("account_invoice_refund_link") == "uninstalled"
+                stdout = invoke("test", "--private", "--extra", retcode=None)
+                # Ensure "test_module" and "account_invoice_refund_link" were installed
+                assert _install_status("test_module") == "installed"
+                assert _install_status("account_invoice_refund_link") == "installed"
+                _tests_ran(
+                    stdout, supported_odoo_version, "account_invoice_refund_link"
+                )
             # Test --test-tags
             if supported_odoo_version >= 12:
                 with local.cwd(tmp_path / "odoo" / "custom" / "src" / "private"):
@@ -407,25 +405,25 @@ def test_test_tasks(
                         supported_odoo_version,
                         dependencies='["account_invoice_refund_link"]',
                     )
-                    # Run again but skip tests
-                    invoke("resetdb", "--extra", "--private", "--dependencies")
-                    stdout = invoke(
-                        "test",
-                        "--private",
-                        "--extra",
-                        "--skip",
+                # Run again but skip tests
+                invoke("resetdb", "--extra", "--private", "--dependencies")
+                stdout = invoke(
+                    "test",
+                    "--private",
+                    "--extra",
+                    "--skip",
+                    "account_invoice_refund_link",
+                    retcode=None,
+                )
+                assert _install_status("test_module") == "installed"
+                assert _install_status("account_invoice_refund_link") == "installed"
+                # Tests for account_invoice_refund_link should not run
+                with pytest.raises(AssertionError):
+                    _tests_ran(
+                        stdout,
+                        supported_odoo_version,
                         "account_invoice_refund_link",
-                        retcode=None,
                     )
-                    assert _install_status("test_module") == "installed"
-                    assert _install_status("account_invoice_refund_link") == "installed"
-                    # Tests for account_invoice_refund_link should not run
-                    with pytest.raises(AssertionError):
-                        _tests_ran(
-                            stdout,
-                            supported_odoo_version,
-                            "account_invoice_refund_link",
-                        )
     finally:
         safe_stop_env(
             tmp_path,

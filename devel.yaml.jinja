@@ -20,8 +20,9 @@ services:
     ports:
       - "127.0.0.1:{{ macros.version_major(odoo_version) }}899:6899"
       - "127.0.0.1:{{ macros.version_major(odoo_version) }}069:8069"
+      - "127.0.0.1:{{ macros.version_major(odoo_version) }}072:8072"
     environment:
-      PORT: "6899 8069"
+      PORT: "6899 8069 8072"
       TARGET: odoo
 
   odoo:

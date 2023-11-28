@@ -26,9 +26,6 @@ services:
       PGUSER: &dbuser "{{ postgres_username }}"
       PROXY_MODE: "{% if odoo_proxy %}true{% else %}false{% endif %}"
       LIST_DB: "{{ odoo_listdb | tojson }}"
-    {%- if smtp_canonical_default %}
-    hostname: "{{ smtp_canonical_default }}"
-    {%- endif %}
     tty: true
     volumes:
       - filestore:/var/lib/odoo:z
@@ -95,7 +92,7 @@ services:
 
   backup:
     image: ghcr.io/tecnativa/docker-duplicity-postgres{% if backup_dst.startswith(('boto3+s3://', 's3://', 's3+http://')) %}-s3{% endif %}:{{ backup_image_version }}
-    hostname: backup{% if macros.first_main_domain(domains_prod) %}.{{ macros.first_main_domain(domains_prod) }}{% endif %}
+    hostname: backup.{% if domains_prod %}{{ macros.first_main_domain(domains_prod) }}{% else %}{{ project_name|replace('.','-') }}{% endif %}
     init: true
     environment:
       DB_VERSION: "{{ postgres_version or 'latest' }}"

@@ -19,6 +19,9 @@ services:
       SMTP_PORT: "1025"
       SMTP_SERVER: smtplocal
     restart: unless-stopped
+    {%- if domains_test %}
+    hostname: {{ macros.first_main_domain(domains_test)|tojson }}
+    {%- endif %}
     depends_on:
       - db
       - smtp
@@ -32,7 +35,7 @@ services:
       doodba.domain.main: {{ macros.first_main_domain(domains_test)|tojson }}
       {%- if odoo_proxy == "traefik" and domains_test %}
       traefik.enable: "true"
-      {{- traefik1_labels.odoo(domains_test, ["/"]) }}
+      {{- traefik1_labels.odoo(domains_test, ["/"], odoo_version) }}
       {{- traefik2_labels.odoo(
         domains_test,
         cidr_whitelist,

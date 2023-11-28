@@ -3,12 +3,21 @@ load-plugins=pylint_odoo
 score=n
 
 [ODOOLINT]
+{%- if odoo_version < 16 %}
 readme_template_url="https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"
 manifest_required_authors={{ project_author }}
 manifest_required_keys=license
 manifest_deprecated_keys=description,active
 license_allowed=AGPL-3,GPL-2,GPL-2 or any later version,GPL-3,GPL-3 or any later version,LGPL-3,OPL-1,OEEL-1
 valid_odoo_versions={{ odoo_version }}
+{%- else %}
+readme-template-url="https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"
+manifest-required-authors={{ project_author }}
+manifest-required-keys=license
+manifest-deprecated-keys=description,active
+license-allowed=AGPL-3,GPL-2,GPL-2 or any later version,GPL-3,GPL-3 or any later version,LGPL-3,OPL-1,OEEL-1
+valid-odoo-versions={{ odoo_version }}
+{%- endif %}
 
 [MESSAGES CONTROL]
 disable=all
@@ -20,21 +29,10 @@ disable=all
 # .pylintrc-mandatory containing only mandatory checks is used the pre-commit
 # config as a blocking check.
 
-enable=anomalous-backslash-in-string,
-    api-one-deprecated,
-    api-one-multi-together,
-    assignment-from-none,
-    attribute-deprecated,
-    class-camelcase,
-    dangerous-default-value,
-    dangerous-view-replace-wo-priority,
-    duplicate-id-csv,
-    duplicate-key,
-    duplicate-xml-fields,
-    duplicate-xml-record-id,
-    eval-referenced,
-    eval-used,
-    incoherent-interpreter-exec-perm,
+# messages that do not cause the lint step to fail
+enable=attribute-deprecated,
+    consider-merging-classes-inherited,
+    invalid-commit,
     license-allowed,
     manifest-author-string,
     manifest-deprecated-key,
@@ -47,41 +45,81 @@ enable=anomalous-backslash-in-string,
     method-inverse,
     method-required-super,
     method-search,
+    missing-readme,
+    odoo-addons-relative-import,
+    print-used,
+    sql-injection,
+    translation-field,
+    translation-required,
+    use-vim-comment,
+    {%- if odoo_version < 16 %}
+    anomalous-backslash-in-string,
+    api-one-deprecated,
+    api-one-multi-together,
+    assignment-from-none,
+    class-camelcase,
+    dangerous-default-value,
+    dangerous-view-replace-wo-priority,
+    duplicate-id-csv,
+    duplicate-key,
+    duplicate-xml-fields,
+    duplicate-xml-record-id,
+    eval-referenced,
+    eval-used,
+    incoherent-interpreter-exec-perm,
     missing-import-error,
     missing-manifest-dependency,
     openerp-exception-warning,
     pointless-statement,
     pointless-string-statement,
-    print-used,
     redundant-keyword-arg,
     redundant-modulename-xml,
     reimported,
     relative-import,
     return-in-init,
     rst-syntax-error,
-    sql-injection,
     too-few-format-args,
-    translation-field,
-    translation-required,
     unreachable,
-    use-vim-comment,
     wrong-tabs-instead-of-spaces,
     xml-syntax-error,
-    # messages that do not cause the lint step to fail
-    consider-merging-classes-inherited,
     create-user-wo-reset-password,
     dangerous-filter-wo-user,
     deprecated-module,
     file-not-used,
-    invalid-commit,
     missing-newline-extrafiles,
-    missing-readme,
     no-utf8-coding-comment,
-    odoo-addons-relative-import,
     old-api7-method-defined,
     redefined-builtin,
     too-complex,
     unnecessary-utf8-coding-comment
+    {%- else %}
+    attribute-string-redundant,
+    bad-builtin-groupby,
+    context-overridden,
+    development-status-allowed,
+    except-pass,
+    external-request-timeout,
+    manifest-data-duplicated,
+    manifest-maintainers-list,
+    missing-return,
+    no-raise-unlink,
+    no-wizard-in-models,
+    no-write-in-compute,
+    odoo-exception-warning,
+    renamed-field-parameter,
+    resource-not-exist,
+    test-folder-imported,
+    translation-contains-variable,
+    translation-format-interpolation,
+    translation-format-truncated,
+    translation-fstring-interpolation,
+    translation-not-lazy,
+    translation-positional-used,
+    translation-too-few-args,
+    translation-too-many-args,
+    translation-unsupported-format,
+    website-manifest-key-not-valid-uri
+    {%- endif %}
 
 [REPORTS]
 msg-template={path}:{line}: [{msg_id}({symbol}), {obj}] {msg}
