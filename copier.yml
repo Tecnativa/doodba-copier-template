@@ -477,7 +477,7 @@ smtp_relay_password:
 smtp_relay_version:
   type: str
   when: *has_smtp
-  default: "10"
+  default: "13"
   help: >-
     Doodba uses docker-mailserver as the local mail relay.
 
