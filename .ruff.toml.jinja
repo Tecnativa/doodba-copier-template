@@ -1,4 +1,4 @@
-target-version = "py310"
+target-version = {% if odoo_version < 14 %}"py37"{% elif odoo_version < 16 %}"py38"{% else %}"py310"{% endif %}
 fix = true
 cache-dir = "~/.cache/ruff"
 
