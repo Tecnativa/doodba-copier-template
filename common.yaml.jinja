@@ -92,7 +92,7 @@ services:
     init: true
     environment:
       DB_VERSION: "{{ postgres_version or 'latest' }}"
-      DBS_TO_INCLUDE: "{{ odoo_dbfilter }}"
+      DBS_TO_INCLUDE: "{{ odoo_dbfilter | replace('$', '$$') | replace('%d', '.*') | replace('%h', '.*') }}"
       DST: "{{ backup_dst }}"
       {%- if smtp_relay_host %}
       EMAIL_FROM: "{{ backup_email_from }}"
