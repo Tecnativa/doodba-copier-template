@@ -63,11 +63,11 @@ services:
       - SYS_PTRACE
     environment:
       DEFAULT_RELAY_HOST: "[{{ smtp_relay_host }}]:{{ smtp_relay_port }}"
-      {% if smtp_relay_version|float < 11.0 %}
+      {% if smtp_relay_version|float < 11.0 -%}
       DMS_DEBUG: 0
       {% else %}
       LOG_LEVEL: info
-      {% endif %}
+      {%- endif %}
       ENABLE_SRS: 1
       ONE_DIR: 1
       PERMIT_DOCKER: connected-networks
