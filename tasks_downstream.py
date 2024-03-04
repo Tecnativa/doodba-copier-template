@@ -1045,3 +1045,21 @@ def restore_snapshot(
         if "Stopping" in cur_state:
             # Restart services if they were previously active
             c.run(DOCKER_COMPOSE_CMD + " start odoo db", pty=True)
+
+@task(
+    help={
+        "key": "The Yaml key to read. Levels are separated by ':'. Example: domains_prod:0:hosts:0",
+    },
+)
+def read_answer(c, key):
+    answers = {}
+    with open(os.path.join(PROJECT_ROOT,'.copier-answers.yml'), 'r') as file:
+        answers = yaml.safe_load(file)
+    rpath = key.split(':')
+    try:
+        value = answers[rpath[0]]
+        for rp in rpath[1:]:
+            value = value[int(rp) if rp.isdigit() else rp]
+        print(value)
+    except:
+        pass
