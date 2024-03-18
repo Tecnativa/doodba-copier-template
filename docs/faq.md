@@ -356,11 +356,7 @@ default.
 
 ## How to use with podman?
 
-Podman 3.4+ support is experimental.
-
-⚠ You will not have [network isolation](daily-usage.md#network-isolation) until podman
-rootless networks are fully supported. See
-https://github.com/containers/podman/issues/10672 for progress on that subject.
+Podman 4+ is supported for development, provided you follow these instructions.
 
 Example usage:
 
@@ -375,11 +371,9 @@ systemctl enable --user --now podman.socket
 export DOCKER_HOST=unix:///run/user/$(id -u)/podman/podman.sock
 # Instruct git-aggregator to use inner UID and GID 0, which podman will map to your user
 export DOODBA_GITAGGREGATE_UID=0 DOODBA_GITAGGREGATE_GID=0 DOODBA_UMASK=22
-# Disable network isolation
-export DOODBA_NETWORK_INTERNAL=false
 ```
 
-Once all that is done, continue with normal wokflow on that terminal.
+Once all that is done, continue with normal workflow on that terminal.
 
 Add those exports to your bash profile to avoid repeating them for each terminal. If you
 use `fish`, it's easier:
@@ -387,7 +381,6 @@ use `fish`, it's easier:
 ```fish
 # Fish-only syntax to save all those exports permanently
 set --universal --export DOCKER_HOST unix:///run/user/(id -u)/podman/podman.sock
-set --universal --export DOODBA_NETWORK_INTERNAL false
 set --universal --export DOODBA_GITAGGREGATE_UID 0
 set --universal --export DOODBA_GITAGGREGATE_GID 0
 set --universal --export DOODBA_UMASK 22
