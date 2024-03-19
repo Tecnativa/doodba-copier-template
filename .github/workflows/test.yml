@@ -79,7 +79,7 @@ jobs:
       - run: pip install poetry
       - name: Patch $PATH
         run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-      - run: poetry install
+      - run: poetry install --no-root
       # Precreate shared networks to avoid race conditions
       - run: docker network create inverseproxy_shared
       - run: docker network create globalwhitelist_shared
