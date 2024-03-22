@@ -1,6 +1,7 @@
 {%- import "_macros.jinja" as macros -%}
 {%- import "_traefik1_labels.yml.jinja" as traefik1_labels -%}
 {%- import "_traefik2_labels.yml.jinja" as traefik2_labels -%}
+{%- import "_traefik3_labels.yml.jinja" as traefik3_labels -%}
 {%- set _key = traefik2_labels.key(project_name, odoo_version, "test") -%}
 version: "2.4"
 

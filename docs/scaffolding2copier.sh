@@ -33,6 +33,7 @@ copier $CUSTOM_COPIER_FLAGS \
   -d smtp_relay_user="$SMTP_REAL_RELAY_USER" \
   -d smtp_canonical_default="$SMTP_REAL_NON_CANONICAL_DEFAULT" \
   -d smtp_canonical_domains="[$SMTP_REAL_CANONICAL_DOMAINS]" \
+  -d traefik_version="$TRAEFIK_VERSION" \
   -d backup_dst="boto3+s3://$BACKUP_S3_BUCKET" \
   -d backup_email_from="$BACKUP_EMAIL_FROM" \
   -d backup_email_to="$BACKUP_EMAIL_TO" \

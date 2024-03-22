@@ -125,6 +125,17 @@ odoo_proxy:
 
     Which proxy will you use to deploy odoo?
 
+traefik_version:
+  default: 3
+  type: int
+  when: &odoo_proxy_specific "{{ odoo_proxy == 'traefik' }}"
+  help: >-
+    Indicate traefik version
+  choices:
+    - 1
+    - 2
+    - 3
+
 odoo_initial_lang:
   default: en_US
   type: str
