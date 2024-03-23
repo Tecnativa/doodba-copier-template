@@ -174,9 +174,7 @@ def test_resetdb(
             invoke("restore-snapshot", "--snapshot-name", "db_with_sale")
             assert _install_status("sale") == "installed"
     finally:
-        safe_stop_env(
-            tmp_path / "odoo" / "custom" / "src" / "odoo",
-        )
+        safe_stop_env(tmp_path / "odoo" / "custom" / "src" / "odoo")
 
 
 @pytest.mark.sequential
