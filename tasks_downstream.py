@@ -783,13 +783,13 @@ def test(
         # Limit tests to explicit list
         # Filter spec format (comma-separated)
         # [-][tag][/module][:class][.method]
-        odoo_command.extend(["--test-tags", "/" + ",/".join(modules_list)])
+        odoo_command.extend(["--test-tags", f"/{',/'.join(modules_list)}"])
     if debugpy:
         _test_in_debug_mode(c, odoo_command)
     else:
         cmd = [DOCKER_COMPOSE_CMD, "run", "--rm"]
         if db_filter:
-            cmd.extend(["-e", "DB_FILTER='%s'" % db_filter])
+            cmd.extend(["-e", f"DB_FILTER='{db_filter}'"])
         cmd.append("odoo")
         cmd.extend(odoo_command)
         with c.cd(str(PROJECT_ROOT)):
@@ -805,7 +805,7 @@ def test(
 )
 def stop(c, purge=False):
     """Stop and (optionally) purge environment."""
-    cmd = DOCKER_COMPOSE_CMD + " down --remove-orphans"
+    cmd = f"{DOCKER_COMPOSE_CMD} down --remove-orphans"
     if purge:
         cmd += " --rmi local --volumes"
     with c.cd(str(PROJECT_ROOT)):
@@ -849,8 +849,8 @@ def resetdb(
     else:
         modules = modules or "base"
     with c.cd(str(PROJECT_ROOT)):
-        c.run(DOCKER_COMPOSE_CMD + " stop odoo", pty=True)
-        _run = DOCKER_COMPOSE_CMD + " run --rm -l traefik.enable=false odoo"
+        c.run(f"{DOCKER_COMPOSE_CMD} stop odoo", pty=True)
+        _run = f"{DOCKER_COMPOSE_CMD} run --rm -l traefik.enable=false odoo"
         c.run(
             f"{_run} click-odoo-dropdb {dbname}",
             env=UID_ENV,
@@ -864,7 +864,7 @@ def resetdb(
         )
     if populate and ODOO_VERSION < 11:
         _logger.warn(
-            "Skipping populate task as it is not available in v%s" % ODOO_VERSION
+            f"Skipping populate task as it is not available in v{ODOO_VERSION}"
         )
         populate = False
     if populate:
@@ -883,7 +883,7 @@ def preparedb(c):
         )
     with c.cd(str(PROJECT_ROOT)):
         c.run(
-            DOCKER_COMPOSE_CMD + " run --rm -l traefik.enable=false odoo preparedb",
+            f"{DOCKER_COMPOSE_CMD} run --rm -l traefik.enable=false odoo preparedb",
             env=UID_ENV,
             pty=True,
         )
@@ -892,7 +892,7 @@ def preparedb(c):
 @task()
 def restart(c, quick=True):
     """Restart odoo container(s)."""
-    cmd = DOCKER_COMPOSE_CMD + " restart"
+    cmd = f"{DOCKER_COMPOSE_CMD} restart"
     if quick:
         cmd = f"{cmd} -t0"
     cmd = f"{cmd} odoo odoo_proxy"
@@ -909,7 +909,7 @@ def restart(c, quick=True):
 )
 def logs(c, tail=10, follow=True, container=None):
     """Obtain last logs of current environment."""
-    cmd = DOCKER_COMPOSE_CMD + " logs"
+    cmd = f"{DOCKER_COMPOSE_CMD} logs"
     if follow:
         cmd += " -f"
     if tail:
@@ -971,9 +971,9 @@ def snapshot(
     if not destination_db:
         destination_db = f"{source_db}-{datetime.now().strftime('%Y_%m_%d-%H_%M')}"
     with c.cd(str(PROJECT_ROOT)):
-        cur_state = c.run(DOCKER_COMPOSE_CMD + " stop odoo db", pty=True).stdout
+        cur_state = c.run(f"{DOCKER_COMPOSE_CMD} stop odoo db", pty=True).stdout
         _logger.info("Snapshoting current %s DB to %s", (source_db, destination_db))
-        _run = DOCKER_COMPOSE_CMD + " run --rm -l traefik.enable=false odoo"
+        _run = f"{DOCKER_COMPOSE_CMD} run --rm -l traefik.enable=false odoo"
         c.run(
             f"{_run} click-odoo-copydb {source_db} {destination_db}",
             env=UID_ENV,
@@ -981,7 +981,7 @@ def snapshot(
         )
         if "Stopping" in cur_state:
             # Restart services if they were previously active
-            c.run(DOCKER_COMPOSE_CMD + " start odoo db", pty=True)
+            c.run(f"{DOCKER_COMPOSE_CMD} start odoo db", pty=True)
 
 
 @task(
@@ -1002,11 +1002,11 @@ def restore_snapshot(
     Uses click-odoo-copydb behind the scenes to restore a DB snapshot.
     """
     with c.cd(str(PROJECT_ROOT)):
-        cur_state = c.run(DOCKER_COMPOSE_CMD + " stop odoo db", pty=True).stdout
+        cur_state = c.run(f"{DOCKER_COMPOSE_CMD} stop odoo db", pty=True).stdout
         if not snapshot_name:
             # List DBs
             res = c.run(
-                DOCKER_COMPOSE_CMD + " run --rm -e LOG_LEVEL=WARNING odoo psql -tc"
+                f"{DOCKER_COMPOSE_CMD} run --rm -e LOG_LEVEL=WARNING odoo psql -tc"
                 " 'SELECT datname FROM pg_database;'",
                 env=UID_ENV,
                 hide="stdout",
@@ -1019,7 +1019,7 @@ def restore_snapshot(
                 db_name = db.lstrip()
                 try:
                     db_date = datetime.strptime(
-                        db_name.lstrip(destination_db + "-"), "%Y_%m_%d-%H_%M"
+                        db_name.lstrip(f"{destination_db}-"), "%Y_%m_%d-%H_%M"
                     )
                     db_list.append((db_name, db_date))
                 except ValueError:
@@ -1030,7 +1030,7 @@ def restore_snapshot(
                     "No snapshot found for destination_db %s" % destination_db
                 )
         _logger.info("Restoring snapshot %s to %s", (snapshot_name, destination_db))
-        _run = DOCKER_COMPOSE_CMD + " run --rm -l traefik.enable=false odoo"
+        _run = f"{DOCKER_COMPOSE_CMD} run --rm -l traefik.enable=false odoo"
         c.run(
             f"{_run} click-odoo-dropdb {destination_db}",
             env=UID_ENV,
@@ -1043,5 +1043,4 @@ def restore_snapshot(
             pty=True,
         )
         if "Stopping" in cur_state:
-            # Restart services if they were previously active
-            c.run(DOCKER_COMPOSE_CMD + " start odoo db", pty=True)
+            c.run(f"{DOCKER_COMPOSE_CMD} start odoo db", pty=True)

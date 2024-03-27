@@ -61,7 +61,7 @@ jobs:
       - name: Install Compose
         uses: ndeloof/install-compose-action@c036dce35dc2a23597c03aa05f32347b2cfa0437
         with:
-          version: v2.20.3
+          version: v2.26.0
           legacy: false # force V2
       - name: Generate cache key CACHE
         run:
