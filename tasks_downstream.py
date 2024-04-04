@@ -46,8 +46,8 @@ ODOO_VERSION = float(
         "build"
     ]["args"]["ODOO_VERSION"]
 )
-DOCKER_COMPOSE_CMD = (
-    f"{shutil.which('docker')} compose" or shutil.which("docker-compose")
+DOCKER_COMPOSE_CMD = f"{shutil.which('docker')} compose" or shutil.which(
+    "docker-compose"
 )
 
 _logger = getLogger(__name__)
