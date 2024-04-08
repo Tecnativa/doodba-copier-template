@@ -40,7 +40,7 @@ This project itself is just the template, but you need to install these tools to
 - Linux<sup>1</sup>
 - [copier][]
 - [Docker](https://docs.docker.com/)
-  - [Compose V2 plugin](https://docs.docker.com/compose/)
+  - [Compose V2 plugin](https://docs.docker.com/compose/install/)
 - [git](https://git-scm.com/) 2.24 or newer
 - [invoke](https://www.pyinvoke.org/) installed in Python 3.8.1+ (and the binary must be
   called `invoke` — beware if your distro installs it as `invoke3` or similar).
@@ -83,13 +83,13 @@ If you always used Copier with this project, getting last updates with Copier is
 
 ```bash
 cd ~/path/to/your/downstream/scaffolding
-copier update
+copier update --trust
 ```
 
 Copier will ask you all questions again, but default values will be those you answered
 last time. Just hit <kbd>Enter</kbd> to accept those defaults, or change them if
-needed... or you can use `copier --force update` instead to avoid answering again all
-things.
+needed... or you can use `copier update --force --trust` instead to avoid answering
+again all things.
 
 Basically, read Copier docs and `copier --help-all` to know how to use it.
 
