@@ -8,6 +8,7 @@ import json
 import os
 import shutil
 import stat
+import subprocess
 import tempfile
 import time
 from datetime import datetime
@@ -46,8 +47,17 @@ ODOO_VERSION = float(
         "build"
     ]["args"]["ODOO_VERSION"]
 )
-DOCKER_COMPOSE_CMD = f"{shutil.which('docker')} compose" or shutil.which(
-    "docker-compose"
+# Depending on the user's docker version either version of docker compose could not
+# be available. We default to v2 and fallback to v1.
+
+docker_compose_v2 = (
+    subprocess.run([shutil.which("docker"), "compose"], capture_output=True).returncode
+    == 0
+)
+DOCKER_COMPOSE_CMD = (
+    f"{shutil.which('docker')} compose"
+    if docker_compose_v2
+    else shutil.which("docker-compose")
 )
 
 _logger = getLogger(__name__)
