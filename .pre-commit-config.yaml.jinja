@@ -38,7 +38,7 @@ repos:
         files: "\\.rej$"
   - &maintainer_tools
     repo: https://github.com/oca/maintainer-tools
-    rev: 1070863d1298b1bf373a0e69458dd8a88ab91578
+    rev: 400ffa99242c8b225ab4d34de78721a68b292a61
     hooks:
       # update the NOT INSTALLABLE ADDONS section above
       - id: oca-update-pre-commit-excluded-addons
@@ -120,6 +120,8 @@ repos:
           - --addons-dir=odoo/custom/src/private
           - --org-name={{ project_author }}
           - --repo-name={{ project_name }}
+          - --convert-fragments-to-markdown
           - --gen-html
+          - --if-fragments-changed
           - --branch={{ odoo_version }}
           - --template-filename=.module-readme.rst.j2
