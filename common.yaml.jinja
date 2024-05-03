@@ -31,6 +31,12 @@ services:
       traefik.frontend.passHostHeader: "true"
       traefik.port: "8069"
     {%- endif %}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8069"]
+      interval: 45s
+      timeout: 15s
+      retries: 3
+      start_period: 25s
 
   {% if postgres_version -%}
   db:
@@ -43,6 +49,12 @@ services:
         work_mem = 512MB
     volumes:
       - db:/var/lib/postgresql/data:z
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 45s
+      timeout: 30s
+      retries: 3
+      start_period: 25s
   {%- endif %}
 
   smtpfake:
@@ -113,4 +125,10 @@ services:
     volumes:
       - backup_cache:/root:z
       - filestore:/mnt/backup/src/odoo:z
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 45s
+      timeout: 30s
+      retries: 3
+      start_period: 25s
   {%- endif %}
