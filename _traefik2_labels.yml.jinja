@@ -43,6 +43,18 @@
   {%- endif %}
 {%- endmacro %}
 
+{# Same on HostSNI #}
+{%- macro domains_rule_sni(domain_group) -%}
+  HostSNI(
+    {%- for host in domain_group.hosts -%}
+    `{{ host }}`
+    {%- if not loop.last %}, {% endif %}
+    {%- endfor -%}
+  )
+  {%- if domain_group.path_prefixes %} && {{ path_prefix_rule(domain_group.path_prefixes) }}
+  {%- endif %}
+{%- endmacro %}
+
 {%- macro key(project_name, odoo_version, suffix) %}
   {{- '%s-%.1f-%s'|format(project_name, odoo_version, suffix)|replace('.', '-') }}
 {%- endmacro %}
@@ -211,8 +223,11 @@
 
 {%- macro database(domain_groups_list, cidr_whitelist, key, port, project_name) %}
       {#- Service #}
+      traefik.tcp.routers.{{ key }}-database.entrypoints: postgres-entrypoint
       traefik.tcp.services.{{ key }}-database.loadbalancer.server.port: 5432
-
+      traefik.{{ key }}-database.port: 5432
+      traefik.tcp.routers.{{ key }}-database.tls: "true"
+      traefik.tcp.routers.{{ key }}-database.tls.certResolver: letsencrypt
       {%- if cidr_whitelist %}
       {#- Declare whitelist middleware #}
       ? traefik.tcp.middlewares.{{ key }}-whitelist.IPWhiteList.sourceRange
@@ -222,22 +237,12 @@
       {%- endif %}
 
       {%- call(domain_group) macros.domains_loop_grouped(domain_groups_list) %}
+      traefik.tcp.routers.{{ key }}-database.rule: {{ domains_rule_sni(domain_group) }}
+
       {#- Remember basic middlewares for this domain group #}
       {%- set _ns = namespace(basic_middlewares=[]) -%}
       {%- if cidr_whitelist %}
         {%- set _ns.basic_middlewares = _ns.basic_middlewares + ["whitelist"] %}
       {%- endif %}
-
-      {#- database router #}
-      {{-
-        router_tcp(
-          domain_group=domain_group,
-          key=key,
-          suffix="database",
-          service="database",
-          middlewares=_ns.basic_middlewares,
-          port=port,
-        )
-      }}
       {%- endcall %}
 {%- endmacro %}
