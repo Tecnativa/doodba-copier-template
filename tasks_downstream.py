@@ -748,6 +748,7 @@ def test(
     cur_file=None,
     mode="init",
     db_filter="^devel$",
+    tags=None,
 ):
     """Run Odoo tests
 
@@ -793,7 +794,10 @@ def test(
         # Limit tests to explicit list
         # Filter spec format (comma-separated)
         # [-][tag][/module][:class][.method]
-        odoo_command.extend(["--test-tags", f"/{',/'.join(modules_list)}"])
+        test_tags = f"/{',/'.join(modules_list)}"
+        if tags:
+            test_tags = tags
+        odoo_command.extend(["--test-tags", test_tags])
     if debugpy:
         _test_in_debug_mode(c, odoo_command)
     else:
