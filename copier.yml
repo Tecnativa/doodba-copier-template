@@ -214,8 +214,12 @@ gitlab_url:
 domains_prod:
   type: yaml
   multiline: true
-  default: {}
+  default: null
   placeholder: |
+    - hosts:
+        - www.main.com
+        - shop.main.com
+  examples: |
     # Main domains, with TLS and cert resolved with "letsencrypt" resolver
     - hosts:
         - www.main.com
@@ -270,8 +274,12 @@ domains_prod:
 domains_test:
   type: yaml
   multiline: true
-  default: {}
+  default: null
   placeholder: |
+    - hosts:
+        - demo1.main.com
+        - demo2.main.com
+  examples: |
     # Main domains, with TLS and cert resolved with "letsencrypt" resolver
     - hosts:
         - demo1.main.com
