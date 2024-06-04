@@ -219,12 +219,8 @@ domains_prod:
     - hosts:
         - www.main.com
         - shop.main.com
-  examples: |
     # Main domains, with TLS and cert resolved with "letsencrypt" resolver
-    - hosts:
-        - www.main.com
-        - shop.main.com
-
+  examples: |
     # Alternate domains that redirect to main ones
     - hosts:
         - main.com
@@ -279,12 +275,8 @@ domains_test:
     - hosts:
         - demo1.main.com
         - demo2.main.com
-  examples: |
     # Main domains, with TLS and cert resolved with "letsencrypt" resolver
-    - hosts:
-        - demo1.main.com
-        - demo2.main.com
-
+  examples: |
     # Alternate domains that redirect to main ones
     - hosts:
         - www.demo1.main.com
