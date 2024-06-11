@@ -349,7 +349,7 @@ cidr_whitelist:
     ⚠️ It must be a list. And this is only supported if you deploy with Traefik 2+.
 
 postgres_version:
-  default: "15"
+  default: "16"
   help: >-
     Which PostgreSQL version do you want to deploy? (Recommended: for new instances
     always use the latest version. Version 9.6 has no backup support.)
@@ -362,6 +362,7 @@ postgres_version:
     "13": "13"
     "14": "14"
     "15": "15"
+    "16": "16"
   validator: >-
     {% if postgres_version|int > 0 %} {% if (odoo_version >= 16.0 and
     postgres_version|int < 12) or (odoo_version >= 14.0 and postgres_version|int < 10)
