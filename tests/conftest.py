@@ -11,7 +11,6 @@ from typing import Dict, Union
 
 import pytest
 import yaml
-from packaging import version
 from plumbum import ProcessExecutionError, local
 from plumbum.cmd import git, invoke
 from python_on_whales import DockerClient
@@ -24,6 +23,8 @@ with open("copier.yml") as copier_fd:
 # Different tests test different Odoo versions
 OLDEST_SUPPORTED_ODOO_VERSION = 11.0
 ALL_ODOO_VERSIONS = tuple(COPIER_SETTINGS["odoo_version"]["choices"])
+TRAEFIK_VERSION = os.getenv("TRAEFIK_VERSION", "3")
+
 SUPPORTED_ODOO_VERSIONS = tuple(
     v for v in ALL_ODOO_VERSIONS if v >= OLDEST_SUPPORTED_ODOO_VERSION
 )
@@ -67,9 +68,6 @@ DBVER_PER_ODOO = {
         "latest": LATEST_PSQL_VER,
     },
 }
-
-# Traefik versions matrix
-ALL_TRAEFIK_VERSIONS = ("latest", "1.7")
 
 
 @pytest.fixture(autouse=True)
@@ -147,13 +145,31 @@ def versionless_odoo_autoskip(request):
         pytest.skip("version-independent test in old versioned odoo test session")
 
 
-@pytest.fixture(params=ALL_TRAEFIK_VERSIONS)
+@pytest.fixture(params=TRAEFIK_VERSION)
 def traefik_host(request):
     """Fixture to indicate where to find a running traefik instance."""
     docker = DockerClient()
-    if request.param == "latest" or version.parse(request.param) >= version.parse("2"):
+    if request.param == "3":
         traefik_container = docker.run(
-            f"traefik:{request.param}",
+            "traefik:v3.0",
+            detach=True,
+            privileged=True,
+            networks=["inverseproxy_shared"],
+            volumes=[("/var/run/docker.sock", "/var/run/docker.sock", "ro")],
+            command=[
+                "--accessLog=true",
+                "--entryPoints.web-alt.address=:8080",
+                "--entryPoints.web-insecure.address=:80",
+                "--entryPoints.web-main.address=:443",
+                "--log.level=debug",
+                "--providers.docker.exposedByDefault=false",
+                "--providers.docker.network=inverseproxy_shared",
+                "--providers.docker=true",
+            ],
+        )
+    elif request.param == "2":
+        traefik_container = docker.run(
+            "traefik:v2.4",
             detach=True,
             privileged=True,
             networks=["inverseproxy_shared"],
@@ -171,7 +187,7 @@ def traefik_host(request):
         )
     else:
         traefik_container = docker.run(
-            f"traefik:{request.param}",
+            "traefik:v1.7",
             detach=True,
             privileged=True,
             networks=["inverseproxy_shared"],
