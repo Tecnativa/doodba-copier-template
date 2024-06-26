@@ -127,6 +127,7 @@ odoo_proxy:
 
 traefik_version:
   type: int
+  default: 2
   when: "{{ odoo_proxy == 'traefik' }}"
   help: >
     Indicate Traefik version( v2 recommended )
