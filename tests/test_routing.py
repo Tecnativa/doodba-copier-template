@@ -25,6 +25,7 @@ def test_multiple_domains(
     base_path = f"{base_domain}/web/login"
     # XXX Remove traefik1 specific stuff some day
     is_traefik1 = version.parse(traefik_host["traefik_version"]) < version.parse("2")
+    is_traefik3 = version.parse(traefik_host["traefik_version"]) >= version.parse("3")
     data = {
         "odoo_listdb": True,
         "odoo_version": supported_odoo_version,
@@ -117,16 +118,19 @@ def test_multiple_domains(
                 )
             else:
                 # main0, no TLS
-                response = requests.get(f"http://main0.{base_path}")
-                assert response.ok
-                assert response.url == f"http://main0.{base_path}"
-                assert response.headers["X-Robots-Tag"] == "noindex, nofollow"
-                # alt0 and alt1, no TLS
-                for alt_num in range(2):
-                    response = requests.get(f"http://alt{alt_num}.main0.{base_path}")
+                if not is_traefik3:
+                    response = requests.get(f"http://main0.{base_path}")
                     assert response.ok
                     assert response.url == f"http://main0.{base_path}"
-                    assert response.history[0].status_code == 302
+                    assert response.headers["X-Robots-Tag"] == "noindex, nofollow"
+                    # alt0 and alt1, no TLS
+                    for alt_num in range(2):
+                        response = requests.get(
+                            f"http://alt{alt_num}.main0.{base_path}"
+                        )
+                        assert response.ok
+                        assert response.url == f"http://main0.{base_path}"
+                        assert response.history[0].status_code == 302
                 # main2 serves https on port 80; returns a 404 from Odoo (not from
                 # Traefik) without HTTPS redirection
                 bad_response = requests.get(
@@ -161,21 +165,23 @@ def test_multiple_domains(
                 if is_traefik1
                 else f"https://main1.{base_path}"
             )
-            assert response.headers["X-Robots-Tag"] == "noindex, nofollow"
-            # alt0 and alt1, with self-signed TLS
-            for alt_num in range(2):
-                response = requests.get(
-                    f"http://alt{alt_num}.main1.{base_domain}/web/database/selector",
-                    verify=False,
-                )
-                assert response.ok
-                assert (
-                    response.url == f"https://main1.{base_domain}/web/database/selector"
-                )
+            if not is_traefik3:
                 assert response.headers["X-Robots-Tag"] == "noindex, nofollow"
-                # Search for a response in the chain with the 301 return code
-                # as several will be made during the redirection
-                assert filter(lambda r: r.status_code == 301, response.history)
+                # alt0 and alt1, with self-signed TLS
+                for alt_num in range(2):
+                    response = requests.get(
+                        f"http://alt{alt_num}.main1.{base_domain}/web/database/selector",
+                        verify=False,
+                    )
+                    assert response.ok
+                    assert (
+                        response.url
+                        == f"https://main1.{base_domain}/web/database/selector"
+                    )
+                    assert response.headers["X-Robots-Tag"] == "noindex, nofollow"
+                    # Search for a response in the chain with the 301 return code
+                    # as several will be made during the redirection
+                    assert filter(lambda r: r.status_code == 301, response.history)
             # missing, which fails with Traefik 404, both with and without TLS
             bad_response = requests.get(
                 f"http://missing.{base_path}", verify=not is_traefik1

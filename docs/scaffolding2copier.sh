@@ -27,6 +27,7 @@ copier $CUSTOM_COPIER_FLAGS \
   -d postgres_version="$DB_VERSION" \
   -d postgres_username="$DB_USER" \
   -d postgres_dbname="prod" \
+  -d traefik_version="$TRAEFIK_VERSION" \
   -d smtp_default_from="$SMTP_DEFAULT_FROM" \
   -d smtp_relay_host="$SMTP_REAL_RELAY_HOST" \
   -d smtp_relay_port="$SMTP_REAL_RELAY_PORT" \

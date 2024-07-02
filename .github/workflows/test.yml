@@ -49,6 +49,10 @@ jobs:
             odoo-version: 17.0
           - python-version: 3.11
             odoo-version: 17.0
+        traefik_version:
+          - 1
+          - 2
+          - 3
 
     steps:
       # Shared steps
@@ -92,7 +96,9 @@ jobs:
       - run: poetry run invoke test
         env:
           SELECTED_ODOO_VERSIONS: ${{ matrix.odoo-version }}
+          TRAEFIK_VERSION: ${{ matrix.traefik_version }}
       # Concurrent tests (isolated)
       - run: poetry run invoke test --sequential
         env:
           SELECTED_ODOO_VERSIONS: ${{ matrix.odoo-version }}
+          TRAEFIK_VERSION: ${{ matrix.traefik_version }}
