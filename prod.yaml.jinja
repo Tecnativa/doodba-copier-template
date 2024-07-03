@@ -94,7 +94,7 @@ services:
     labels:
       traefik.enable: "true"
       traefik.docker.network: "inverseproxy_shared"
-      {{- traefik2_labels.database(
+      {{- traefik3_labels_2.database(
         domains_prod,
         postgres_cidr_whitelist,
         _key,
