@@ -33,12 +33,11 @@
 
 {# Echo all domains of a group, in a Traefik rule #}
 {%- macro domains_rule(domain_group) -%}
-  Host(
-    {%- for host in domain_group.hosts -%}
-    `{{ host }}`
-    {%- if not loop.last %}, {% endif %}
-    {%- endfor -%}
-  )
+  {%- if domain_group.hosts | length == 1 -%}
+    Host(`{{ domain_group.hosts[0] }}`)
+  {%- else -%}
+    (Host(`{{ domain_group.hosts | join('`) || Host(`') }}`))
+  {%- endif -%}
   {%- if domain_group.path_prefixes %} && {{ path_prefix_rule(domain_group.path_prefixes) }}
   {%- endif %}
 {%- endmacro %}
