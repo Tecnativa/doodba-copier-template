@@ -1,0 +1,93 @@
+{%- import "_macros.jinja" as macros -%}
+
+{# Echo all path prefixes in a Traefik rule #}
+{%- macro path_prefix_rule(path_prefixes) -%}
+  Path:
+    {%- for path in path_prefixes %}
+      {%- if path.endswith("/") %}
+        {{- path }}{anything:.*}
+      {%- else %}
+        {{- path }},{{ path }}/{anything:.*}
+      {%- endif %}
+      {%- if not loop.last %},{% endif %}
+    {%- endfor %}
+{%- endmacro %}
+
+{# Echo all domains of a group, in a Traefik rule #}
+{%- macro domains_rule(hosts, path_prefixes=()) -%}
+  Host(`{{ hosts | join('`, `') }}`)
+  {%- if path_prefixes -%}
+    ;{{ path_prefix_rule(path_prefixes) }}
+  {%- endif %}
+{%- endmacro %}
+
+{#- Basic labels for a single router #}
+{%- macro router(prefix, index0, rule, entrypoints=(), port=none) %}
+      traefik.{{ prefix }}-{{ index0 }}.frontend.rule: {{ rule }}
+      {%- if entrypoints %}
+      traefik.{{ prefix }}-{{ index0 }}.frontend.entryPoints:
+        {{ entrypoints|sort|join(",") }}
+      {%- endif %}
+      {%- if port %}
+      traefik.{{ prefix }}-{{ index0 }}.port: {{ port }}
+      {%- endif %}
+{%- endmacro %}
+
+{%- macro odoo(domain_groups_list, paths_without_crawlers, odoo_version) %}
+      traefik.domain: {{ macros.first_main_domain(domain_groups_list)|tojson }}
+      {%- call(domain_group) macros.domains_loop_grouped(domain_groups_list) %}
+
+      {#- Route redirections #}
+      {%- if domain_group.redirect_to %}
+      traefik.alt-{{ domain_group.loop.index0 }}.frontend.redirect.regex: ^(.*)://([^/]+)/(.*)$$
+      traefik.alt-{{ domain_group.loop.index0 }}.frontend.redirect.replacement: $$1://{{ domain_group.redirect_to }}/$$3
+      {{-
+        router(
+          prefix="alt",
+          index0=domain_group.loop.index0,
+          rule=domains_rule(domain_group.hosts, domain_group.path_prefixes),
+          entrypoints=domain_group.entrypoints,
+        )
+      }}
+      {%- else %}
+
+      {#- Forbidden crawler routers #}
+      {%- if paths_without_crawlers and not domain_group.path_prefixes %}
+      traefik.forbiddenCrawlers-{{ domain_group.loop.index0 }}.frontend.headers.customResponseHeaders:
+        "X-Robots-Tag:noindex, nofollow"
+      {{-
+        router(
+          prefix="forbiddenCrawlers",
+          index0=domain_group.loop.index0,
+          rule=domains_rule(domain_group.hosts, paths_without_crawlers),
+          entrypoints=domain_group.entrypoints,
+        )
+      }}
+      {%- endif %}
+
+      {#- Normal routers #}
+      {%- if paths_without_crawlers != ["/"] or domain_group.path_prefixes %}
+      {{-
+        router(
+          prefix="main",
+          index0=domain_group.loop.index0,
+          rule=domains_rule(domain_group.hosts, domain_group.path_prefixes),
+          entrypoints=domain_group.entrypoints,
+        )
+      }}
+      {%- endif %}
+      {%- if not domain_group.path_prefixes %}
+      {%- set longpolling_route = "/longpolling/" if odoo_version < 16 else "/websocket" -%}
+      {{-
+        router(
+          prefix="longpolling",
+          index0=domain_group.loop.index0,
+          rule=domains_rule(domain_group.hosts, [longpolling_route]),
+          entrypoints=domain_group.entrypoints,
+          port=8072,
+        )
+      }}
+      {%- endif %}
+      {%- endif %}
+      {%- endcall %}
+{%- endmacro %}

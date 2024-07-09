@@ -1,0 +1,243 @@
+{%- import "_macros.jinja" as macros -%}
+{#
+  Note: indentation of 6 spaces is important because that's the depth level
+  of container labels in a docker-compose file.
+#}
+
+{# Echo all path prefixes in a Traefik rule #}
+{%- macro path_prefix_rule(path_prefixes) %}
+  {%- set _ns = namespace(with_slash=[], without_slash=[]) %}
+  {%- for prefix in path_prefixes %}
+    {%- if prefix.endswith("/") %}
+      {%- set _ns.with_slash = _ns.with_slash + [prefix] %}
+    {%- else %}
+      {%- set _ns.with_slash = _ns.with_slash + ["%s/" % prefix] %}
+      {%- set _ns.without_slash = _ns.without_slash + [prefix] %}
+    {%- endif %}
+  {%- endfor -%}
+  (PathPrefix(
+      {%- for path in _ns.with_slash -%}
+        `{{ path }}`
+        {%- if not loop.last %}, {% endif %}
+      {%- endfor -%}
+    )
+    {%- if _ns.without_slash %} || Path(
+      {%- for path in _ns.without_slash -%}
+        `{{ path }}`
+        {%- if not loop.last %}, {% endif %}
+      {%- endfor -%}
+      )
+    {%- endif -%}
+  )
+{%- endmacro %}
+
+{# Echo all domains of a group, in a Traefik rule #}
+{%- macro domains_rule(domain_group) -%}
+  Host:
+  {%- for host in domain_group.hosts -%}
+  {{ host }}
+  {%- if not loop.last %}, {% endif %}
+  {%- endfor -%}
+  {%- if domain_group.path_prefixes %} && {{ path_prefix_rule(domain_group.path_prefixes) }}
+  {%- endif %}
+{%- endmacro %}
+
+
+{%- macro key(project_name, odoo_version, suffix) %}
+  {{- '%s-%.1f-%s'|format(project_name, odoo_version, suffix)|replace('.', '-') }}
+{%- endmacro %}
+
+{#- Basic labels for a single router #}
+{%- macro router(domain_group, key, suffix, rule=none, service=none, middlewares=()) %}
+      traefik.http.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.rule:
+        {{ rule|default(domains_rule(domain_group), true) }}
+      traefik.http.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.service:
+        {{ key }}-{{ service|default("main", true) }}
+      {%- if domain_group.entrypoints %}
+      traefik.http.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.entrypoints:
+        {{ domain_group.entrypoints|sort|join(", ") }}
+      {%- endif %}
+      {%- if middlewares %}
+      traefik.http.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.middlewares:
+        {{ key }}-{{ middlewares|sort|join(", %s-" % key) }}
+      {%- endif %}
+
+      {%- if domain_group.cert_resolver %}
+
+      {#- Add TLS configuraiton #}
+      {%- if suffix.endswith("-secure") %}
+      traefik.http.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.tls: "true"
+      {%- if domain_group.cert_resolver is string %}
+      traefik.http.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.tls.certResolver:
+        {{ domain_group.cert_resolver }}
+      {%- endif %}
+
+      {#- Create TLS-only router;
+         HACK https://github.com/containous/traefik/issues/7235 #}
+      {%- else %}
+      {{- router(domain_group, key, "%s-secure" % suffix, rule, service, middlewares) }}
+      {%- endif %}
+
+      {%- endif %}
+{%- endmacro %}
+
+{%- macro common_middlewares(key, cidr_whitelist) %}
+      {#- Common middlewares #}
+      traefik.http.middlewares.{{ key }}-buffering.buffering.retryExpression:
+        IsNetworkError() && Attempts() < 5
+      traefik.http.middlewares.{{ key }}-compress.compress: "true"
+      ? traefik.http.middlewares.{{ key }}-forbid-crawlers.headers.customResponseHeaders.X-Robots-Tag
+      : "noindex, nofollow"
+      traefik.http.middlewares.{{ key }}-addSTS.headers.forceSTSHeader: "true"
+      traefik.http.middlewares.{{ key }}-forceSecure.redirectScheme.scheme: https
+      traefik.http.middlewares.{{ key }}-forceSecure.redirectScheme.permanent: "true"
+      {%- if cidr_whitelist %}
+      {#- Declare whitelist middleware #}
+      ? traefik.http.middlewares.{{ key }}-whitelist.IPWhiteList.sourceRange
+      : {% for cidr in cidr_whitelist -%}
+        {{ cidr }}{% if not loop.last %}, {% endif %}
+        {%- endfor %}
+      {%- endif %}
+{%- endmacro %}
+
+{%- macro odoo(domain_groups_list, cidr_whitelist, key, odoo_version,
+               paths_without_crawlers, project_name) %}
+      {#- Service #}
+      traefik.http.services.{{ key }}-main.loadbalancer.server.port: 8069
+      traefik.http.services.{{ key }}-longpolling.loadbalancer.server.port: 8072
+
+      {%- call(domain_group) macros.domains_loop_grouped(domain_groups_list) %}
+      {#- Remember basic middlewares for this domain group #}
+      {%- set _ns = namespace(basic_middlewares=[]) -%}
+      {%- if cidr_whitelist %}
+        {%- set _ns.basic_middlewares = _ns.basic_middlewares + ["whitelist"] %}
+      {%- endif %}
+      {%- if domain_group.cert_resolver %}
+        {%- set _ns.basic_middlewares = _ns.basic_middlewares + ["addSTS", "forceSecure"] %}
+      {%- endif %}
+
+      {%- if domain_group.redirect_to %}
+      {#- Redirections #}
+      {%- if domain_group.redirect_permanent %}
+      traefik.http.middlewares.{{ key }}-redirect-{{ domain_group.loop.index0 }}.redirectRegex.permanent: "true"
+      {%- endif %}
+      traefik.http.middlewares.{{ key }}-redirect-{{ domain_group.loop.index0 }}.redirectRegex.regex: ^(.*)://([^/]+)/(.*)$$
+      traefik.http.middlewares.{{ key }}-redirect-{{ domain_group.loop.index0 }}.redirectRegex.replacement: $$1://{{ domain_group.redirect_to }}/$$3
+      {{-
+        router(
+          domain_group=domain_group,
+          key=key,
+          suffix="redirect",
+          middlewares=_ns.basic_middlewares + [
+            "compress",
+            "redirect-%d" % domain_group.loop.index0,
+          ],
+        )
+      }}
+      {%- else %}
+
+      {#- When removing crawlers for /, this router is the same as forbiddenCrawlers, so no need to duplicate #}
+      {%- if paths_without_crawlers != ["/"] or domain_group.path_prefixes %}
+      {#- Main router #}
+      {{-
+        router(
+          domain_group=domain_group,
+          key=key,
+          suffix="main",
+          middlewares=_ns.basic_middlewares + [
+            "buffering",
+            "compress",
+          ],
+        )
+      }}
+      {%- endif %}
+
+      {#- Longpolling router #}
+      {%- if not domain_group.path_prefixes %}
+      {%- set longpolling_route = "PathPrefix(`/longpolling/`)" if odoo_version < 16 else "Path(`/websocket`)" -%}
+      {{-
+        router(
+          domain_group=domain_group,
+          key=key,
+          suffix="longpolling",
+          rule="%s && %s" % (domains_rule(domain_group), longpolling_route),
+          service="longpolling",
+          middlewares=_ns.basic_middlewares,
+        )
+      }}
+      {%- endif %}
+
+      {#- Forbidden crawlers router #}
+      {%- if paths_without_crawlers and not domain_group.path_prefixes %}
+      {{-
+        router(
+          domain_group=domain_group,
+          key=key,
+          suffix="forbiddenCrawlers",
+          rule="%s && %s" % (
+            domains_rule(domain_group),
+            path_prefix_rule(paths_without_crawlers),
+          ),
+          middlewares=_ns.basic_middlewares + [
+            "buffering",
+            "compress",
+            "forbid-crawlers",
+          ],
+        )
+      }}
+      {%- endif %}
+      {%- endif %}
+      {%- endcall %}
+{%- endmacro %}
+
+{#- Basic labels for a single router #}
+{%- macro router_tcp(domain_group, key, suffix, rule=none, service=none, middlewares=(), port=none) %}
+      {%- if port %}
+      traefik.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.port: {{ port }}
+      {%- endif %}
+      traefik.tcp.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.rule:
+        {{ rule|default(domains_rule(domain_group), true) }}
+      traefik.tcp.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.service:
+        {{ key }}-{{ service|default("main", true) }}
+      {%- if domain_group.entrypoints %}
+      traefik.tcp.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.entrypoints:
+        {{ domain_group.entrypoints|sort|join(", ") }}
+      {%- endif %}
+      {%- if middlewares %}
+      traefik.tcp.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.middlewares:
+        {{ key }}-{{ middlewares|sort|join(", %s-" % key) }}
+      {%- endif %}
+{%- endmacro %}
+
+{%- macro database(domain_groups_list, cidr_whitelist, key, port, project_name) %}
+      {#- Service #}
+      traefik.tcp.services.{{ key }}-database.loadbalancer.server.port: 5432
+
+      {%- if cidr_whitelist %}
+      {#- Declare whitelist middleware #}
+      ? traefik.tcp.middlewares.{{ key }}-whitelist.IPWhiteList.sourceRange
+      : {% for cidr in cidr_whitelist -%}
+        {{ cidr }}{% if not loop.last %}, {% endif %}
+        {%- endfor %}
+      {%- endif %}
+
+      {%- call(domain_group) macros.domains_loop_grouped(domain_groups_list) %}
+      {#- Remember basic middlewares for this domain group #}
+      {%- set _ns = namespace(basic_middlewares=[]) -%}
+      {%- if cidr_whitelist %}
+        {%- set _ns.basic_middlewares = _ns.basic_middlewares + ["whitelist"] %}
+      {%- endif %}
+
+      {#- database router #}
+      {{-
+        router_tcp(
+          domain_group=domain_group,
+          key=key,
+          suffix="database",
+          service="database",
+          middlewares=_ns.basic_middlewares,
+          port=port,
+        )
+      }}
+      {%- endcall %}
+{%- endmacro %}

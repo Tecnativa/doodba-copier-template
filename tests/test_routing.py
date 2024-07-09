@@ -28,6 +28,9 @@ def test_multiple_domains(
     is_traefik3 = version.parse(traefik_host["traefik_version"]) >= version.parse("3")
     data = {
         "odoo_listdb": True,
+        "traefik_version": int(
+            str(version.parse(traefik_host["traefik_version"])).split(".")[0]
+        ),
         "odoo_version": supported_odoo_version,
         "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
         "paths_without_crawlers": ["/web/login", "/web/database"],
