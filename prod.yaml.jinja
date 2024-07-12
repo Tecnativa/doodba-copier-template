@@ -1,6 +1,8 @@
 {%- import "_macros.jinja" as macros -%}
 {%- import "_traefik1_labels.yml.jinja" as traefik1_labels -%}
+{%- import "_traefik1_paths_labels.yml.jinja" as traefik1_path_labels -%}
 {%- import "_traefik2_labels.yml.jinja" as traefik2_labels -%}
+{%- import "_traefik2_hosts_labels.yml.jinja" as traefik2_hosts_labels -%}
 {%- import "_traefik3_labels.yml.jinja" as traefik3_labels -%}
 {%- import "_traefik3_paths_labels.yml.jinja" as traefik3_labels_2 -%}
 {%- set _key = traefik2_labels.key(project_name, odoo_version, "prod") -%}
@@ -39,7 +41,13 @@ services:
       doodba.domain.main: {{ macros.first_main_domain(domains_prod)|tojson }}
       {%- if odoo_proxy == "traefik" and domains_prod %}
       traefik.enable: "true"
-      {{- (traefik3_labels.odoo(domains_prod, paths_without_crawlers, odoo_version, traefik_version) if traefik_version == 3 else traefik1_labels.odoo(domains_prod, paths_without_crawlers, odoo_version)) }}
+      {%- if traefik_version == 3 -%}
+      {{- traefik3_labels.odoo(domains_prod, paths_without_crawlers, odoo_version, traefik_version)}}
+      {%- elif traefik_version == 2 -%}
+      {{- traefik2_hosts_labels.odoo(domains_prod, paths_without_crawlers, odoo_version)}}
+      {%- else -%}
+      {{- traefik1_labels.odoo(domains_prod, paths_without_crawlers, odoo_version)}}
+      {%- endif -%}
       {{- traefik2_labels.common_middlewares(_key, cidr_whitelist) }}
       {%- if traefik_version == 3 -%}
       {{- traefik3_labels_2.odoo(
@@ -50,8 +58,17 @@ services:
               paths_without_crawlers,
               project_name,
             ) }}
-      {%- else -%}
+      {%- elif traefik_version == 2 -%}
       {{- traefik2_labels.odoo(
+              domains_prod,
+              cidr_whitelist,
+              _key,
+              odoo_version,
+              paths_without_crawlers,
+              project_name,
+            ) }}
+      {%- else -%}
+      {{- traefik1_path_labels.odoo(
               domains_prod,
               cidr_whitelist,
               _key,
