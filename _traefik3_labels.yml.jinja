@@ -54,7 +54,6 @@
       {%- else %}
 
       {#- Forbidden crawler routers #}
-      {%- if traefik_version < 3%}
       {%- if paths_without_crawlers and not domain_group.path_prefixes %}
       traefik.forbiddenCrawlers-{{ domain_group.loop.index0 }}.frontend.headers.customResponseHeaders:
         "X-Robots-Tag:noindex, nofollow"
@@ -66,7 +65,6 @@
           entrypoints=domain_group.entrypoints,
         )
       }}
-      {%- endif %}
       {%- endif %}
 
       {#- Normal routers #}
