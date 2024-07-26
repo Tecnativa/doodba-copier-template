@@ -88,6 +88,7 @@ services:
       - .docker/db-creation.env
     restart: unless-stopped
     {%- if postgres_exposed %}
+    {%- if traefik_version == 3 %}
     networks:
       default:
       inverseproxy_shared:
@@ -101,6 +102,10 @@ services:
         postgres_exposed_port,
         project_name,
       ) }}
+    {%- else %}
+    ports:
+      - "{{ postgres_exposed_port }}:5432"
+    {%- endif %}
     {%- endif %}
   {%- endif %}
 
