@@ -225,13 +225,13 @@ gitlab_url:
 domains_prod:
   type: yaml
   multiline: true
-  default: {}
+  default: null
   placeholder: |
-    # Main domains, with TLS and cert resolved with "letsencrypt" resolver
     - hosts:
         - www.main.com
         - shop.main.com
-
+    # Main domains, with TLS and cert resolved with "letsencrypt" resolver
+  examples: |
     # Alternate domains that redirect to main ones
     - hosts:
         - main.com
@@ -281,13 +281,13 @@ domains_prod:
 domains_test:
   type: yaml
   multiline: true
-  default: {}
+  default: null
   placeholder: |
-    # Main domains, with TLS and cert resolved with "letsencrypt" resolver
     - hosts:
         - demo1.main.com
         - demo2.main.com
-
+    # Main domains, with TLS and cert resolved with "letsencrypt" resolver
+  examples: |
     # Alternate domains that redirect to main ones
     - hosts:
         - www.demo1.main.com
@@ -360,7 +360,7 @@ cidr_whitelist:
     ⚠️ It must be a list. And this is only supported if you deploy with Traefik 2+.
 
 postgres_version:
-  default: "15"
+  default: "16"
   help: >-
     Which PostgreSQL version do you want to deploy? (Recommended: for new instances
     always use the latest version. Version 9.6 has no backup support.)
@@ -373,6 +373,7 @@ postgres_version:
     "13": "13"
     "14": "14"
     "15": "15"
+    "16": "16"
   validator: >-
     {% if postgres_version|int > 0 %} {% if (odoo_version >= 16.0 and
     postgres_version|int < 12) or (odoo_version >= 14.0 and postgres_version|int < 10)
