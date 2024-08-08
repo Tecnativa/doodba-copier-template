@@ -155,7 +155,7 @@ def traefik_host(request):
     docker = DockerClient()
     if request.param == "3":
         traefik_container = docker.run(
-            "traefik:v3.0",
+            "traefik:v3.1.2",
             detach=True,
             privileged=True,
             networks=["inverseproxy_shared"],
