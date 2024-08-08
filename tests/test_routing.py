@@ -35,6 +35,8 @@ def test_multiple_domains(
         "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
         "paths_without_crawlers": ["/web/login", "/web/database"],
         "project_name": uuid.uuid4().hex,
+        "postgres_exposed": True,
+        "postgres_exposed_port": 5432,
         f"domains_{environment}": [
             # main0 has no TLS
             {"hosts": [f"main0.{base_domain}"], "cert_resolver": False},

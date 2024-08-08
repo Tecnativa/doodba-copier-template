@@ -161,6 +161,7 @@ def traefik_host(request):
                 "--entryPoints.web-alt.address=:8080",
                 "--entryPoints.web-insecure.address=:80",
                 "--entryPoints.web-main.address=:443",
+                "--entryPoints.postgres-entrypoint.address=:5432",
                 "--log.level=debug",
                 "--providers.docker.exposedByDefault=false",
                 "--providers.docker.network=inverseproxy_shared",
