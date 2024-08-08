@@ -151,7 +151,7 @@ def traefik_host(request):
     docker = DockerClient()
     if request.param == "3":
         traefik_container = docker.run(
-            "traefik:v3.0",
+            "traefik:v3.1.2",
             detach=True,
             privileged=True,
             networks=["inverseproxy_shared"],
@@ -161,6 +161,7 @@ def traefik_host(request):
                 "--entryPoints.web-alt.address=:8080",
                 "--entryPoints.web-insecure.address=:80",
                 "--entryPoints.web-main.address=:443",
+                "--entryPoints.postgres-entrypoint.address=:5432",
                 "--log.level=debug",
                 "--providers.docker.exposedByDefault=false",
                 "--providers.docker.network=inverseproxy_shared",
