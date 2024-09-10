@@ -22,6 +22,7 @@ This project lets you maintain [Odoo][] deployments based on [Doodba][] using
   - [Use the template to generate your subproject](#use-the-template-to-generate-your-subproject)
   - [Getting updates for your subproject](#getting-updates-for-your-subproject)
 - [Using your subproject to build an Odoo deployment](#using-your-subproject-to-build-an-odoo-deployment)
+  - [Python libraries](#python-libraries)
 - [Getting help](#getting-help)
 - [Contributing](#contributing)
 - [Credits](#credits)
@@ -96,6 +97,17 @@ Basically, read Copier docs and `copier --help-all` to know how to use it.
 # Using your subproject to build an Odoo deployment
 
 This is a big topic [documented separately](docs/daily-usage.md).
+
+## Python libraries
+
+This project includes several libraries to add features to odoo scafoldings:
+
+- **openupgradelib**: Tools to manage upgrades in Odoo.
+- **unicodecsv**: Read and write CSV files with Unicode encoding support.
+- **unidecode**: Transliterates Unicode text to ASCII characters.
+- **jingtrang** (from Odoo 13 onwards): XML document validation using RELAX NG schemas.
+- **pathlib** (for Odoo < 11): Object-oriented path management for file system
+  operations.
 
 # Getting help
 
