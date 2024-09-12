@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 import requests
+import yaml
 from copier import run_copy
 from packaging import version
 from plumbum import local
@@ -70,6 +71,7 @@ def test_multiple_domains(
     if supported_odoo_version < 16:
         data["postgres_version"] = 13
     dc = DockerClient(compose_files=[f"{environment}.yaml"])
+
     with local.cwd(tmp_path):
         run_copy(
             src_path=str(cloned_template),
@@ -84,6 +86,11 @@ def test_multiple_domains(
         docker_compose_config = dc.compose.config()
         assert docker_compose_config.services["odoo"].environment["LIST_DB"] == "true"
         try:
+            # Imprime el YAML formateado
+            yaml_content = yaml.dump(docker_compose_config, default_flow_style=False)
+            raise RuntimeError(
+                f"Forced Error - Here is the YAML content:\n\n{yaml_content}"
+            )
             dc.compose.build()
             dc.compose.run(
                 "odoo",
@@ -194,5 +201,7 @@ def test_multiple_domains(
             bad_response = requests.get(f"https://missing.{base_path}", verify=False)
             assert bad_response.status_code == 404
             assert "Server" not in bad_response.headers
-        finally:
-            dc.compose.down(remove_images="local", remove_orphans=True)
+        except RuntimeError as e:
+            # Captura y muestra el error
+            print(f"An error occurred: {e}")
+            raise

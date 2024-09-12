@@ -1,4 +1,5 @@
 {%- import "_macros.jinja" as macros -%}
+
 {# Echo all domains of a group, in a Traefik rule #}
 {%- macro domains_rule(hosts, path_prefixes=(), paths=()) -%}
   Host(`{{ hosts | join("`) || Host(`") }}`)
@@ -41,30 +42,29 @@
 
       {#- Route redirections #}
       {%- if domain_group.redirect_to %}
-      traefik.alt-{{ domain_group.loop.index0 }}.frontend.redirect.regex: ^(.*)://([^/]+)/(.*)$$
-      traefik.alt-{{ domain_group.loop.index0 }}.frontend.redirect.replacement: $$1://{{ domain_group.redirect_to }}/$$3
+      traefik.http.middlewares.redirect-to-{{ domain_group.loop.index0 }}.redirectregex.regex: ^(.*)://([^/]+)/(.*)$$
+      traefik.http.middlewares.redirect-to-{{ domain_group.loop.index0 }}.redirectregex.replacement: $$1://{{ domain_group.redirect_to }}/$$3
+      traefik.http.routers.alt-{{ domain_group.loop.index0 }}.middlewares: redirect-to-{{ domain_group.loop.index0 }}
       {{-
         router(
           prefix="alt",
           index0=domain_group.loop.index0,
           rule=domains_rule(domain_group.hosts, domain_group.path_prefixes),
-          entrypoints=domain_group.entrypoints,
+          entrypoints=domain_group.entrypoints
         )
       }}
-      {%- else %}
-
-      {#- Forbidden crawler routers #}
+      {%- else -%}
       {%- if paths_without_crawlers and not domain_group.path_prefixes %}
-      traefik.forbiddenCrawlers-{{ domain_group.loop.index0 }}.frontend.headers.customResponseHeaders:
-        "X-Robots-Tag:noindex, nofollow"
       {{-
         router(
           prefix="forbiddenCrawlers",
           index0=domain_group.loop.index0,
           rule=domains_rule(domain_group.hosts, paths_without_crawlers),
           entrypoints=domain_group.entrypoints,
-        )
+          middlewares=["forbiddenCrawlers-" ~ domain_group.loop.index0]        )
       }}
+      traefik.http.middlewares.forbiddenCrawlers-{{ domain_group.loop.index0 }}.headers.customResponseHeadersX-Robots-Tag:
+        "noindex, nofollow"
       {%- endif %}
 
       {#- Normal routers #}
@@ -74,7 +74,7 @@
           prefix="main",
           index0=domain_group.loop.index0,
           rule=domains_rule(domain_group.hosts, domain_group.path_prefixes),
-          entrypoints=domain_group.entrypoints,
+          entrypoints=domain_group.entrypoints
         )
       }}
       {%- endif %}
@@ -86,21 +86,27 @@
           index0=domain_group.loop.index0,
           rule=domains_rule(domain_group.hosts, [longpolling_route]),
           entrypoints=domain_group.entrypoints,
-          port=8072,
+          port=8072
         )
       }}
       {%- endif %}
       {%- endif %}
       {%- endcall %}
 {%- endmacro %}
+
 {#- Basic labels for a single router #}
-{%- macro router(prefix, index0, rule, entrypoints=(), port=none) %}
-      traefik.{{ prefix }}-{{ index0 }}.frontend.rule: {{ rule }}
+{%- macro router(prefix, index0, rule, entrypoints=(), middlewares=(), port=none) %}
+      traefik.http.routers.{{ prefix }}-{{ index0 }}.rule:
+        {{ rule }}
       {%- if entrypoints %}
-      traefik.{{ prefix }}-{{ index0 }}.frontend.entryPoints:
-        {{ entrypoints|sort|join(",") }}
+      traefik.http.routers.{{ prefix }}-{{ index0 }}.entryPoints:
+        "{{ entrypoints | join(',') }}"
+      {%- endif %}
+      {%- if middlewares %}
+      traefik.http.routers.{{ prefix }}-{{ index0 }}.middlewares:
+        "{{ middlewares | join(',') }}"
       {%- endif %}
       {%- if port %}
-      traefik.{{ prefix }}-{{ index0 }}.port: {{ port }}
+      traefik.http.services.{{ prefix }}-{{ index0 }}.loadbalancer.server.port: {{ port }}
       {%- endif %}
 {%- endmacro %}
