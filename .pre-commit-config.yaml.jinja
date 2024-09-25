@@ -53,12 +53,45 @@ repos:
       - id: oca-checks-po
         args: ["--fix"]
   {% endif -%}
+  {% if odoo_version >= 13 -%}
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.1.3
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
       - id: ruff-format
+  {% else -%}
+  - repo: https://github.com/psf/black
+    rev: 23.9.1
+    hooks:
+      - id: black
+        additional_dependencies: ["click<=8.1.7"]
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        name: isort except __init__.py
+        args: [--settings, .]
+        exclude: /__init__\.py$
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.1.0
+    hooks:
+      - id: flake8
+        name: flake8 except __init__.py, __manifest__.py
+        args: ["--extend-ignore=B023"]
+        exclude: /__(?:init|manifest)__\.py$
+        additional_dependencies: ["flake8-bugbear==23.7.10", "importlib-metadata<=6.8.0"]
+      - id: flake8
+        name: flake8 only __init__.py
+        args: ["--extend-ignore=F401"] # ignore unused imports in __init__.py
+        files: /__init__\.py$
+        additional_dependencies: ["flake8-bugbear==23.7.10", "importlib-metadata<=6.8.0"]
+      - id: flake8
+        name: flake8 only __manifest__.py
+        args: ["--extend-ignore=B018"] # ignore found useless expression in __manifest__.py
+        files: /__manifest__\.py$
+        additional_dependencies: ["flake8-bugbear==23.7.10", "importlib-metadata<=6.8.0"]
+  {% endif -%}
   - repo: https://github.com/pre-commit/mirrors-prettier
     # HACK https://github.com/prettier/prettier/issues/15696
     rev: v2.7.1
