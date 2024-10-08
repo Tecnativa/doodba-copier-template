@@ -19,6 +19,8 @@ services:
       WITHOUT_DEMO: "${DOODBA_WITHOUT_DEMO-all}"
       SMTP_PORT: "1025"
       SMTP_SERVER: smtplocal
+      # Just in case you use queue_job
+      ODOO_QUEUE_JOB_CHANNELS: "root:1"
     restart: unless-stopped
     {%- if domains_test %}
     hostname: {{ macros.first_main_domain(domains_test)|tojson }}
@@ -48,7 +50,7 @@ services:
     {%- endif %}
     command:
       - odoo
-      - --workers=2
+      - --workers=3
       - --max-cron-threads=1
 
   {% if postgres_version -%}
