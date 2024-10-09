@@ -113,3 +113,27 @@ def test_dbfilter_default(
         assert "DB_FILTER" not in test.services["odoo"].environment
         assert prod.services["odoo"].environment["DB_FILTER"] == "^prod"
         assert prod.services["backup"].environment["DBS_TO_INCLUDE"] == "^prod"
+
+
+def test_dbfilter_custom_odoo_extensions(
+    cloned_template: Path, supported_odoo_version: float, tmp_path: Path
+):
+    """Fixes custom Odoo regexp extensions in dbfilter for the backup service."""
+    with local.cwd(tmp_path):
+        run_copy(
+            src_path=str(cloned_template),
+            dst_path=".",
+            data={
+                "odoo_version": supported_odoo_version,
+                "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
+                "backup_dst": "file:///here",
+                "odoo_dbfilter": "^%d_%h$",
+            },
+            vcs_ref="test",
+            defaults=True,
+            overwrite=True,
+            unsafe=True,
+        )
+        prod = DockerClient(compose_files=["prod.yaml"]).compose.config()
+        assert prod.services["odoo"].environment["DB_FILTER"] == "^%d_%h$$"
+        assert prod.services["backup"].environment["DBS_TO_INCLUDE"] == "^.*_.*$$"

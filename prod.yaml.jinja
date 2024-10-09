@@ -21,7 +21,7 @@ services:
       - .docker/odoo.env
       - .docker/db-access.env
     environment:
-      DB_FILTER: "{{ odoo_dbfilter }}"
+      DB_FILTER: "{{ odoo_dbfilter | replace('$', '$$') }}"
       DOODBA_ENVIRONMENT: "${DOODBA_ENVIRONMENT-prod}"
       INITIAL_LANG: "{{ odoo_initial_lang }}"
       {%- if smtp_relay_host %}
