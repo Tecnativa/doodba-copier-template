@@ -4,13 +4,20 @@
 
 {#- This namespace holds repo versions #}
 {%- set proj_rev = namespace() %}
-
+{%- set proj_rev.ruff = "v0.1.3" %}
+{%- set proj_rev.pre_commit_hooks = "v4.5.0" %}
+{%- set proj_rev.odoo_pre_commit_hooks = "v0.0.29" %}
 {%- if odoo_version < 16 %}
   {%- set proj_rev.pylint_odoo = "v8.0.0" %}
 {%- elif odoo_version < 17 %}
   {%- set proj_rev.pylint_odoo = "v8.0.20" %}
-{%- else %}
+{%- elif odoo_version < 18 %}
   {%- set proj_rev.pylint_odoo = "v9.0.4" %}
+{%- else %}
+  {%- set proj_rev.pylint_odoo = "v9.1.3" %}
+  {%- set proj_rev.ruff = "v0.6.8" %}
+  {%- set proj_rev.pre_commit_hooks = "v4.6.0" %}
+  {%- set proj_rev.odoo_pre_commit_hooks = "v0.0.33" %}
 {%- endif -%}
 
 exclude: |
@@ -47,7 +54,7 @@ repos:
           - odoo/custom/src/private
   {% if odoo_version >= 14 -%}
   - repo: https://github.com/OCA/odoo-pre-commit-hooks
-    rev: v0.0.29
+    rev: {{ proj_rev.odoo_pre_commit_hooks }}
     hooks:
       - id: oca-checks-odoo-module
       - id: oca-checks-po
@@ -55,7 +62,7 @@ repos:
   {% endif -%}
   {% if odoo_version >= 13 -%}
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.3
+    rev: {{ proj_rev.ruff }}
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
@@ -104,7 +111,7 @@ repos:
           - prettier@2.7.1
           - "@prettier/plugin-xml@v2.2.0"
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: {{ proj_rev.pre_commit_hooks }}
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
