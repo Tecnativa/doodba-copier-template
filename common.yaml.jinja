@@ -39,6 +39,12 @@ services:
     environment:
       POSTGRES_DB: *dbname
       POSTGRES_USER: *dbuser
+      {%- if db_environment_extra %}
+      # Only for tests
+      {%- for key, value in db_environment_extra.items() %}
+      {{ key }}: {{ value }}
+      {%- endfor %}
+      {%- endif %}
       CONF_EXTRA: |
         work_mem = 512MB
     volumes:
