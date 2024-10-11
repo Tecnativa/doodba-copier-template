@@ -44,11 +44,12 @@ jobs:
           - 14.0
           - 15.0
           - 16.0
+          - 17.0
         include:
           - python-version: "3.10"
-            odoo-version: 17.0
+            odoo-version: 18.0
           - python-version: 3.11
-            odoo-version: 17.0
+            odoo-version: 18.0
         traefik_version:
           - 1
           - 2

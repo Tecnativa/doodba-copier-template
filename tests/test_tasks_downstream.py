@@ -349,6 +349,9 @@ def test_test_tasks(
             invoke("resetdb", "-m", module_name, "--dependencies")
             assert _install_status("mail") == "installed"
             # Test module simple call in init mode (default)
+            if supported_odoo_version >= 17:
+                # Uninstall module
+                invoke("uninstall", "-m", module_name)
             assert _install_status(module_name) == "uninstalled"
             stdout = invoke("test", "-m", module_name, retcode=None)
             # Ensure module was installed and tests ran
@@ -378,25 +381,32 @@ def test_test_tasks(
                         }
                     )
                 invoke("git-aggregate")
-                invoke("resetdb", "--extra", "--private", "--dependencies")
-                assert (
-                    _install_status("mail") == "installed"
-                )  # dependency of test_module
-                assert (
-                    _install_status("account") == "installed"
-                )  # dependency of account_invoice_refund_link
-                # Test "account_invoice_refund_link"
-                assert _install_status("test_module") == "uninstalled"
-                assert _install_status("account_invoice_refund_link") == "uninstalled"
-                stdout = invoke("test", "--private", "--extra", retcode=None)
-                # Ensure "test_module" and "account_invoice_refund_link" were installed
-                assert _install_status("test_module") == "installed"
-                assert _install_status("account_invoice_refund_link") == "installed"
-                _tests_ran(
-                    stdout, supported_odoo_version, "account_invoice_refund_link"
-                )
+                if supported_odoo_version < 18.0:
+                    # TODO: Put 19.0 once 'account_invoice_refund_link' is migrated to Odoo 18.0
+                    # Skip the tests for 'account_invoice_refund_link' as it's not available yet
+                    invoke("resetdb", "--extra", "--private", "--dependencies")
+                    assert (
+                        _install_status("mail") == "installed"
+                    )  # dependency of test_module
+                    assert (
+                        _install_status("account") == "installed"
+                    )  # dependency of account_invoice_refund_link
+                    # Test "account_invoice_refund_link"
+                    assert _install_status("test_module") == "uninstalled"
+                    assert (
+                        _install_status("account_invoice_refund_link") == "uninstalled"
+                    )
+                    stdout = invoke("test", "--private", "--extra", retcode=None)
+                    # Ensure "test_module" and "account_invoice_refund_link" were installed
+                    assert _install_status("test_module") == "installed"
+                    assert _install_status("account_invoice_refund_link") == "installed"
+                    _tests_ran(
+                        stdout, supported_odoo_version, "account_invoice_refund_link"
+                    )
             # Test --test-tags
-            if supported_odoo_version >= 12:
+            if supported_odoo_version >= 12 and supported_odoo_version < 18.0:
+                # TODO: Put 19.0 once 'account_invoice_refund_link' is migrated to Odoo 18.0
+                # Skip the tests for 'account_invoice_refund_link' as it's not available yet
                 with local.cwd(tmp_path / "odoo" / "custom" / "src" / "private"):
                     generate_test_addon(
                         "test_module",
