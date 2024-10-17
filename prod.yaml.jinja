@@ -88,19 +88,24 @@ services:
       - .docker/db-creation.env
     restart: unless-stopped
     {%- if postgres_exposed %}
+    {%- if traefik_version == 3 %}
     networks:
       default:
       inverseproxy_shared:
     labels:
       traefik.enable: "true"
       traefik.docker.network: "inverseproxy_shared"
-      {{- traefik2_labels.database(
+      {{- traefik3_labels_2.database(
         domains_prod,
         postgres_cidr_whitelist,
         _key,
         postgres_exposed_port,
         project_name,
       ) }}
+    {%- else %}
+    ports:
+      - "{{ postgres_exposed_port }}:5432"
+    {%- endif %}
     {%- endif %}
   {%- endif %}
 
