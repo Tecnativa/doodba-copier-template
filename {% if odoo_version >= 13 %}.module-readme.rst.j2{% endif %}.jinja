@@ -1,3 +1,4 @@
+{% raw -%}
 {%- macro fragment(name, title, sub='=') %}
 {%- if name in fragments %}
 {{- title }}
@@ -85,3 +86,4 @@ Current maintainer{% if manifest.maintainers|length > 1 %}s{% endif %}:
 
 {% for maintainer in manifest.maintainers %}|maintainer-{{ maintainer }}|{% if not loop.last %} {% endif %}{% endfor %}
 {% endif %}
+{% endraw -%}
