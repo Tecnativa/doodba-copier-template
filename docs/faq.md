@@ -408,7 +408,7 @@ pre-commit reformat your files in next commit, and commit again.
 Quick dirty recipe:
 
 ```bash
-copier --force update
+copier update --trust
 git add .
 pre-commit run
 git add .
