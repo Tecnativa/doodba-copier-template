@@ -42,8 +42,8 @@
   {%- endif %}
 {%- endmacro %}
 
-{%- macro domains_rule_sni(domain_group) -%}
-  {%- for host in domain_group.hosts -%}
+{%- macro domains_rule_sni(hosts) -%}
+  {%- for host in hosts -%}
     HostSNI(`{{ host }}`)
     {%- if not loop.last -%}
       ||
@@ -233,9 +233,12 @@
         {%- endfor %}
       {%- endif %}
 
-      {#- Apply rule to the first element in domain_groups_list #}
-      {%- set first_domain_group = domain_groups_list[0] %}
-      traefik.tcp.routers.{{ key }}-database.rule: {{ domains_rule_sni(first_domain_group) }}
+      {%- set ns_hosts = namespace(all_hosts=[]) %}
+      {%- for domain_group in domain_groups_list %}
+        {%- set ns_hosts.all_hosts = ns_hosts.all_hosts + domain_group.hosts %}
+      {%- endfor %}
+      traefik.tcp.routers.{{ key }}-database.rule: {{ domains_rule_sni(ns_hosts.all_hosts) }}
+
       {#- Remember basic middlewares for this domain group #}
       {%- set _ns = namespace(basic_middlewares=[]) -%}
       {%- if cidr_whitelist %}
