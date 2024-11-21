@@ -2,6 +2,7 @@
 {%- import "_traefik1_labels.yml.jinja" as traefik1_labels -%}
 {%- import "_traefik2_labels.yml.jinja" as traefik2_labels -%}
 {%- import "_traefik3_labels.yml.jinja" as traefik3_labels -%}
+{%- import "_traefik3_paths_labels.yml.jinja" as traefik3_labels_2 -%}
 {%- set _key = traefik2_labels.key(project_name, odoo_version, "test") -%}
 version: "2.4"
 
@@ -59,6 +60,26 @@ services:
     env_file:
       - .docker/db-creation.env
     restart: unless-stopped
+    {%- if postgres_exposed_test %}
+    {%- if traefik_version == 3 %}
+    networks:
+      default:
+      inverseproxy_shared:
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "inverseproxy_shared"
+      {{- traefik3_labels_2.database(
+        domains_test,
+        postgres_cidr_whitelist,
+        _key,
+        postgres_exposed_port_test,
+        project_name,
+      ) }}
+    {%- else %}
+    ports:
+      - "{{ postgres_exposed_port_test }}:5432"
+    {%- endif %}
+    {%- endif %}
   {%- endif %}
 
   smtp:
