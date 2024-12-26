@@ -24,6 +24,9 @@ services:
       DB_FILTER: "{{ odoo_dbfilter | replace('$', '$$') }}"
       DOODBA_ENVIRONMENT: "${DOODBA_ENVIRONMENT-prod}"
       INITIAL_LANG: "{{ odoo_initial_lang }}"
+      {%- if odoo_version >= 16.0 %}
+      ODOO_BUS_PUBLIC_SAMESITE_WS: 1
+      {%- endif %}
       {%- if smtp_relay_host %}
       SMTP_SERVER: smtplocal
       {%- endif %}
