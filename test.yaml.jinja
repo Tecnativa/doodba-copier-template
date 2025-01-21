@@ -64,6 +64,8 @@ services:
       service: db
     env_file:
       - .docker/db-creation.env
+    environment:
+      - DB_HOST={{ _key }}-db
     restart: unless-stopped
   {%- endif %}
 

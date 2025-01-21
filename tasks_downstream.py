@@ -26,10 +26,15 @@ except ImportError:
 
 PROJECT_ROOT = Path(__file__).parent.absolute()
 SRC_PATH = PROJECT_ROOT / "odoo" / "custom" / "src"
+
+_key = os.environ.get("_key", "")
+DB_SERVICE = os.environ.get("DB_HOST", f"{_key}-db")
+
 UID_ENV = {
     "GID": os.environ.get("DOODBA_GID", str(os.getgid())),
     "UID": os.environ.get("DOODBA_UID", str(os.getuid())),
     "DOODBA_UMASK": os.environ.get("DOODBA_UMASK", "27"),
+    "PGHOST": DB_SERVICE,
 }
 UID_ENV.update(
     {
