@@ -4,6 +4,7 @@ description = "Copier template to maintain Doodba integration projects"
 license = "BSL-1.0"
 name = "doodba-copier-template"
 version = "0.1.0"
+package-mode = false
 
 [tool.poetry.dependencies]
 copier = ">=9"
