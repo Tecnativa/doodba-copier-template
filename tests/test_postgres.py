@@ -9,6 +9,28 @@ from python_on_whales import DockerClient
 from .conftest import DBVER_PER_ODOO
 
 
+def _get_db_service_name(dc: DockerClient) -> str:
+    """
+    Use python-on-whales to retrieve the final Compose configuration
+    and return the DB service name that ends with '-db'. Fallback to
+    any service containing 'db' or 'postgres'. Finally, fallback to 'db'.
+    """
+    config_data = dc.compose.config()  # Returns a dict with { "services": {...}, ... }
+    services_dict = config_data["services"]
+    # First pass: Look for a service name that exactly ends with '-db'
+    for svc_name in services_dict:
+        if svc_name.lower().endswith("-db"):
+            return svc_name
+
+    # Second pass: Fallback to any name containing 'db' or 'postgres'
+    for svc_name in services_dict:
+        if "postgres" in svc_name.lower() or "db" in svc_name.lower():
+            return svc_name
+
+    # Final fallback
+    return "db"
+
+
 @pytest.mark.parametrize("dbver", ("oldest", "latest"))
 def test_postgresql_client_versions(
     cloned_template: Path,
@@ -40,6 +62,7 @@ def test_postgresql_client_versions(
         )
         try:
             dc_prod.compose.build()
+            db_svc = _get_db_service_name(dc_prod)
             odoo_pgdump_stdout = dc_prod.compose.run(
                 "odoo",
                 command=["pg_dump", "--version"],
@@ -50,7 +73,7 @@ def test_postgresql_client_versions(
                 odoo_pgdump_stdout.splitlines()[-1].strip().split(" ")[2].split(".")[0]
             )
             db_pgdump_stdout = dc_prod.compose.run(
-                "db",
+                db_svc,
                 command=["pg_dump", "--version"],
                 remove=True,
                 tty=False,
