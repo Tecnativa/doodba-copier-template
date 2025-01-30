@@ -31,6 +31,9 @@ def _get_db_service_name(dc: DockerClient) -> str:
     return "db"
 
 
+@pytest.mark.skip(
+    reason="Skipping test_postgresql_client_versions because of apt repo issues"
+)
 @pytest.mark.parametrize("dbver", ("oldest", "latest"))
 def test_postgresql_client_versions(
     cloned_template: Path,
