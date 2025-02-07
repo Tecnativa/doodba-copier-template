@@ -1,4 +1,8 @@
 #!/bin/bash
+## Use jessie from archive
+echo "deb http://archive.debian.org/debian jessie main" > /etc/apt/sources.list
+echo "deb http://archive.debian.org/debian-security jessie/updates main" >> /etc/apt/sources.list
+## Update pg repos
 # First one removes the current line
 echo "deb https://apt-archive.postgresql.org/pub/repos/apt jessie-pgdg-archive main" > /etc/apt/sources.list.d/postgresql.list
 # Second one appends
