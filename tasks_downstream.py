@@ -26,10 +26,42 @@ except ImportError:
 
 PROJECT_ROOT = Path(__file__).parent.absolute()
 SRC_PATH = PROJECT_ROOT / "odoo" / "custom" / "src"
+
+# _key = os.environ.get("_key", "").strip()
+# DB_SERVICE = os.environ.get("DB_HOST") or (_key + "-db" if _key else "db")
+
+
+def get_db_service_name():
+    """
+    Return the database service name that ends with '-db'. If not found,
+    fall back to any service containing 'postgres' or 'db'. As a last
+    resort, return 'db'.
+    """
+    for filename in ("devel.yaml", "devel.yml", "docker-compose.yml"):
+        compose_file = PROJECT_ROOT / filename
+        if compose_file.exists():
+            with open(compose_file) as f:
+                try:
+                    compose_data = yaml.safe_load(f) or {}
+                    services = compose_data.get("services", {})
+                    for svc in services:
+                        if svc.lower().endswith("-db"):
+                            return svc
+                    for svc in services:
+                        if "postgres" in svc.lower() or "db" in svc.lower():
+                            return svc
+                except yaml.YAMLError:
+                    pass
+    return "db"
+
+
+DB_SERVICE = get_db_service_name()
+
 UID_ENV = {
     "GID": os.environ.get("DOODBA_GID", str(os.getgid())),
     "UID": os.environ.get("DOODBA_UID", str(os.getuid())),
     "DOODBA_UMASK": os.environ.get("DOODBA_UMASK", "27"),
+    "PGHOST": DB_SERVICE,
 }
 UID_ENV.update(
     {
@@ -982,7 +1014,9 @@ def snapshot(
     if not destination_db:
         destination_db = f"{source_db}-{datetime.now().strftime('%Y_%m_%d-%H_%M')}"
     with c.cd(str(PROJECT_ROOT)):
-        cur_state = c.run(f"{DOCKER_COMPOSE_CMD} stop odoo db", pty=True).stdout
+        cur_state = c.run(
+            f"{DOCKER_COMPOSE_CMD} stop odoo {DB_SERVICE}", pty=True
+        ).stdout
         _logger.info("Snapshoting current %s DB to %s", (source_db, destination_db))
         _run = f"{DOCKER_COMPOSE_CMD} run --rm -l traefik.enable=false odoo"
         c.run(
@@ -992,7 +1026,7 @@ def snapshot(
         )
         if "Stopping" in cur_state:
             # Restart services if they were previously active
-            c.run(f"{DOCKER_COMPOSE_CMD} start odoo db", pty=True)
+            c.run(f"{DOCKER_COMPOSE_CMD} start odoo {DB_SERVICE}", pty=True)
 
 
 @task(
@@ -1013,7 +1047,9 @@ def restore_snapshot(
     Uses click-odoo-copydb behind the scenes to restore a DB snapshot.
     """
     with c.cd(str(PROJECT_ROOT)):
-        cur_state = c.run(f"{DOCKER_COMPOSE_CMD} stop odoo db", pty=True).stdout
+        cur_state = c.run(
+            f"{DOCKER_COMPOSE_CMD} stop odoo {DB_SERVICE}", pty=True
+        ).stdout
         if not snapshot_name:
             # List DBs
             res = c.run(
@@ -1054,4 +1090,4 @@ def restore_snapshot(
             pty=True,
         )
         if "Stopping" in cur_state:
-            c.run(f"{DOCKER_COMPOSE_CMD} start odoo db", pty=True)
+            c.run(f"{DOCKER_COMPOSE_CMD} start odoo {DB_SERVICE}", pty=True)
