@@ -1,4 +1,6 @@
 {% import "_macros.jinja" as macros -%}
+{%- import "_traefik2_labels.yml.jinja" as traefik2_labels -%}
+
 version: "2.4"
 
 services:
@@ -39,6 +41,7 @@ services:
     environment:
       POSTGRES_DB: *dbname
       POSTGRES_USER: *dbuser
+      PGHOST: "${DB_HOST:-db}"
       CONF_EXTRA: |
         work_mem = 512MB
     volumes:

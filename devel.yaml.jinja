@@ -1,4 +1,6 @@
 {%- import "_macros.jinja" as macros -%}
+{%- import "_traefik2_labels.yml.jinja" as traefik2_labels -%}
+{%- set _key = traefik2_labels.key(project_name, odoo_version, "devel") -%}
 {% set whitelisted_hosts = (
   "cdnjs.cloudflare.com",
   "fonts.googleapis.com",
@@ -52,11 +54,12 @@ services:
       WDB_WEB_PORT: "{{ macros.version_major(odoo_version) }}984"
       # To avoid installing demo data export DOODBA_WITHOUT_DEMO=all
       WITHOUT_DEMO: "${DOODBA_WITHOUT_DEMO-false}"
+      PGHOST: {{ _key }}-db
     volumes:
       - ./odoo/custom:/opt/odoo/custom:ro,z
       - ./odoo/auto:/opt/odoo/auto:rw,z
     depends_on:
-      - db
+      - {{ _key }}-db
       {% for host in whitelisted_hosts -%}
       - proxy_{{ host|replace(".", "_") }}
       {% endfor -%}
@@ -77,13 +80,14 @@ services:
       {%- endif %}
 
   {% if postgres_version -%}
-  db:
+  {{ _key }}-db:
     extends:
       file: common.yaml
       service: db
     environment:
       POSTGRES_DB: *dbname
       POSTGRES_PASSWORD: odoopassword
+      DB_HOST: {{ _key }}-db
   {%- endif %}
 
   pgweb:
@@ -92,9 +96,10 @@ services:
     ports:
       - "127.0.0.1:{{ macros.version_major(odoo_version) }}081:8081"
     environment:
-      DATABASE_URL: postgres://{{ postgres_username }}:odoopassword@db:5432/devel?sslmode=disable
+      DATABASE_URL: postgres://{{ postgres_username }}:odoopassword@{{ _key }}-db:5432/devel?sslmode=disable
+      PGHOST: {{ _key }}-db
     depends_on:
-      - db
+      - {{ _key }}-db
 
   smtp:
     extends:
