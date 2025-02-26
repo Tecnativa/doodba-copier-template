@@ -30,9 +30,8 @@ services:
       {%- if smtp_relay_host %}
       SMTP_SERVER: smtplocal
       {%- endif %}
-      PGHOST: {{ _key }}-db
     depends_on:
-      - {{ _key }}-db
+      - db
       {%- if smtp_relay_host %}
       - smtp
       {%- endif %}
@@ -84,12 +83,10 @@ services:
       {%- endif %}
 
   {% if postgres_version -%}
-  {{ _key }}-db:
+  db:
     extends:
       file: common.yaml
       service: db
-    environment:
-      - DB_HOST={{ _key }}-db
     env_file:
       - .docker/db-creation.env
     restart: unless-stopped
@@ -139,10 +136,8 @@ services:
       - .docker/backup.env
       - .docker/db-access.env
     restart: unless-stopped
-    environment:
-      PGHOST: {{ _key }}-db
     depends_on:
-      - {{ _key }}-db
+      - db
       {%- if smtp_relay_host %}
       - smtp
       {%- endif %}
