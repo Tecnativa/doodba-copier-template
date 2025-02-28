@@ -32,7 +32,7 @@ services:
       {%- endif %}
       PGHOST: {{ _key }}-db
     depends_on:
-      - {{ _key }}-db
+      - db
       {%- if smtp_relay_host %}
       - smtp
       {%- endif %}
@@ -84,7 +84,7 @@ services:
       {%- endif %}
 
   {% if postgres_version -%}
-  {{ _key }}-db:
+  db:
     extends:
       file: common.yaml
       service: db
@@ -97,6 +97,8 @@ services:
     {%- if traefik_version == 3 %}
     networks:
       default:
+        aliases:
+            - "{{ _key }}-db"
       inverseproxy_shared:
     labels:
       traefik.enable: "true"
@@ -112,6 +114,11 @@ services:
     ports:
       - "{{ postgres_exposed_port }}:5432"
     {%- endif %}
+    {%- else %}
+    networks:
+      default:
+        aliases:
+            - "{{ _key }}-db"
     {%- endif %}
   {%- endif %}
 
@@ -139,10 +146,8 @@ services:
       - .docker/backup.env
       - .docker/db-access.env
     restart: unless-stopped
-    environment:
-      PGHOST: {{ _key }}-db
     depends_on:
-      - {{ _key }}-db
+      - db
       {%- if smtp_relay_host %}
       - smtp
       {%- endif %}
