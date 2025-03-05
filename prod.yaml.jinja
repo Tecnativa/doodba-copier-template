@@ -93,12 +93,11 @@ services:
     env_file:
       - .docker/db-creation.env
     restart: unless-stopped
-    {%- if postgres_exposed %}
-    {%- if traefik_version == 3 %}
     networks:
       default:
         aliases:
-            - "{{ _key }}-db"
+          - "{{ _key }}-db"
+    {%- if postgres_exposed and traefik_version >= 3 %}
       inverseproxy_shared:
     labels:
       traefik.enable: "true"
@@ -113,12 +112,6 @@ services:
     {%- else %}
     ports:
       - "{{ postgres_exposed_port }}:5432"
-    {%- endif %}
-    {%- else %}
-    networks:
-      default:
-        aliases:
-            - "{{ _key }}-db"
     {%- endif %}
   {%- endif %}
 
