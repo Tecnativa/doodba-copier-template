@@ -106,6 +106,70 @@ def _get_cwd_addon(file):
             return None
 
 
+def _scan_subrepos_and_add_path_mappings(
+    cw_config,
+    debugpy_configuration,
+    firefox_configuration,
+    chrome_configuration,
+):
+    """Scan subrepos in SRC_PATH, configure folders & pathMappings."""
+    for subrepo in SRC_PATH.glob("*"):
+        if not subrepo.is_dir():
+            continue
+        if (subrepo / ".git").exists() and subrepo.name != "odoo":
+            cw_config["folders"].append(
+                {"path": str(subrepo.relative_to(PROJECT_ROOT))}
+            )
+
+        # Check if subrepo is itself a doodba-copier project
+        is_doodba_subproject = False
+        answers_file = subrepo / ".copier-answers.yml"
+        if answers_file.is_file():
+            with answers_file.open() as f:
+                answers = yaml.safe_load(f) or {}
+            if "Tecnativa/doodba-copier-template" in answers.get("_src_path", ""):
+                is_doodba_subproject = True
+
+        private_dir = subrepo / "odoo" / "custom" / "src" / "private"
+        # Default scanning approach (1-level + addons/* + private/*)
+        for addon in chain(
+            subrepo.glob("*"),
+            subrepo.glob("addons/*"),
+            private_dir.glob("*"),
+        ):
+            if (addon / "__manifest__.py").is_file() or (
+                addon / "__openerp__.py"
+            ).is_file():
+                if is_doodba_subproject:
+                    local_path = "${workspaceFolder:%s}/odoo/custom/src/private/%s" % (  # noqa: UP031
+                        subrepo.name,
+                        addon.name,
+                    )
+                elif subrepo.name == "odoo":
+                    local_path = "${workspaceFolder:%s}/addons/%s/" % (  # noqa: UP031
+                        subrepo.name,
+                        addon.name,
+                    )
+                else:
+                    local_path = "${workspaceFolder:%s}/%s" % (  # noqa: UP031
+                        subrepo.name,
+                        addon.name,
+                    )
+                debugpy_configuration["pathMappings"].append(
+                    {
+                        "localRoot": local_path,
+                        "remoteRoot": f"/opt/odoo/auto/addons/{addon.name}/",
+                    }
+                )
+                url = f"http://localhost:{ODOO_VERSION:.0f}069/{addon.name}/static/"
+                path = "${workspaceFolder:%s}/%s/static/" % (  # noqa: UP031
+                    subrepo.name,
+                    addon.relative_to(subrepo),
+                )
+                firefox_configuration["pathMappings"].append({"url": url, "path": path})
+                chrome_configuration["pathMapping"][url] = path
+
+
 @task
 def write_code_workspace_file(c, cw_path=None):
     """Generate code-workspace file definition.
@@ -126,7 +190,7 @@ def write_code_workspace_file(c, cw_path=None):
     Example: `--cw-path doodba.my-custom-name.code-workspace`
     """
     root_name = f"doodba.{PROJECT_ROOT.name}"
-    root_var = "${workspaceFolder:%s}" % root_name
+    root_var = "${workspaceFolder:%s}" % root_name  # noqa: UP031
     if not cw_path:
         try:
             cw_path = next(PROJECT_ROOT.glob("doodba.*.code-workspace"))
@@ -202,6 +266,7 @@ def write_code_workspace_file(c, cw_path=None):
     }
     if chrome_executable:
         chrome_configuration["runtimeExecutable"] = chrome_executable
+
     cw_config["launch"] = {
         "compounds": [
             {
@@ -222,7 +287,7 @@ def write_code_workspace_file(c, cw_path=None):
             chrome_configuration,
         ],
     }
-    # Configure folders and debuggers
+    # Configure pathMappings for the main odoo folder
     debugpy_configuration["pathMappings"].append(
         {
             "localRoot": "${workspaceFolder:odoo}/",
@@ -230,38 +295,13 @@ def write_code_workspace_file(c, cw_path=None):
         }
     )
     cw_config["folders"] = []
-    for subrepo in SRC_PATH.glob("*"):
-        if not subrepo.is_dir():
-            continue
-        if (subrepo / ".git").exists() and subrepo.name != "odoo":
-            cw_config["folders"].append(
-                {"path": str(subrepo.relative_to(PROJECT_ROOT))}
-            )
-        for addon in chain(subrepo.glob("*"), subrepo.glob("addons/*")):
-            if (addon / "__manifest__.py").is_file() or (
-                addon / "__openerp__.py"
-            ).is_file():
-                if subrepo.name == "odoo":
-                    # ruff: noqa: UP031
-                    local_path = "${workspaceFolder:%s}/addons/%s/" % (
-                        subrepo.name,
-                        addon.name,
-                    )
-                else:
-                    local_path = "${workspaceFolder:%s}/%s" % (subrepo.name, addon.name)
-                debugpy_configuration["pathMappings"].append(
-                    {
-                        "localRoot": local_path,
-                        "remoteRoot": f"/opt/odoo/auto/addons/{addon.name}/",
-                    }
-                )
-                url = f"http://localhost:{ODOO_VERSION:.0f}069/{addon.name}/static/"
-                path = "${workspaceFolder:%s}/%s/static/" % (
-                    subrepo.name,
-                    addon.relative_to(subrepo),
-                )
-                firefox_configuration["pathMappings"].append({"url": url, "path": path})
-                chrome_configuration["pathMapping"][url] = path
+    _scan_subrepos_and_add_path_mappings(
+        cw_config,
+        debugpy_configuration,
+        firefox_configuration,
+        chrome_configuration,
+    )
+
     cw_config["tasks"] = {
         "version": "2.0.0",
         "tasks": [
@@ -1038,7 +1078,7 @@ def restore_snapshot(
             snapshot_name = max(db_list, key=lambda x: x[1])[0]
             if not snapshot_name:
                 raise exceptions.PlatformError(
-                    "No snapshot found for destination_db %s" % destination_db
+                    "No snapshot found for destination_db %s" % destination_db  # noqa: UP031
                 )
         _logger.info("Restoring snapshot %s to %s", (snapshot_name, destination_db))
         _run = f"{DOCKER_COMPOSE_CMD} run --rm -l traefik.enable=false odoo"
