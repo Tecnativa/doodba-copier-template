@@ -24,6 +24,7 @@ services:
       SMTP_SERVER: smtplocal
       # Just in case you use queue_job
       ODOO_QUEUE_JOB_CHANNELS: "root:1"
+      PGHOST: {{ _key }}-db
     restart: unless-stopped
     {%- if domains_test %}
     hostname: {{ macros.first_main_domain(domains_test)|tojson }}
@@ -61,8 +62,14 @@ services:
     extends:
       file: common.yaml
       service: db
+    environment:
+      - DB_HOST={{ _key }}-db
     env_file:
       - .docker/db-creation.env
+    networks:
+      default:
+        aliases:
+            - "{{ _key }}-db"
     restart: unless-stopped
   {%- endif %}
 
