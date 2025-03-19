@@ -90,6 +90,11 @@
       {%- endif %}
 {%- endmacro %}
 
+{%- macro custom_ws_middleware(key) -%}
+ {#- Force X-Forwarded-Proto to https for websockets #}
+      traefik.http.middlewares.{{ key }}-override-ws-headers.headers.customRequestHeaders.X-Forwarded-Proto: "https"
+{%- endmacro %}
+
 {%- macro common_middlewares(key, cidr_whitelist) %}
       {#- Common middlewares #}
       traefik.http.middlewares.{{ key }}-buffering.buffering.retryExpression:
@@ -111,10 +116,12 @@
 
 {%- macro odoo(domain_groups_list, cidr_whitelist, key, odoo_version,
                paths_without_crawlers, project_name) %}
+      {%- if odoo_version >= 16%}
+      {{- custom_ws_middleware(key) }}
+      {%- endif %}
       {#- Service #}
       traefik.http.services.{{ key }}-main.loadbalancer.server.port: 8069
       traefik.http.services.{{ key }}-longpolling.loadbalancer.server.port: 8072
-
       {%- call(domain_group) macros.domains_loop_grouped(domain_groups_list) %}
       {#- Remember basic middlewares for this domain group #}
       {%- set _ns = namespace(basic_middlewares=[]) -%}
@@ -164,6 +171,11 @@
       {#- Longpolling router #}
       {%- if not domain_group.path_prefixes %}
       {%- set longpolling_route = "PathPrefix(`/longpolling/`)" if odoo_version < 16 else "Path(`/websocket`)" -%}
+      {%- if odoo_version >= 16 %}
+      {%- set ws_middlewares = _ns.basic_middlewares + ["override-ws-headers"] %}
+      {%- else %}
+      {%- set ws_middlewares = _ns.basic_middlewares %}
+      {%- endif %}
       {{-
         router(
           domain_group=domain_group,
@@ -171,7 +183,7 @@
           suffix="longpolling",
           rule="%s && %s" % (domains_rule(domain_group), longpolling_route),
           service="longpolling",
-          middlewares=_ns.basic_middlewares,
+          middlewares=ws_middlewares,
         )
       }}
       {%- endif %}
