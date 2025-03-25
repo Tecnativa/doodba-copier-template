@@ -89,7 +89,7 @@ services:
       file: common.yaml
       service: db
     environment:
-      - DB_HOST={{ _key }}-db
+      DB_HOST: {{ _key }}-db
     env_file:
       - .docker/db-creation.env
     restart: unless-stopped
