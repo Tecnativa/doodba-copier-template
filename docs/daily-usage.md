@@ -272,7 +272,7 @@ docker compose up -d backup
 docker compose exec backup restore --time TIME_IN_BACKUP_NAME --force
 
 # ⚠️ DELETE PRODUCTION database
-#docker compose backup dropdb
+#docker compose exec backup dropdb
 
 # create new empty database
 docker compose exec backup createdb
