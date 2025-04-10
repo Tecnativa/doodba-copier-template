@@ -12,6 +12,7 @@
     "ms-python.python",
     "msjsdiag.debugger-for-chrome",
     "redhat.vscode-xml",
-    "samuelcolvin.jinjahtml"
+    "samuelcolvin.jinjahtml",
+    "Odoo.owl-vision"
   ]
 }
