@@ -1,2 +1,5 @@
 ARG ODOO_VERSION
 FROM ghcr.io/tecnativa/doodba:${ODOO_VERSION}-onbuild
+ONBUILD ARG FONT_MONO="Noto Mono"
+ONBUILD ARG FONT_SANS="Noto Sans"
+ONBUILD ARG FONT_SERIF="Noto Serif"
