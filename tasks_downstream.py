@@ -767,7 +767,7 @@ def _get_module_list(
         "extra": "Test all extra addons. Default: False",
         "private": "Test all private addons. Default: False",
         "enterprise": "Test all enterprise addons. Default: False",
-        "skip": "List of addons to skip. Default: []",
+        "skip": "Comma-separated list of modules to skip. Default: ''",
         "debugpy": "Whether or not to run tests in a VSCode debugging session. "
         "Default: False",
         "cur-file": "Path to the current file."
@@ -824,9 +824,10 @@ def test(
         if not m_to_skip:
             continue
         if m_to_skip not in modules_list:
-            _logger.warn(
-                "%s not found in the list of addons to test: %s", (m_to_skip, modules)
+            _logger.warning(
+                "%s not found in the list of addons to test: %s", m_to_skip, modules
             )
+            continue
         modules_list.remove(m_to_skip)
     modules = ",".join(modules_list)
     odoo_command.append(modules)
