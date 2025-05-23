@@ -12,6 +12,7 @@ import subprocess
 import tempfile
 import time
 from datetime import datetime
+from glob import iglob
 from itertools import chain
 from logging import getLogger
 from pathlib import Path
@@ -627,6 +628,102 @@ def install(
             env=UID_ENV,
             pty=True,
         )
+
+
+@task(
+    help={
+        "module": "Specific Odoo module to update.",
+        "all": "Update all modules. Takes a lot of time. [default: False]",
+        "repo": "Update all modules from a specific repository.",
+        "msgmerge": "Merge .pot changes into all .po files. [default: True]",
+        "fuzzy_matching": "Use fuzzy matching when merging. [default: False]",
+        "purge_old_translations": "Remove lines with old translations. [default: True]",
+        "remove_dates": "Remove dates from .po files. [default: True]",
+    }
+)
+def updatepot(
+    c,
+    module=None,
+    _all=False,
+    repo=None,
+    msgmerge=True,
+    fuzzy_matching=False,
+    purge_old_translations=True,
+    remove_dates=True,
+):
+    """Updates POT of a given module"""
+    if not module and not _all and not repo:
+        cur_module = _get_cwd_addon(Path.cwd())
+        if not cur_module:
+            raise exceptions.ParseError(
+                msg="Odoo addon to update translation not found "
+                "You must provide at least one of: -m {module}, "
+                "be in the subdirectory of a module, --all or -r {repo} "
+                "See --help for details."
+            )
+        module = cur_module
+
+    cmd = (
+        DOCKER_COMPOSE_CMD
+        + f" run --rm  -v {PROJECT_ROOT}/odoo/custom:/tmp/odoo/custom:rw,z "
+        f"-v {PROJECT_ROOT}/odoo/auto:/tmp/odoo/auto:rw,z odoo "
+        "click-odoo-makepot --addons-dir "
+        f"{'/tmp/odoo/auto/addons' if not repo else '/tmp/odoo/custom/src/' + repo}/"
+    )
+
+    cmd += " --msgmerge" if msgmerge else " --no-msgmerge"
+    cmd += " --no-fuzzy-matching" if not fuzzy_matching else " --fuzzy-matching"
+    cmd += (
+        " --purge-old-translations"
+        if purge_old_translations
+        else " --no-purge-old-translations"
+    )
+    if not _all and not repo:
+        cmd += f" -m {module}"
+
+    with c.cd(str(PROJECT_ROOT)):
+        c.run(DOCKER_COMPOSE_CMD + " stop odoo")
+        c.run(
+            cmd,
+            env=UID_ENV,
+            pty=True,
+        )
+    glob = (
+        f"{PROJECT_ROOT}/odoo/custom/src/{'*' if not repo else repo}"
+        f"/{'*' if _all or repo else module}/i18n/"
+    )
+    new_files = iglob(f"{glob}/*.po*")
+    for new_file in new_files:
+        file_name = os.path.basename(new_file)
+        if file_name.endswith("~"):
+            os.remove(new_file)
+            continue
+        with open(new_file) as fd:
+            content = fd.read()
+        new_lines = []
+        for line in content.splitlines():
+            if remove_dates and (
+                line.startswith('"POT-Creation-Date')
+                or line.startswith('"PO-Revision-Date')
+            ):
+                continue
+            new_lines.append(line)
+        content = "\n".join(new_lines)
+        with open(new_file, "w") as fd:
+            fd.write(content.strip() + "\n")
+    _logger.info(".po[t] files updated")
+    precommit_cmd = f"pre-commit run --files {' '.join(iglob(f'{glob}/*.po*'))}"
+
+    if not repo and module:
+        for folder in iglob(f"{PROJECT_ROOT}/odoo/custom/src/*/*"):
+            if os.path.isdir(folder) and os.path.basename(folder) == module:
+                repo = os.path.basename(os.path.dirname(folder))
+                break
+    precommit_folder = (
+        str(PROJECT_ROOT) + f"/odoo/custom/src/{repo}" if repo != "private" else ""
+    )
+    with c.cd(str(precommit_folder)):
+        c.run(precommit_cmd)
 
 
 @task(
