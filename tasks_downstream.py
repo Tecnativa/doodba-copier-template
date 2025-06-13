@@ -555,14 +555,23 @@ def lint(c, verbose=False):
 
 
 @task()
-def start(c, detach=True, debugpy=False, _reload=True, port_prefix=0):
+def start(
+    c,
+    detach=True,
+    debugpy=False,
+    _reload=True,
+    port_prefix=0,
+    pydevd=False,
+    pycharm=False,
+):
     """Start environment."""
     cmd = DOCKER_COMPOSE_CMD + " up"
+    disable_reload = any([not _reload, debugpy, pydevd, pycharm])
     with tempfile.NamedTemporaryFile(
         mode="w",
         suffix=".yaml",
     ) as tmp_docker_compose_file:
-        if debugpy or not _reload:
+        if disable_reload:
             # Remove auto-reload
             cmd = (
                 DOCKER_COMPOSE_CMD + " -f docker-compose.yml "
@@ -578,6 +587,8 @@ def start(c, detach=True, debugpy=False, _reload=True, port_prefix=0):
             env = dict(
                 UID_ENV,
                 DOODBA_DEBUGPY_ENABLE=str(int(debugpy)),
+                DOODBA_PYDEVD_ENABLE=str(int(pydevd)),
+                DOODBA_PYCHARM_ENABLE=str(int(pycharm)),
             )
             if port_prefix:
                 env["PORT_PREFIX"] = str(port_prefix)
