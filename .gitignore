@@ -26,6 +26,8 @@
 /doodba.*.code-workspace
 /src
 .idea/*
+# Ignore local dependencies
+/odoo/custom/dependencies/*-local.*
 
 # Project-specific docker configurations
 /.docker/
