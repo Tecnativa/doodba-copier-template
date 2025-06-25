@@ -258,7 +258,6 @@ volumes:
 <summary>Traefik v2 docker compose</summary>
 
 ```yaml
-version: "2.4"
 services:
   proxy:
     image: traefik:2.4
@@ -351,7 +350,6 @@ volumes:
 <summary>Traefik v3 docker compose</summary>
 
 ```yaml
-version: "2.4"
 services:
   proxy:
     image: traefik:3.0
