@@ -11,12 +11,14 @@ import stat
 import subprocess
 import tempfile
 import time
+import xml.dom.minidom
 from datetime import datetime
 from glob import iglob
 from itertools import chain
 from logging import getLogger
 from pathlib import Path
 from shutil import which
+from xml.etree.ElementTree import Element, SubElement, tostring
 
 from invoke import exceptions, task
 
@@ -169,6 +171,105 @@ def _scan_subrepos_and_add_path_mappings(
                 )
                 firefox_configuration["pathMappings"].append({"url": url, "path": path})
                 chrome_configuration["pathMapping"][url] = path
+
+
+@task
+def generate_idea_conf(c):
+    """Generate .idea to be able to use pycharm debugger."""
+    run_config_dir = Path(".idea/runConfigurations")
+    run_config_dir.mkdir(parents=True, exist_ok=True)
+    config_filename = "debug_odoo.xml"
+    config_file = run_config_dir / config_filename
+    component = Element("component", {"name": "ProjectRunConfigurationManager"})
+    configuration = SubElement(
+        component,
+        "configuration",
+        {
+            "name": "Debug Odoo",
+            "type": "PyRemoteDebugConfigurationType",
+            "factoryName": "Python Remote Debug",
+        },
+    )
+    SubElement(configuration, "module", {"name": PROJECT_ROOT.name})
+    SubElement(configuration, "option", {"name": "PORT", "value": "6988"})
+    SubElement(configuration, "option", {"name": "HOST", "value": "localhost"})
+    path_mapping_settings = SubElement(configuration, "PathMappingSettings")
+    option = SubElement(path_mapping_settings, "option", {"name": "pathMappings"})
+    mapping_list = SubElement(option, "list")
+    full_path = SRC_PATH.resolve()
+    for subrepo in SRC_PATH.glob("*"):
+        if not subrepo.is_dir():
+            continue
+        # Check if subrepo is itself a doodba-copier project
+        is_doodba_subproject = False
+        answers_file = subrepo / ".copier-answers.yml"
+        if answers_file.is_file():
+            with answers_file.open() as f:
+                answers = yaml.safe_load(f) or {}
+            if "Tecnativa/doodba-copier-template" in answers.get("_src_path", ""):
+                is_doodba_subproject = True
+        private_dir = subrepo / "odoo" / "custom" / "src" / "private"
+        # Default scanning approach (1-level + addons/* + private/*)
+        for addon in chain(
+            subrepo.glob("*"),
+            subrepo.glob("addons/*"),
+            private_dir.glob("*"),
+        ):
+            if (addon / "__manifest__.py").is_file() or (
+                addon / "__openerp__.py"
+            ).is_file():
+                if is_doodba_subproject:
+                    local_path = "%s/%s/odoo/custom/src/private/%s" % (  # noqa: UP031
+                        full_path,
+                        subrepo.name,
+                        addon.name,
+                    )
+                elif subrepo.name == "odoo":
+                    local_path = "%s/%s/addons/%s" % (  # noqa: UP031
+                        full_path,
+                        subrepo.name,
+                        addon.name,
+                    )
+                else:
+                    local_path = "%s/%s/%s" % (  # noqa: UP031
+                        full_path,
+                        subrepo.name,
+                        addon.name,
+                    )
+                SubElement(
+                    mapping_list,
+                    "mapping",
+                    {
+                        "local-root": local_path,
+                        "remote-root": f"/opt/odoo/auto/addons/{addon.name}",
+                    },
+                )
+    SubElement(
+        mapping_list,
+        "mapping",
+        {
+            "local-root": "%s/odoo/odoo-bin" % full_path,  # noqa: UP031
+            "remote-root": "/usr/local/bin/odoo",
+        },
+    )
+    SubElement(
+        mapping_list,
+        "mapping",
+        {
+            "local-root": "%s/odoo" % full_path,  # noqa: UP031
+            "remote-root": "/opt/odoo/custom/src/odoo",
+        },
+    )
+    SubElement(configuration, "option", {"name": "REDIRECT_OUTPUT", "value": "true"})
+    SubElement(
+        configuration, "option", {"name": "SUSPEND_AFTER_CONNECT", "value": "true"}
+    )
+    SubElement(configuration, "method", {"v": "2"})
+    xml_str = tostring(component, "utf-8")
+    parsed = xml.dom.minidom.parseString(xml_str)
+    pretty_xml = parsed.toprettyxml(indent="  ")
+    with open(config_file, "w", encoding="utf-8") as f:
+        f.write(pretty_xml)
 
 
 @task
@@ -476,6 +577,7 @@ def develop(c):
         c.run("git init")
         c.run("ln -sf devel.yaml docker-compose.yml")
         write_code_workspace_file(c)
+        generate_idea_conf(c)
         c.run("pre-commit install")
 
 
@@ -491,6 +593,7 @@ def git_aggregate(c):
             env=UID_ENV,
         )
     write_code_workspace_file(c)
+    generate_idea_conf(c)
     for git_folder in SRC_PATH.glob("*/.git/.."):
         action = (
             "install"
@@ -537,14 +640,14 @@ def lint(c, verbose=False):
 
 
 @task()
-def start(c, detach=True, debugpy=False):
+def start(c, detach=True, debugpy=False, pydevd=False, pycharm=False):
     """Start environment."""
     cmd = DOCKER_COMPOSE_CMD + " up"
     with tempfile.NamedTemporaryFile(
         mode="w",
         suffix=".yaml",
     ) as tmp_docker_compose_file:
-        if debugpy:
+        if debugpy or pydevd or pycharm:
             # Remove auto-reload
             cmd = (
                 DOCKER_COMPOSE_CMD + " -f docker-compose.yml "
@@ -563,6 +666,8 @@ def start(c, detach=True, debugpy=False):
                 env=dict(
                     UID_ENV,
                     DOODBA_DEBUGPY_ENABLE=str(int(debugpy)),
+                    DOODBA_PYDEVD_ENABLE=str(int(pydevd)),
+                    DOODBA_PYCHARM_ENABLE=str(int(pycharm)),
                 ),
             )
             if not (
