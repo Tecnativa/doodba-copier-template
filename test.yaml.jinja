@@ -15,6 +15,7 @@ services:
       - .docker/db-access.env
     environment:
       DOODBA_ENVIRONMENT: "${DOODBA_ENVIRONMENT-test}"
+      LIST_DB: "{{ odoo_listdb_staging | tojson }}"
       {%- if odoo_version >= 16.0 %}
       ODOO_BUS_PUBLIC_SAMESITE_WS: 1
       {%- endif %}
