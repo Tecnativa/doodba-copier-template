@@ -20,7 +20,6 @@ services:
       PGDATABASE: &dbname {{ postgres_dbname }}
       PGUSER: &dbuser "{{ postgres_username }}"
       PROXY_MODE: "{% if odoo_proxy %}true{% else %}false{% endif %}"
-      LIST_DB: "{{ odoo_listdb | tojson }}"
     tty: true
     volumes:
       - filestore:/var/lib/odoo:z
