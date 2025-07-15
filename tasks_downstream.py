@@ -1006,8 +1006,10 @@ def resetdb(
             warn=True,
             pty=True,
         )
+        lang = os.getenv("INITIAL_LANG")
+        lang_opt = f" --lang {lang}" if lang else ""
         c.run(
-            f"{_run} click-odoo-initdb -n {dbname} -m {modules}",
+            f"{_run} click-odoo-initdb -n {dbname} -m {modules}{lang_opt}",
             env=UID_ENV,
             pty=True,
         )
