@@ -712,8 +712,9 @@ def updatepot(
         with open(new_file, "w") as fd:
             fd.write(content.strip() + "\n")
     _logger.info(".po[t] files updated")
-    precommit_cmd = f"pre-commit run --files {' '.join(iglob(f'{glob}/*.po*'))}"
-
+    precommit_cmd = (
+        f"pre-commit run --files {' '.join(iglob(f'{glob}/*.po*'))}" "--color=always"
+    )
     if not repo and module:
         for folder in iglob(f"{PROJECT_ROOT}/odoo/custom/src/*/*"):
             if os.path.isdir(folder) and os.path.basename(folder) == module:
