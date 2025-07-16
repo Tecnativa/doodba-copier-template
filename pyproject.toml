@@ -8,7 +8,7 @@ package-mode = false
 
 [tool.poetry.dependencies]
 copier = ">=9"
-plumbum = "^1.8.2"
+plumbum = "^1.9.0"
 python = "^3.8.1"
 
 [tool.poetry.dev-dependencies]
