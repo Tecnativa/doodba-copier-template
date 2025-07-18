@@ -28,3 +28,4 @@
 
 # Project-specific docker configurations
 /.docker/
+.idea
