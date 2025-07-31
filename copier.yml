@@ -351,6 +351,17 @@ paths_without_crawlers:
     💡 We will convert this to `Path` rules. Check valid syntax in
     https://docs.traefik.io/routing/routers/#rule
 
+paths_with_crawlers:
+  multiline: true
+  default:
+    - /web/image/website
+  help: >-
+    Tell me the list of paths which where you want to allow crawlers and might get
+    blocked by the `paths_without_crawlers` setting.
+
+    💡 We will convert this to `Path` rules. Check valid syntax in
+    https://docs.traefik.io/routing/routers/#rule
+
 cidr_whitelist:
   multiline: true
   default: null
