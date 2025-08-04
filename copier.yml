@@ -162,7 +162,13 @@ odoo_listdb:
   default: false
   type: bool
   help: >-
-    Do you want to list databases publicly?
+    Do you want to list databases publicly in the production environment?
+
+odoo_listdb_staging:
+  default: "{{ odoo_listdb }}"
+  type: bool
+  help: >-
+    Do you want to list databases publicly in the staging environment?
 
 odoo_oci_image:
   type: str
