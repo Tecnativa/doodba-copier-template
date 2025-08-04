@@ -1195,3 +1195,52 @@ def restore_snapshot(
         )
         if "Stopping" in cur_state:
             c.run(f"{DOCKER_COMPOSE_CMD} start odoo db", pty=True)
+
+
+@task(
+    help={
+        "module_name": "Name of the module to scaffold.",
+        "path": "Path where to create the module. Default: current directory.",
+    },
+)
+def scaffold(
+    c,
+    module_name,
+    path=None,
+):
+    """Scaffold a new Odoo module.
+
+    Creates a new Odoo module with the basic structure using odoo scaffold command.
+    """
+    if not module_name:
+        raise exceptions.ParseError(
+            msg="Module name is required. See --help for details."
+        )
+
+    # Use current directory if no path specified, otherwise use the specified path
+    target_path = path or str(Path.cwd())
+
+    # Convert the target path to be relative to PROJECT_ROOT for the container
+    target_path_abs = Path(target_path).resolve()
+    if not target_path_abs.is_relative_to(PROJECT_ROOT):
+        raise exceptions.ParseError(
+            msg=f"Path '{target_path}' must be within the project directory."
+        )
+
+    # Convert to container path
+    container_path = str(target_path_abs.relative_to(PROJECT_ROOT))
+    if container_path == ".":
+        container_path = ""
+
+    cmd = (
+        f"{DOCKER_COMPOSE_CMD} run --rm -v "
+        f'"{PROJECT_ROOT}:/tmp/project:rw" '
+        f"odoo odoo scaffold {module_name} /tmp/project/{container_path}"
+    )
+
+    with c.cd(str(PROJECT_ROOT)):
+        c.run(
+            cmd,
+            env=UID_ENV,
+            pty=True,
+        )
