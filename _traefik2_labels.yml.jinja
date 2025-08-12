@@ -48,7 +48,7 @@
 {%- endmacro %}
 
 {#- Basic labels for a single router #}
-{%- macro router(domain_group, key, suffix, rule=none, service=none, middlewares=()) %}
+{%- macro router(domain_group, key, suffix, rule=none, service=none, middlewares=(), priority=none) %}
       traefik.http.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.rule:
         {{ rule|default(domains_rule(domain_group), true) }}
       traefik.http.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.service:
@@ -60,6 +60,10 @@
       {%- if middlewares %}
       traefik.http.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.middlewares:
         {{ key }}-{{ middlewares|sort|join(", %s-" % key) }}
+      {%- endif %}
+
+      {%- if priority %}
+      traefik.http.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.priority: {{ priority }}
       {%- endif %}
 
       {%- if domain_group.cert_resolver %}
@@ -75,7 +79,7 @@
       {#- Create TLS-only router;
          HACK https://github.com/containous/traefik/issues/7235 #}
       {%- else %}
-      {{- router(domain_group, key, "%s-secure" % suffix, rule, service, middlewares) }}
+      {{- router(domain_group, key, "%s-secure" % suffix, rule, service, middlewares, priority) }}
       {%- endif %}
 
       {%- endif %}
@@ -106,7 +110,7 @@
 {%- endmacro %}
 
 {%- macro odoo(domain_groups_list, cidr_whitelist, key, odoo_version,
-               paths_without_crawlers, project_name) %}
+               paths_without_crawlers, paths_with_crawlers, project_name) %}
       {%- if odoo_version >= 16%}
       {{- custom_ws_middleware(key) }}
       {%- endif %}
@@ -140,6 +144,7 @@
             "compress",
             "redirect-%d" % domain_group.loop.index0,
           ],
+          priority=10,
         )
       }}
       {%- else %}
@@ -156,6 +161,7 @@
             "buffering",
             "compress",
           ],
+          priority=1,
         )
       }}
       {%- endif %}
@@ -176,6 +182,7 @@
           rule="%s && %s" % (domains_rule(domain_group), longpolling_route),
           service="longpolling",
           middlewares=ws_middlewares,
+          priority=10,
         )
       }}
       {%- endif %}
@@ -196,6 +203,25 @@
             "compress",
             "forbid-crawlers",
           ],
+          priority=10,
+        )
+      }}
+      {%- endif %}
+      {%- if paths_with_crawlers and not domain_group.path_prefixes %}
+      {{-
+        router(
+          domain_group=domain_group,
+          key=key,
+          suffix="allowedCrawlers",
+          rule="%s && %s" % (
+            domains_rule(domain_group),
+            path_prefix_rule(paths_with_crawlers),
+          ),
+          middlewares=_ns.basic_middlewares + [
+            "buffering",
+            "compress",
+          ],
+          priority=100,
         )
       }}
       {%- endif %}
