@@ -179,7 +179,7 @@ This is needed for testing and production environments to be reachable.
 
 Our supported proxy is Traefik. There must be one in each node.
 
-To have it, use this `inverseproxy.yaml` file:
+To have it, use this `inverseproxy/docker-compose.yaml` file:
 
 <details>
 <summary>Traefik v1 docker compose</summary>
