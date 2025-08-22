@@ -341,6 +341,22 @@ def write_code_workspace_file(c, cw_path=None):
                 },
             },
             {
+                "label": "Uninstall current module",
+                "type": "process",
+                "command": "invoke",
+                "args": ["uninstall", "--cur-file", "${file}", "restart"],
+                "presentation": {
+                    "echo": True,
+                    "reveal": "always",
+                    "focus": True,
+                    "panel": "shared",
+                    "showReuseMessage": True,
+                    "clear": False,
+                },
+                "problemMatcher": [],
+                "options": {"statusbar": {"label": "$(trash) Uninstall module"}},
+            },
+            {
                 "label": "Run Odoo Tests for current module",
                 "type": "process",
                 "command": "invoke",
