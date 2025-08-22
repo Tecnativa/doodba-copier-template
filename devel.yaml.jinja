@@ -45,6 +45,8 @@ services:
       INITIAL_LANG: "{{ odoo_initial_lang }}"
       LIST_DB: "true"
       DEBUGPY_ENABLE: "${DOODBA_DEBUGPY_ENABLE:-0}"
+      PYDEVD_ENABLE: "${DOODBA_PYDEVD_DEBUGPY_ENABLE:-0}"
+      PYCHARM_ENABLE: "${DOODBA_PYCHARM_ENABLE:-0}"
       PGDATABASE: &dbname devel
       PYTHONDONTWRITEBYTECODE: 1
       PYTHONOPTIMIZE: ""
