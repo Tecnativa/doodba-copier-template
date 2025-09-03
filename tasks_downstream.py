@@ -537,14 +537,14 @@ def lint(c, verbose=False):
 
 
 @task()
-def start(c, detach=True, debugpy=False):
+def start(c, detach=True, debugpy=False, _reload=True):
     """Start environment."""
     cmd = DOCKER_COMPOSE_CMD + " up"
     with tempfile.NamedTemporaryFile(
         mode="w",
         suffix=".yaml",
     ) as tmp_docker_compose_file:
-        if debugpy:
+        if debugpy or not _reload:
             # Remove auto-reload
             cmd = (
                 DOCKER_COMPOSE_CMD + " -f docker-compose.yml "
@@ -712,8 +712,9 @@ def updatepot(
         with open(new_file, "w") as fd:
             fd.write(content.strip() + "\n")
     _logger.info(".po[t] files updated")
-    precommit_cmd = f"pre-commit run --files {' '.join(iglob(f'{glob}/*.po*'))}"
-
+    precommit_cmd = (
+        f"pre-commit run --files {' '.join(iglob(f'{glob}/*.po*'))}" "--color=always"
+    )
     if not repo and module:
         for folder in iglob(f"{PROJECT_ROOT}/odoo/custom/src/*/*"):
             if os.path.isdir(folder) and os.path.basename(folder) == module:
