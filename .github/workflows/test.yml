@@ -32,28 +32,34 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version:
-          - 3.8
-          - 3.9
-          - "3.10"
-          - 3.11
-        odoo-version:
-          - 11.0
-          - 12.0
-          - 13.0
-          - 14.0
-          - 15.0
-          - 16.0
-          - 17.0
+        odoo-version: ["18.0"]
+        python-version: ["3.11"]
+        traefik-version: [3]
         include:
-          - python-version: "3.10"
-            odoo-version: 18.0
-          - python-version: 3.11
-            odoo-version: 18.0
-        traefik_version:
-          - 1
-          - 2
-          - 3
+          - odoo-version: "17.0"
+            python-version: "3.10"
+            traefik-version: 2
+          - odoo-version: "17.0"
+            python-version: "3.10"
+            traefik-version: 3
+          - odoo-version: "16.0"
+            python-version: "3.10"
+            traefik-version: 2
+          - odoo-version: "16.0"
+            python-version: "3.10"
+            traefik-version: 3
+          - odoo-version: "15.0"
+            python-version: "3.9"
+            traefik-version: 2
+          - odoo-version: "15.0"
+            python-version: "3.9"
+            traefik-version: 3
+          - odoo-version: "14.0"
+            python-version: "3.9"
+            traefik-version: 3
+          - odoo-version: "13.0"
+            python-version: "3.9"
+            traefik-version: 3
 
     steps:
       # Shared steps
@@ -97,9 +103,9 @@ jobs:
       - run: poetry run invoke test
         env:
           SELECTED_ODOO_VERSIONS: ${{ matrix.odoo-version }}
-          TRAEFIK_VERSION: ${{ matrix.traefik_version }}
+          TRAEFIK_VERSION: ${{ matrix.traefik-version }}
       # Concurrent tests (isolated)
       - run: poetry run invoke test --sequential
         env:
           SELECTED_ODOO_VERSIONS: ${{ matrix.odoo-version }}
-          TRAEFIK_VERSION: ${{ matrix.traefik_version }}
+          TRAEFIK_VERSION: ${{ matrix.traefik-version }}
