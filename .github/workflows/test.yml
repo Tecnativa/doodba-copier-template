@@ -32,10 +32,16 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        odoo-version: ["18.0"]
-        python-version: ["3.11"]
+        odoo-version: ["19.0"]
+        python-version: ["3.12"]
         traefik-version: [3]
         include:
+          - odoo-version: "18.0"
+            python-version: "3.10"
+            traefik-version: 2
+          - odoo-version: "18.0"
+            python-version: "3.11"
+            traefik-version: 3
           - odoo-version: "17.0"
             python-version: "3.10"
             traefik-version: 2
