@@ -49,11 +49,11 @@ DBVER_PER_ODOO = {
     },
     13.0: {
         "oldest": "10",  # Odoo supports 9.6, but that version is not supported by the backup service and is necessary to be able to perform all tests
-        "latest": LATEST_PSQL_VER,
+        "latest": "16",
     },
     14.0: {
         "oldest": "10",
-        "latest": LATEST_PSQL_VER,
+        "latest": "16",
     },
     15.0: {
         "oldest": "10",
