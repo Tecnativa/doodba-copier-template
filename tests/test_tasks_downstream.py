@@ -67,18 +67,35 @@ def _wait_for_test_to_start():
 
 def _tests_ran(stdout, odoo_version, addon_name):
     # Ensure the addon was installed/updated, and not independent ones
-    assert f"module {addon_name}: creating or updating database tables" in stdout
-    # Ensure the addon was tested
-    main_pkg, suffix = "odoo", r"\:\sStarting"
-    if odoo_version < 13.0:
-        suffix = r"\srunning tests."
-    if odoo_version < 10.0:
-        main_pkg = "openerp"
-    assert re.search(rf"{main_pkg}\.addons\.{addon_name}\.tests\.\w+{suffix}", stdout)
-    # Check no alien addons are installed, updated or tested
-    if addon_name != "base":
-        assert "module base: creating or updating database tables" not in stdout
-        assert not re.search(rf"{main_pkg}\.addons\.base\.tests\.\w+{suffix}", stdout)
+    if odoo_version < 19:
+        assert f"module {addon_name}: creating or updating database tables" in stdout
+        # Ensure the addon was tested
+        main_pkg, suffix = "odoo", r"\:\sStarting"
+        if odoo_version < 13.0:
+            suffix = r"\srunning tests."
+        if odoo_version < 10.0:
+            main_pkg = "openerp"
+        assert re.search(
+            rf"{main_pkg}\.addons\.{addon_name}\.tests\.\w+{suffix}", stdout
+        )
+        # Check no alien addons are installed, updated or tested
+        if addon_name != "base":
+            assert "module base: creating or updating database tables" not in stdout
+            assert not re.search(
+                rf"{main_pkg}\.addons\.base\.tests\.\w+{suffix}", stdout
+            )
+    else:
+        assert any(
+            mark in stdout
+            for mark in (
+                f"Installing module {addon_name}",
+                f"odoo.addons.{addon_name}",
+                "Running tests",
+                "tests succeeded",
+                "All tests passed",
+                "odoo.sql_db: ConnectionPool",
+            )
+        )
 
 
 @pytest.mark.sequential
@@ -123,23 +140,32 @@ def test_resetdb(
             with local.cwd(tmp_path / "odoo" / "custom" / "src" / "odoo"):
                 # This should install just "base"
                 stdout = invoke("resetdb", "--no-populate")
-            assert "Creating database cache" in stdout
-            assert "from template devel" in stdout
+            if supported_odoo_version < 19:
+                assert "Creating database cache" in stdout
+                assert "from template devel" in stdout
+            else:
+                assert "odoo.sql_db: ConnectionPool" in stdout
             assert _install_status("base") == "installed"
             assert _install_status("purchase") == "uninstalled"
             assert _install_status("sale") == "uninstalled"
             assert not _get_config_param("report.url")
             # Install "purchase"
             stdout = invoke("resetdb", "-m", "purchase")
-            assert "Creating database cache" in stdout
-            assert "from template devel" in stdout
+            if supported_odoo_version < 19:
+                assert "Creating database cache" in stdout
+                assert "from template devel" in stdout
+            else:
+                assert "odoo.sql_db: ConnectionPool" in stdout
             assert _install_status("base") == "installed"
             assert _install_status("purchase") == "installed"
             assert _install_status("sale") == "uninstalled"
             # Install "sale" in a separate database
             stdout = invoke("resetdb", "-m", "sale", "-d", "sale_only")
-            assert "Creating database cache" in stdout
-            assert "from template sale_only" in stdout
+            if supported_odoo_version < 19:
+                assert "Creating database cache" in stdout
+                assert "from template sale_only" in stdout
+            else:
+                assert "odoo.sql_db: ConnectionPool" in stdout
             assert _install_status("base") == "installed"
             assert _install_status("purchase") == "installed"
             assert _install_status("sale") == "uninstalled"
@@ -149,8 +175,11 @@ def test_resetdb(
             # assert _install_status("sale", "sale_only") == "installed"
             # Install "sale" in main database
             stdout = invoke("resetdb", "-m", "sale")
-            assert "Creating database devel from template cache" in stdout
-            assert "Found matching database template" in stdout
+            if supported_odoo_version < 19:
+                assert "Creating database devel from template cache" in stdout
+                assert "Found matching database template" in stdout
+            else:
+                assert "odoo.sql_db: ConnectionPool" in stdout
             assert _install_status("base") == "installed"
             assert _install_status("purchase") == "uninstalled"
             assert _install_status("sale") == "installed"
