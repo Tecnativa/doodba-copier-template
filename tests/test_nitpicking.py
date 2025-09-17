@@ -362,9 +362,15 @@ def test_pre_commit_in_subproject(
             found += 1
             if is_py3:
                 assert {"id": "debug-statements"} in repo["hooks"]
-                assert {"id": "fix-encoding-pragma", "args": ["--remove"]} in repo[
-                    "hooks"
-                ]
+                if supported_odoo_version < 19:
+                    assert {"id": "fix-encoding-pragma", "args": ["--remove"]} in repo[
+                        "hooks"
+                    ]
+                else:
+                    # Odoo 19+ not use fix-encoding-pragma anymore
+                    assert not any(
+                        h.get("id") == "fix-encoding-pragma" for h in repo["hooks"]
+                    )
             else:
                 assert {"id": "debug-statements"} not in repo["hooks"]
                 assert {"id": "fix-encoding-pragma", "args": ["--remove"]} not in repo[

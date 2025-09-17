@@ -33,7 +33,7 @@ SELECTED_ODOO_VERSIONS = (
     frozenset(map(float, os.environ.get("SELECTED_ODOO_VERSIONS", "").split()))
     or ALL_ODOO_VERSIONS
 )
-PRERELEASE_ODOO_VERSIONS = {18.0}
+PRERELEASE_ODOO_VERSIONS = {19.0}
 
 # Postgres versions
 ALL_PSQL_VERSIONS = tuple(COPIER_SETTINGS["postgres_version"]["choices"])
@@ -49,11 +49,11 @@ DBVER_PER_ODOO = {
     },
     13.0: {
         "oldest": "10",  # Odoo supports 9.6, but that version is not supported by the backup service and is necessary to be able to perform all tests
-        "latest": LATEST_PSQL_VER,
+        "latest": "16",
     },
     14.0: {
         "oldest": "10",
-        "latest": LATEST_PSQL_VER,
+        "latest": "16",
     },
     15.0: {
         "oldest": "10",
@@ -68,6 +68,10 @@ DBVER_PER_ODOO = {
         "latest": LATEST_PSQL_VER,
     },
     18.0: {
+        "oldest": "12",
+        "latest": LATEST_PSQL_VER,
+    },
+    19.0: {
         "oldest": "12",
         "latest": LATEST_PSQL_VER,
     },

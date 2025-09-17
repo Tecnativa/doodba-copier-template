@@ -99,7 +99,7 @@ _migrations:
 odoo_version:
   help: On which odoo version is it based?
   type: float
-  default: 18.0
+  default: 19.0
   choices:
     - 7.0
     - 8.0
@@ -113,6 +113,7 @@ odoo_version:
     - 16.0
     - 17.0
     - 18.0
+    - 19.0
 
 odoo_proxy:
   default: traefik
@@ -378,7 +379,7 @@ cidr_whitelist:
     ⚠️ It must be a list. And this is only supported if you deploy with Traefik 2+.
 
 postgres_version:
-  default: "16"
+  default: "17"
   help: >-
     Which PostgreSQL version do you want to deploy? (Recommended: for new instances
     always use the latest version. Version 9.6 has no backup support.)
@@ -392,12 +393,15 @@ postgres_version:
     "14": "14"
     "15": "15"
     "16": "16"
+    "17": "17"
   validator: >-
     {% if postgres_version|int > 0 %} {% if (odoo_version >= 16.0 and
     postgres_version|int < 12) or (odoo_version >= 14.0 and postgres_version|int < 10)
     %}  The postgres version is too low for the selected Odoo version. {% elif
     odoo_version <= 12.0 and postgres_version|int > 13 %}  The postgres version is too
-    high for the selected Odoo version. {% endif %} {% endif %}
+    high for the selected Odoo version. {% elif odoo_version <= 14.0 and
+    postgres_version|int > 16 %} The postgres version is too high for the selected Odoo
+    version. {% endif %} {% endif %}
 
 postgres_username:
   type: str
