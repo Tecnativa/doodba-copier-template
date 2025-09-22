@@ -189,7 +189,7 @@
           rule="%s && %s" % (domains_rule(domain_group), longpolling_route),
           service="longpolling",
           middlewares=ws_middlewares,
-          priority=10,
+          priority=20,
         )
       }}
       {%- endif %}
