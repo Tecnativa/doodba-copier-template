@@ -1,7 +1,7 @@
 target-version = {% if odoo_version < 14 %}"py37"{% elif odoo_version < 16 %}"py38"{% else %}"py310"{% endif %}
 fix = true
 cache-dir = "~/.cache/ruff"
-
+{% set prefix = "lint." if odoo_version >= 18 else "" %}
 [lint]
 extend-select = [
     "B",
@@ -15,16 +15,16 @@ exclude = ["setup/*"]
 [format]
 exclude = ["setup/*"]
 
-[per-file-ignores]
+[{{ prefix }}per-file-ignores]
 "__init__.py" = ["F401", "I001"]  # ignore unused and unsorted imports in __init__.py
 "__manifest__.py" = ["B018"]  # useless expression
 
-[isort]
+[{{ prefix }}isort]
 section-order = ["future", "standard-library", "third-party", "odoo", "odoo-addons", "first-party", "local-folder"]
 
-[isort.sections]
+[{{ prefix }}isort.sections]
 "odoo" = ["odoo"]
 "odoo-addons" = ["odoo.addons"]
 
-[mccabe]
+[{{ prefix }}mccabe]
 max-complexity = 16
