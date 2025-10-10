@@ -73,8 +73,10 @@ services:
       - --workers=0
       {%- if odoo_version == 9 %}
       - --dev
-      {%- elif odoo_version >= 10 %}
+      {%- elif odoo_version >= 10 and odoo_version < 19 %}
       - --dev=reload,qweb,werkzeug,xml
+      {%- else %}
+      - --dev=reload,qweb,werkzeug,xml,access
       {%- endif %}
 
   {% if postgres_version -%}
