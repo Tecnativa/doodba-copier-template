@@ -18,9 +18,9 @@ services:
       default:
       public:
     ports:
-      - "127.0.0.1:{{ macros.version_major(odoo_version) }}899:6899"
-      - "127.0.0.1:{{ macros.version_major(odoo_version) }}069:8069"
-      - "127.0.0.1:{{ macros.version_major(odoo_version) }}072:8072"
+      - "127.0.0.1:${PORT_PREFIX:-{{ macros.version_major(odoo_version) }}}899:6899"
+      - "127.0.0.1:${PORT_PREFIX:-{{ macros.version_major(odoo_version) }}}069:8069"
+      - "127.0.0.1:${PORT_PREFIX:-{{ macros.version_major(odoo_version) }}}072:8072"
     environment:
       PORT: "6899 8069 8072"
       TARGET: odoo
@@ -50,7 +50,7 @@ services:
       PYTHONOPTIMIZE: ""
       PYTHONPATH: /opt/odoo/custom/src/odoo
       SMTP_PORT: "1025"
-      WDB_WEB_PORT: "{{ macros.version_major(odoo_version) }}984"
+      WDB_WEB_PORT: "${PORT_PREFIX:-{{ macros.version_major(odoo_version) }}}984"
       # To avoid installing demo data export DOODBA_WITHOUT_DEMO=all
       WITHOUT_DEMO: "${DOODBA_WITHOUT_DEMO-false}"
     volumes:
@@ -93,7 +93,7 @@ services:
     image: docker.io/sosedoff/pgweb
     networks: *public
     ports:
-      - "127.0.0.1:{{ macros.version_major(odoo_version) }}081:8081"
+      - "127.0.0.1:${PORT_PREFIX:-{{ macros.version_major(odoo_version) }}}081:8081"
     environment:
       DATABASE_URL: postgres://{{ postgres_username }}:odoopassword@db:5432/devel?sslmode=disable
     depends_on:
@@ -105,13 +105,13 @@ services:
       service: smtpfake
     networks: *public
     ports:
-      - "127.0.0.1:{{ macros.version_major(odoo_version) }}025:8025"
+      - "127.0.0.1:${PORT_PREFIX:-{{ macros.version_major(odoo_version) }}}025:8025"
 
   wdb:
     image: docker.io/kozea/wdb
     networks: *public
     ports:
-      - "127.0.0.1:{{ macros.version_major(odoo_version) }}984:1984"
+      - "127.0.0.1:${PORT_PREFIX:-{{ macros.version_major(odoo_version) }}}984:1984"
     # HACK https://github.com/Kozea/wdb/issues/136
     init: true
 

@@ -537,7 +537,7 @@ def lint(c, verbose=False):
 
 
 @task()
-def start(c, detach=True, debugpy=False, _reload=True):
+def start(c, detach=True, debugpy=False, _reload=True, port_prefix=0):
     """Start environment."""
     cmd = DOCKER_COMPOSE_CMD + " up"
     with tempfile.NamedTemporaryFile(
@@ -557,13 +557,16 @@ def start(c, detach=True, debugpy=False, _reload=True):
         if detach:
             cmd += " --detach"
         with c.cd(str(PROJECT_ROOT)):
+            env = dict(
+                UID_ENV,
+                DOODBA_DEBUGPY_ENABLE=str(int(debugpy)),
+            )
+            if port_prefix:
+                env["PORT_PREFIX"] = str(port_prefix)
             result = c.run(
                 cmd,
                 pty=True,
-                env=dict(
-                    UID_ENV,
-                    DOODBA_DEBUGPY_ENABLE=str(int(debugpy)),
-                ),
+                env=env,
             )
             if not (
                 "Recreating" in result.stdout
