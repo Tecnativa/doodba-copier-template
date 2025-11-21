@@ -4,6 +4,6 @@ unidecode{% if odoo_version < 11.0 %}<1.3.0{% endif %}
 {% if odoo_version < 11.0 -%}
 pathlib
 {% endif -%}
-{% if odoo_version >= 13.0 -%}
+{% if 13.0 <= odoo_version < 16.0 -%}
 jingtrang
 {% endif -%}
