@@ -4,6 +4,7 @@ This file is to be executed with https://www.pyinvoke.org/ in Python 3.8.1+.
 
 Contains common helpers to develop using this child project.
 """
+
 import json
 import os
 import shutil
@@ -109,7 +110,6 @@ def _get_cwd_addon(file):
 
 def _scan_subrepos_and_add_path_mappings(
     cw_config,
-    debugpy_configuration,
     firefox_configuration,
     chrome_configuration,
 ):
@@ -122,15 +122,6 @@ def _scan_subrepos_and_add_path_mappings(
                 {"path": str(subrepo.relative_to(PROJECT_ROOT))}
             )
 
-        # Check if subrepo is itself a doodba-copier project
-        is_doodba_subproject = False
-        answers_file = subrepo / ".copier-answers.yml"
-        if answers_file.is_file():
-            with answers_file.open() as f:
-                answers = yaml.safe_load(f) or {}
-            if "Tecnativa/doodba-copier-template" in answers.get("_src_path", ""):
-                is_doodba_subproject = True
-
         private_dir = subrepo / "odoo" / "custom" / "src" / "private"
         # Default scanning approach (1-level + addons/* + private/*)
         for addon in chain(
@@ -141,27 +132,6 @@ def _scan_subrepos_and_add_path_mappings(
             if (addon / "__manifest__.py").is_file() or (
                 addon / "__openerp__.py"
             ).is_file():
-                if is_doodba_subproject:
-                    local_path = "${workspaceFolder:%s}/odoo/custom/src/private/%s" % (  # noqa: UP031
-                        subrepo.name,
-                        addon.name,
-                    )
-                elif subrepo.name == "odoo":
-                    local_path = "${workspaceFolder:%s}/addons/%s/" % (  # noqa: UP031
-                        subrepo.name,
-                        addon.name,
-                    )
-                else:
-                    local_path = "${workspaceFolder:%s}/%s" % (  # noqa: UP031
-                        subrepo.name,
-                        addon.name,
-                    )
-                debugpy_configuration["pathMappings"].append(
-                    {
-                        "localRoot": local_path,
-                        "remoteRoot": f"/opt/odoo/auto/addons/{addon.name}/",
-                    }
-                )
                 url = f"http://localhost:{ODOO_VERSION:.0f}069/{addon.name}/static/"
                 path = "${workspaceFolder:%s}/%s/static/" % (  # noqa: UP031
                     subrepo.name,
@@ -238,7 +208,12 @@ def write_code_workspace_file(c, cw_path=None):
         "name": "Attach Python debugger to running container",
         "type": "python",
         "request": "attach",
-        "pathMappings": [],
+        "pathMappings": [
+            {
+                "localRoot": f"${{workspaceFolder:{root_name}}}/odoo",
+                "remoteRoot": "/opt/odoo",
+            }
+        ],
         "port": int(ODOO_VERSION) * 1000 + 899,
         # HACK https://github.com/microsoft/vscode-python/issues/14820
         "host": "0.0.0.0",
@@ -288,17 +263,10 @@ def write_code_workspace_file(c, cw_path=None):
             chrome_configuration,
         ],
     }
-    # Configure pathMappings for the main odoo folder
-    debugpy_configuration["pathMappings"].append(
-        {
-            "localRoot": "${workspaceFolder:odoo}/",
-            "remoteRoot": "/opt/odoo/custom/src/odoo",
-        }
-    )
+    # Configure workspace roots and path mappings
     cw_config["folders"] = []
     _scan_subrepos_and_add_path_mappings(
         cw_config,
-        debugpy_configuration,
         firefox_configuration,
         chrome_configuration,
     )
@@ -716,7 +684,7 @@ def updatepot(
             fd.write(content.strip() + "\n")
     _logger.info(".po[t] files updated")
     precommit_cmd = (
-        f"pre-commit run --files {' '.join(iglob(f'{glob}/*.po*'))}" "--color=always"
+        f"pre-commit run --files {' '.join(iglob(f'{glob}/*.po*'))}--color=always"
     )
     if not repo and module:
         for folder in iglob(f"{PROJECT_ROOT}/odoo/custom/src/*/*"):
