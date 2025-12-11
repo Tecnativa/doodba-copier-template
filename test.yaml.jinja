@@ -97,7 +97,7 @@ services:
       {%- call(domain_group) macros.domains_loop_grouped(domains_test|rejectattr("redirect_to")|rejectattr("path_prefixes")) %}
       {{-
         traefik1_labels.router(
-          prefix="mailhog",
+          prefix="mailpit",
           index0=domain_group.loop.index0,
           rule="%s;PathPrefixStrip:/smtpfake/"|format(
             traefik1_labels.domains_rule(domain_group.hosts),
@@ -108,9 +108,9 @@ services:
       }}
       {%- endcall %}
       {#- Traefik v2 labels #}
-      # Mailhog service
-      traefik.http.middlewares.{{ _key }}-mailhog-stripprefix.stripPrefix.prefixes: /smtpfake/
-      traefik.http.services.{{ _key }}-mailhog.loadbalancer.server.port: 8025
+      # mailpit service
+      traefik.http.middlewares.{{ _key }}-mailpit-stripprefix.stripPrefix.prefixes: /smtpfake/
+      traefik.http.services.{{ _key }}-mailpit.loadbalancer.server.port: 8025
       {{- traefik2_labels.common_middlewares(_key, cidr_whitelist) }}
       {%- call(domain_group) macros.domains_loop_grouped(domains_test|rejectattr("redirect_to")|rejectattr("path_prefixes")) %}
       {#- Remember basic middlewares for this domain group #}
@@ -125,14 +125,14 @@ services:
         traefik2_labels.router(
           domain_group=domain_group,
           key=_key,
-          suffix="mailhog",
+          suffix="mailpit",
           rule="%s && PathPrefix(`/smtpfake/`)"|format(traefik2_labels.domains_rule(domain_group)),
-          service="mailhog",
+          service="mailpit",
           middlewares=_ns.basic_middlewares + [
             "buffering",
             "compress",
             "forbid-crawlers",
-            "mailhog-stripprefix",
+            "mailpit-stripprefix",
           ],
         )
       }}
@@ -142,7 +142,11 @@ services:
       - "smtpconf:/etc/mailhog:ro,z"
     entrypoint: [sh, -c]
     command:
-      - test -r /etc/mailhog/auth && export MH_AUTH_FILE=/etc/mailhog/auth; exec MailHog
+      - >
+        if [ -r /etc/mailhog/auth ]; then
+          export MP_UI_AUTH_FILE=/etc/mailhog/auth;
+        fi;
+        exec /mailpit --webroot=/smtpfake/
 
 networks:
   default:
