@@ -208,7 +208,7 @@ def test_cidr_whitelist_rules(
         f"traefik.http.routers.{key}-test-longpolling-0.middlewares"
     ].split(", ")
     assert f"{key}-test-whitelist" in test_config.services["smtp"].labels[
-        f"traefik.http.routers.{key}-test-mailhog-0.middlewares"
+        f"traefik.http.routers.{key}-test-mailpit-0.middlewares"
     ].split(", ")
 
 
