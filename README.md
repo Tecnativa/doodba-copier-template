@@ -53,7 +53,7 @@ Install non-python apps with your distro's recommended package manager. The reco
 way to install Python CLI apps is [pipx](https://pipxproject.github.io/pipx/):
 
 ```bash
-python3 -m pip install --user pipx
+python3 -m pip install --break-system-packages --user pipx
 pipx install copier
 pipx install invoke
 pipx install pre-commit
