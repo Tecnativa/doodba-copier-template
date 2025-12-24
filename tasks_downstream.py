@@ -613,17 +613,13 @@ def install(
                 " See --help for details."
             )
         modules = cur_module
+    elif not modules and (core or extra or private or enterprise):
+        modules = _get_module_list(c, None, core, extra, private, enterprise)
+    if modules == "":
+        _logger.info("No modules to install")
+        return
     cmd = DOCKER_COMPOSE_CMD + " run --rm odoo addons init"
-    if core:
-        cmd += " --core"
-    if extra:
-        cmd += " --extra"
-    if private:
-        cmd += " --private"
-    if enterprise:
-        cmd += " --enterprise"
-    if modules:
-        cmd += f" -w {modules}"
+    cmd += f" -w {modules}"
     with c.cd(str(PROJECT_ROOT)):
         c.run(DOCKER_COMPOSE_CMD + " stop odoo")
         c.run(
@@ -852,13 +848,20 @@ def _get_module_list(
     if only_installable:
         cmd += " --installable"
     with c.cd(str(PROJECT_ROOT)):
-        module_list = c.run(
+        raw = c.run(
             cmd,
             env=UID_ENV,
             pty=True,
             hide="stdout",
         ).stdout.splitlines()[-1]
-    return module_list
+    module_list = [m.strip() for m in raw.split(",") if m.strip()]
+    # Exclude always openupgrade_* modules on batch mode (when -m is not used)
+    if modules is None:
+        module_list = [
+            m for m in module_list if not m.lower().startswith("openupgrade_")
+        ]
+
+    return ",".join(module_list)
 
 
 @task(
