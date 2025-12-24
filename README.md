@@ -65,7 +65,7 @@ pipx ensurepath
 Once you installed everything, you can now use Copier to copy this template:
 
 ```bash
-copier copy gh:Tecnativa/doodba-copier-template ~/path/to/your/subproject
+copier copy https://github.com/Tecnativa/doodba-copier-template ~/path/to/your/subproject
 ```
 
 Copier will ask you a lot of questions. Answer them to properly generate the template.
