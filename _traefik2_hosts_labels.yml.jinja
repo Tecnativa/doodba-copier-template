@@ -51,20 +51,6 @@
       }}
       {%- else %}
 
-      {#- Forbidden crawler routers #}
-      {%- if paths_without_crawlers and not domain_group.path_prefixes %}
-      traefik.forbiddenCrawlers-{{ domain_group.loop.index0 }}.frontend.headers.customResponseHeaders:
-        "X-Robots-Tag:noindex, nofollow"
-      {{-
-        router(
-          prefix="forbiddenCrawlers",
-          index0=domain_group.loop.index0,
-          rule=domains_rule(domain_group.hosts, paths_without_crawlers),
-          entrypoints=domain_group.entrypoints,
-        )
-      }}
-      {%- endif %}
-
       {#- Normal routers #}
       {%- if paths_without_crawlers != ["/"] or domain_group.path_prefixes %}
       {{-
@@ -73,18 +59,6 @@
           index0=domain_group.loop.index0,
           rule=domains_rule(domain_group.hosts, domain_group.path_prefixes),
           entrypoints=domain_group.entrypoints,
-        )
-      }}
-      {%- endif %}
-      {%- if not domain_group.path_prefixes %}
-      {%- set longpolling_route = "/longpolling/" if odoo_version < 16 else "/websocket" -%}
-      {{-
-        router(
-          prefix="longpolling",
-          index0=domain_group.loop.index0,
-          rule=domains_rule(domain_group.hosts, [longpolling_route]),
-          entrypoints=domain_group.entrypoints,
-          port=8072,
         )
       }}
       {%- endif %}
