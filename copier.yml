@@ -449,6 +449,20 @@ postgres_cidr_whitelist:
 
     ⚠️ It must be a list. And this is only supported if you deploy with Traefik 2+.
 
+postgres_exposed_test:
+  default: false
+  type: bool
+  help: >-
+    Do you also want to expose database service for demo?
+
+postgres_exposed_port_test:
+  default: 5432
+  type: int
+  when: &db_exposed_test "{{ postgres_exposed and traefik_version != 3 }}"
+  help: >-
+    Indicate the port to connect to the demo database.. It must not be de same of
+    production database port
+
 odoo_dbfilter:
   default: "^{{ postgres_dbname }}"
   type: str
