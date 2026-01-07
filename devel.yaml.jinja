@@ -7,8 +7,10 @@
   "www.googleapis.com",
   "www.gravatar.com",
 ) -%}
+{% if compose_version == "v1" %}
 version: "2.4"
 
+{% endif %}
 services:
   odoo_proxy:
     image: ghcr.io/tecnativa/docker-whitelist:latest

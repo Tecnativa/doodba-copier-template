@@ -73,9 +73,10 @@ def _override_docker_command(service, command, file, orig_file=None):
     else:
         docker_compose_file_version = "2.4"
     docker_config = {
-        "version": docker_compose_file_version,
         "services": {service: {"command": command}},
     }
+    if not docker_compose_v2 and docker_compose_file_version:
+        docker_config["version"] = docker_compose_file_version
     docker_config_yaml = yaml.dump(docker_config)
     file.write(docker_config_yaml)
     file.flush()
