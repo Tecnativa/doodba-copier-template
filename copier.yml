@@ -138,6 +138,18 @@ traefik_version:
     v2.4: 2
     v3.0: 3
 
+compose_version:
+  type: str
+  help: >-
+    Indicate the Docker Compose version.
+
+    Used to generate the Docker Compose files so that they are compatible with the
+    indicated version.
+  default: v2+
+  choices:
+    - v1
+    - v2+
+
 odoo_initial_lang:
   default: en_US
   type: str
