@@ -46,6 +46,7 @@ services:
       LIST_DB: "true"
       DEBUGPY_ENABLE: "${DOODBA_DEBUGPY_ENABLE:-0}"
       PGDATABASE: &dbname devel
+      PYDEVD_RESOLVE_SYMLINKS: 1
       PYTHONDONTWRITEBYTECODE: 1
       PYTHONOPTIMIZE: ""
       PYTHONPATH: /opt/odoo/custom/src/odoo
