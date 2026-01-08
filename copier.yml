@@ -379,7 +379,9 @@ cidr_whitelist:
     ⚠️ It must be a list. And this is only supported if you deploy with Traefik 2+.
 
 postgres_version:
-  default: "17"
+  default: >-
+    {% if odoo_version <= 12.0 %}13 {% elif odoo_version <= 14.0 %}16 {% else %}17{%
+    endif %}
   help: >-
     Which PostgreSQL version do you want to deploy? (Recommended: for new instances
     always use the latest version. Version 9.6 has no backup support.)
