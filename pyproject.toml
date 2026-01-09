@@ -9,7 +9,11 @@ package-mode = false
 [tool.poetry.dependencies]
 copier = ">=9"
 plumbum = "^1.8.2"
-python = "^3.8.1"
+python = ">=3.9,<4.0.0"
+urllib3 = [
+  { version = "<2.6.3", python = "<3.9" },
+  { version = ">=2.6.3", python = ">=3.9" },
+]
 
 [tool.poetry.dev-dependencies]
 black = "^24.8.0"
