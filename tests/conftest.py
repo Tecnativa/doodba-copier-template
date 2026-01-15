@@ -57,7 +57,7 @@ DBVER_PER_ODOO = {
     },
     15.0: {
         "oldest": "10",
-        "latest": LATEST_PSQL_VER,
+        "latest": "17",
     },
     16.0: {
         "oldest": "12",
