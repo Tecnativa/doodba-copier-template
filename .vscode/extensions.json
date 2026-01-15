@@ -11,6 +11,7 @@
     "ms-python.black-formatter",
     "ms-python.python",
     "redhat.vscode-xml",
-    "samuelcolvin.jinjahtml"
+    "samuelcolvin.jinjahtml",
+    "Odoo.owl-vision"
   ]
 }
