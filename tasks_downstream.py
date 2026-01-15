@@ -225,7 +225,7 @@ def write_code_workspace_file(c, cw_path=None):
             "search.followSymlinks": False,
             "search.useIgnoreFiles": False,
             # Language-specific configurations
-            "[python]": {"editor.defaultFormatter": "ms-python.black-formatter"},
+            "[python]": {"editor.defaultFormatter": "ms-python.python"},
             "[json]": {"editor.defaultFormatter": "esbenp.prettier-vscode"},
             "[jsonc]": {"editor.defaultFormatter": "esbenp.prettier-vscode"},
             "[markdown]": {"editor.defaultFormatter": "esbenp.prettier-vscode"},
@@ -236,12 +236,13 @@ def write_code_workspace_file(c, cw_path=None):
     # Launch configurations
     debugpy_configuration = {
         "name": "Attach Python debugger to running container",
-        "type": "python",
+        "type": "debugpy",
         "request": "attach",
         "pathMappings": [],
-        "port": int(ODOO_VERSION) * 1000 + 899,
-        # HACK https://github.com/microsoft/vscode-python/issues/14820
-        "host": "0.0.0.0",
+        "connect": {
+            "host": "0.0.0.0",
+            "port": int(ODOO_VERSION) * 1000 + 899,
+        },
     }
     firefox_configuration = {
         "type": "firefox",
@@ -263,6 +264,7 @@ def write_code_workspace_file(c, cw_path=None):
         "url": f"http://localhost:{ODOO_VERSION:.0f}069/?debug=assets",
         "skipFiles": ["**/lib/**"],
         "trace": True,
+        "runtimeArgs": ["--auto-reload=true"],
         "pathMapping": {},
     }
     if chrome_executable:
@@ -272,19 +274,19 @@ def write_code_workspace_file(c, cw_path=None):
         "compounds": [
             {
                 "name": "Start Odoo and debug Python",
-                "configurations": ["Attach Python debugger to running container"],
+                "configurations": [],
                 "preLaunchTask": "Start Odoo in debug mode",
             },
             {
                 "name": "Test and debug current module",
-                "configurations": ["Attach Python debugger to running container"],
+                "configurations": [],
                 "preLaunchTask": "Run Odoo Tests in debug mode for current module",
                 "internalConsoleOptions": "openOnSessionStart",
             },
         ],
         "configurations": [
             debugpy_configuration,
-            firefox_configuration,
+            # firefox_configuration,
             chrome_configuration,
         ],
     }
