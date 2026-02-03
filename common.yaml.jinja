@@ -38,6 +38,7 @@ services:
     environment:
       POSTGRES_DB: *dbname
       POSTGRES_USER: *dbuser
+      PGDATA: /var/lib/postgresql/data
       CONF_EXTRA: |
         work_mem = 512MB
     volumes:
