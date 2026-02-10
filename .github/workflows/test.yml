@@ -28,8 +28,19 @@ env:
   PYTHONIOENCODING: "UTF-8"
 
 jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+      - uses: snok/install-poetry@v1
+      - uses: pre-commit/action@v3.0.1
+
   test:
     runs-on: ubuntu-latest
+    needs: pre-commit
     strategy:
       matrix:
         odoo-version: ["19.0"]
