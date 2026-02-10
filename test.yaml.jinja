@@ -73,7 +73,7 @@ services:
     networks:
       default:
         aliases:
-            - "{{ _key }}-db"
+          - "{{ _key }}-db"
     restart: unless-stopped
   {%- endif %}
 

@@ -3,7 +3,7 @@
 {%- macro domains_rule(hosts, path_prefixes=(), paths=()) -%}
   Host(`{{ hosts | join("`) || Host(`") }}`)
   {%- if path_prefixes or paths -%}
-    {{" "}}&& (
+    {{ " " }}&& (
       {%- if path_prefixes -%}
         {{ path_prefix_rule(path_prefixes) }}
         {%- if paths %} || {% endif %}

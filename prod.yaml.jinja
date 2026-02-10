@@ -49,11 +49,11 @@ services:
       {%- if odoo_proxy == "traefik" and domains_prod %}
       traefik.enable: "true"
       {%- if traefik_version == 3 -%}
-      {{- traefik3_labels.odoo(domains_prod, paths_without_crawlers, odoo_version, traefik_version)}}
+      {{- traefik3_labels.odoo(domains_prod, paths_without_crawlers, odoo_version, traefik_version) }}
       {%- elif traefik_version == 2 -%}
-      {{- traefik2_hosts_labels.odoo(domains_prod, paths_without_crawlers, odoo_version)}}
+      {{- traefik2_hosts_labels.odoo(domains_prod, paths_without_crawlers, odoo_version) }}
       {%- else -%}
-      {{- traefik1_labels.odoo(domains_prod, paths_without_crawlers, odoo_version)}}
+      {{- traefik1_labels.odoo(domains_prod, paths_without_crawlers, odoo_version) }}
       {%- endif -%}
       {{- traefik2_labels.common_middlewares(_key, cidr_whitelist) }}
       {%- if traefik_version == 3 -%}
