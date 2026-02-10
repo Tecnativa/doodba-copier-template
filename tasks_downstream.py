@@ -4,6 +4,7 @@ This file is to be executed with https://www.pyinvoke.org/ in Python 3.8.1+.
 
 Contains common helpers to develop using this child project.
 """
+
 import json
 import os
 import shutil
@@ -733,7 +734,7 @@ def updatepot(
             fd.write(content.strip() + "\n")
     _logger.info(".po[t] files updated")
     precommit_cmd = (
-        f"pre-commit run --files {' '.join(iglob(f'{glob}/*.po*'))}" "--color=always"
+        f"pre-commit run --files {' '.join(iglob(f'{glob}/*.po*'))}--color=always"
     )
     if not repo and module:
         for folder in iglob(f"{PROJECT_ROOT}/odoo/custom/src/*/*"):
@@ -1228,7 +1229,7 @@ def restore_snapshot(
             snapshot_name = max(db_list, key=lambda x: x[1])[0]
             if not snapshot_name:
                 raise exceptions.PlatformError(
-                    "No snapshot found for destination_db %s" % destination_db  # noqa: UP031
+                    f"No snapshot found for destination_db {destination_db}"
                 )
         _logger.info("Restoring snapshot %s to %s", (snapshot_name, destination_db))
         _run = f"{DOCKER_COMPOSE_CMD} run --rm -l traefik.enable=false odoo"

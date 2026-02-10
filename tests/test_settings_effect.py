@@ -54,10 +54,9 @@ def _test_backup_config(
         return
     # Check selected duplicity image
     if "s3" in backup_dst:
-        assert prod_config.services[
-            "backup"
-        ].image == "ghcr.io/tecnativa/docker-duplicity-postgres-s3:{}".format(
-            backup_image_version
+        assert (
+            prod_config.services["backup"].image
+            == f"ghcr.io/tecnativa/docker-duplicity-postgres-s3:{backup_image_version}"
         )
     else:
         assert (

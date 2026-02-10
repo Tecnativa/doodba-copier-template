@@ -7,7 +7,7 @@ import tempfile
 import textwrap
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Dict, Union
+from typing import Union
 
 import pytest
 import yaml
@@ -239,7 +239,7 @@ def teardown_function(function):
 
 
 # Helpers
-def build_file_tree(spec: Dict[Union[str, Path], str], dedent: bool = True):
+def build_file_tree(spec: dict[Union[str, Path], str], dedent: bool = True):
     """Builds a file tree based on the received spec."""
     for path, contents in spec.items():
         path = Path(path)
@@ -367,9 +367,9 @@ def safe_stop_env(exec_path, purge=True):
                 and "has active endpoints" not in e.stdout
             ):
                 raise e
-            assert not _containers_running(
-                exec_path
-            ), "Containers running or not removed. 'stop [--purge]' command did not work."
+            assert not _containers_running(exec_path), (
+                "Containers running or not removed. 'stop [--purge]' command did not work."
+            )
 
 
 @contextmanager
