@@ -48,7 +48,7 @@ services:
   {%- endif %}
 
   smtpfake:
-    image: docker.io/mailhog/mailhog
+    image: docker.io/axllent/mailpit:latest
   {%- if smtp_relay_host %}
 
   smtpreal:
