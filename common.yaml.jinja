@@ -45,11 +45,6 @@ services:
         work_mem = 512MB
     volumes:
       - db:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -q -U $$POSTGRES_USER"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
   {%- endif %}
 
   smtpfake:
