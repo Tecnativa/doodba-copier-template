@@ -99,7 +99,8 @@ services:
     environment:
       DATABASE_URL: postgres://{{ postgres_username }}:odoopassword@db:5432/devel?sslmode=disable
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   smtp:
     extends:
