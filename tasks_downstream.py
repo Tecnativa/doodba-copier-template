@@ -893,6 +893,7 @@ def _get_module_list(
         "mode": "Mode in which tests run. Options: ['init'(default), 'update']",
         "db_filter": "DB_FILTER regex to pass to the test container Set to ''"
         " to disable. Default: '^devel$'",
+        "tags": "Comma-separated list of tags to test. Default: ',/'.join(modules)",
     },
 )
 def test(
