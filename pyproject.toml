@@ -40,6 +40,7 @@ requires = ["poetry>=0.12"]
 
 [tool.ruff]
 fix = true
+target-version = "py39"
 
 [tool.ruff.lint]
 extend-select = [

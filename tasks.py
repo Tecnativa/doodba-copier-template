@@ -4,6 +4,7 @@ These tasks are to be executed with https://www.pyinvoke.org/ in Python 3.8.1+
 and are related to the maintenance of this template project, not the child
 projects generated with it.
 """
+
 import re
 from pathlib import Path
 from unittest import mock
@@ -24,8 +25,8 @@ def _load_copier_conf():
             yaml.reader.Reader,
             "NON_PRINTABLE",
             re.compile(
-                "[^\x09\x0A\x0D\x20-\x7E\x85\xA0-"
-                "\uD7FF\uE000-\uFFFD\U00010000-\U0010FFFF]"
+                "[^\x09\x0a\x0d\x20-\x7e\x85\xa0-"
+                "\ud7ff\ue000-\ufffd\U00010000-\U0010ffff]"
             ),
         ):
             return yaml.safe_load(copier_fd)

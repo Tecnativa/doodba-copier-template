@@ -1,4 +1,5 @@
 """Nitpicking small tests ahead."""
+
 import json
 from pathlib import Path
 from textwrap import dedent
@@ -170,7 +171,7 @@ def test_cidr_whitelist_rules(
         unsafe=True,
     )
     # TODO Use Traefik to test this, instead of asserting labels
-    key = ("test-cidr-whitelist-%.1f" % supported_odoo_version).replace(".", "-")
+    key = f"test-cidr-whitelist-{supported_odoo_version:.1f}".replace(".", "-")
     with local.cwd(tmp_path):
         git("add", "prod.yaml", "test.yaml")
         pre_commit("run", "-a", retcode=None)
