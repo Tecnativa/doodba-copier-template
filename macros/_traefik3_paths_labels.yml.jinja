@@ -1,4 +1,4 @@
-{%- import "_macros.jinja" as macros -%}
+{%- import "macros/_macros.jinja" as macros -%}
 {#
   Note: indentation of 6 spaces is important because that's the depth level
   of container labels in a docker-compose file.
@@ -18,13 +18,13 @@
   (PathPrefix(
       {%- for path in _ns.with_slash -%}
         `{{ path }}`
-        {%- if not loop.last %}, {% endif %}
+        {%- if not loop.last %}) || PathPrefix({% endif %}
       {%- endfor -%}
     )
     {%- if _ns.without_slash %} || Path(
       {%- for path in _ns.without_slash -%}
         `{{ path }}`
-        {%- if not loop.last %}, {% endif %}
+        {%- if not loop.last %}) || Path({% endif %}
       {%- endfor -%}
       )
     {%- endif -%}
@@ -33,15 +33,24 @@
 
 {# Echo all domains of a group, in a Traefik rule #}
 {%- macro domains_rule(domain_group) -%}
-  Host(
-    {%- for host in domain_group.hosts -%}
-    `{{ host }}`
-    {%- if not loop.last %}, {% endif %}
-    {%- endfor -%}
-  )
+  {%- if domain_group.hosts | length == 1 -%}
+    Host(`{{ domain_group.hosts[0] }}`)
+  {%- else -%}
+    (Host(`{{ domain_group.hosts | join('`) || Host(`') }}`))
+  {%- endif -%}
   {%- if domain_group.path_prefixes %} && {{ path_prefix_rule(domain_group.path_prefixes) }}
   {%- endif %}
 {%- endmacro %}
+
+{%- macro domains_rule_sni(hosts) -%}
+  {%- for host in hosts -%}
+    HostSNI(`{{ host }}`)
+    {%- if not loop.last -%}
+      ||
+    {%- endif -%}
+  {%- endfor -%}
+{%- endmacro %}
+
 
 {%- macro key(project_name, odoo_version, suffix) %}
   {{- '%s-%.1f-%s'|format(project_name, odoo_version, suffix)|replace('.', '-') }}
@@ -61,14 +70,13 @@
       traefik.http.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.middlewares:
         {{ key }}-{{ middlewares|sort|join(", %s-" % key) }}
       {%- endif %}
-
       {%- if priority %}
       traefik.http.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.priority: {{ priority }}
       {%- endif %}
 
       {%- if domain_group.cert_resolver %}
 
-      {#- Add TLS configuraiton #}
+      {#- Add TLS configuration #}
       {%- if suffix.endswith("-secure") %}
       traefik.http.routers.{{ key }}-{{ suffix }}-{{ domain_group.loop.index0 }}.tls: "true"
       {%- if domain_group.cert_resolver is string %}
@@ -117,7 +125,6 @@
       {#- Service #}
       traefik.http.services.{{ key }}-main.loadbalancer.server.port: 8069
       traefik.http.services.{{ key }}-longpolling.loadbalancer.server.port: 8072
-
       {%- call(domain_group) macros.domains_loop_grouped(domain_groups_list) %}
       {#- Remember basic middlewares for this domain group #}
       {%- set _ns = namespace(basic_middlewares=[]) -%}
@@ -207,6 +214,8 @@
         )
       }}
       {%- endif %}
+
+      {#- Allowed crawlers router #}
       {%- if paths_with_crawlers and not domain_group.path_prefixes %}
       {{-
         router(
@@ -221,7 +230,7 @@
             "buffering",
             "compress",
           ],
-          priority=100,
+            priority=100,
         )
       }}
       {%- endif %}
@@ -250,7 +259,10 @@
 
 {%- macro database(domain_groups_list, cidr_whitelist, key, port, project_name) %}
       {#- Service #}
+      traefik.tcp.routers.{{ key }}-database.entrypoints: postgres-entrypoint
       traefik.tcp.services.{{ key }}-database.loadbalancer.server.port: 5432
+      traefik.tcp.routers.{{ key }}-database.tls: "true"
+      traefik.tcp.routers.{{ key }}-database.tls.certResolver: letsencrypt
 
       {%- if cidr_whitelist %}
       {#- Declare whitelist middleware #}
@@ -260,23 +272,15 @@
         {%- endfor %}
       {%- endif %}
 
-      {%- call(domain_group) macros.domains_loop_grouped(domain_groups_list) %}
+      {%- set ns_hosts = namespace(all_hosts=[]) %}
+      {%- for domain_group in domain_groups_list %}
+        {%- set ns_hosts.all_hosts = ns_hosts.all_hosts + domain_group.hosts %}
+      {%- endfor %}
+      traefik.tcp.routers.{{ key }}-database.rule: {{ domains_rule_sni(ns_hosts.all_hosts) }}
+
       {#- Remember basic middlewares for this domain group #}
       {%- set _ns = namespace(basic_middlewares=[]) -%}
       {%- if cidr_whitelist %}
         {%- set _ns.basic_middlewares = _ns.basic_middlewares + ["whitelist"] %}
       {%- endif %}
-
-      {#- database router #}
-      {{-
-        router_tcp(
-          domain_group=domain_group,
-          key=key,
-          suffix="database",
-          service="database",
-          middlewares=_ns.basic_middlewares,
-          port=port,
-        )
-      }}
-      {%- endcall %}
 {%- endmacro %}

@@ -1,4 +1,4 @@
-{%- import "_macros.jinja" as macros -%}
+{%- import "macros/_macros.jinja" as macros -%}
 {% set whitelisted_hosts = whitelisted_hosts_devel | default([]) -%}
 {% if compose_version == "v1" %}
 version: "2.4"

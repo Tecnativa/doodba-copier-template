@@ -1,29 +1,12 @@
 # Configure jinja2 defaults to make syntax highlighters lives easier
 _templates_suffix: .jinja
-
+_subdirectory: template
 # Other Copier configurations
 _min_copier_version: "9"
 _exclude:
-  - _macros
-  - _traefik*_labels.yml
-  - /.git
-  - /.github
-  - /.gitmodules
-  - /.vscode/launch.json
-  - /.vscode/settings.json
   - /**.pyc
   - /**.pyo
-  - /CONTRIBUTING.md
-  - /copier.yml
-  - /COPYING
-  - /docs
-  - /migrations.py
-  - /poetry.lock
-  - /pyproject.toml
-  - /scripts
-  - /tasks_downstream.py
-  - /tests
-  - /vendor
+  - tasks_downstream.py
 
 _skip_if_exists:
   - odoo/custom/dependencies/*.txt

@@ -1,10 +1,10 @@
-{%- import "_macros.jinja" as macros -%}
-{%- import "_traefik1_labels.yml.jinja" as traefik1_labels -%}
-{%- import "_traefik1_paths_labels.yml.jinja" as traefik1_path_labels -%}
-{%- import "_traefik2_labels.yml.jinja" as traefik2_labels -%}
-{%- import "_traefik2_hosts_labels.yml.jinja" as traefik2_hosts_labels -%}
-{%- import "_traefik3_labels.yml.jinja" as traefik3_labels -%}
-{%- import "_traefik3_paths_labels.yml.jinja" as traefik3_labels_2 -%}
+{%- import "macros/_macros.jinja" as macros -%}
+{%- import "macros/_traefik1_labels.yml.jinja" as traefik1_labels -%}
+{%- import "macros/_traefik1_paths_labels.yml.jinja" as traefik1_path_labels -%}
+{%- import "macros/_traefik2_labels.yml.jinja" as traefik2_labels -%}
+{%- import "macros/_traefik2_hosts_labels.yml.jinja" as traefik2_hosts_labels -%}
+{%- import "macros/_traefik3_labels.yml.jinja" as traefik3_labels -%}
+{%- import "macros/_traefik3_paths_labels.yml.jinja" as traefik3_labels_2 -%}
 {%- set _key = traefik2_labels.key(project_name, odoo_version, "prod") -%}
 {% if compose_version == "v1" %}
 version: "2.4"

@@ -1,4 +1,4 @@
-{%- import "_macros.jinja" as macros -%}
+{%- import "macros/_macros.jinja" as macros -%}
 {#
   Note: indentation of 6 spaces is important because that's the depth level
   of container labels in a docker-compose file.
@@ -33,15 +33,15 @@
 
 {# Echo all domains of a group, in a Traefik rule #}
 {%- macro domains_rule(domain_group) -%}
-  Host:
-  {%- for host in domain_group.hosts -%}
-  {{ host }}
-  {%- if not loop.last %}, {% endif %}
-  {%- endfor -%}
+  Host(
+    {%- for host in domain_group.hosts -%}
+    `{{ host }}`
+    {%- if not loop.last %}, {% endif %}
+    {%- endfor -%}
+  )
   {%- if domain_group.path_prefixes %} && {{ path_prefix_rule(domain_group.path_prefixes) }}
   {%- endif %}
 {%- endmacro %}
-
 
 {%- macro key(project_name, odoo_version, suffix) %}
   {{- '%s-%.1f-%s'|format(project_name, odoo_version, suffix)|replace('.', '-') }}
@@ -85,6 +85,11 @@
       {%- endif %}
 {%- endmacro %}
 
+{%- macro custom_ws_middleware(key) -%}
+ {#- Force X-Forwarded-Proto to https for websockets #}
+      traefik.http.middlewares.{{ key }}-override-ws-headers.headers.customRequestHeaders.X-Forwarded-Proto: "https"
+{%- endmacro %}
+
 {%- macro common_middlewares(key, cidr_whitelist) %}
       {#- Common middlewares #}
       traefik.http.middlewares.{{ key }}-buffering.buffering.retryExpression:
@@ -106,6 +111,9 @@
 
 {%- macro odoo(domain_groups_list, cidr_whitelist, key, odoo_version,
                paths_without_crawlers, paths_with_crawlers, project_name) %}
+      {%- if odoo_version >= 16 %}
+      {{- custom_ws_middleware(key) }}
+      {%- endif %}
       {#- Service #}
       traefik.http.services.{{ key }}-main.loadbalancer.server.port: 8069
       traefik.http.services.{{ key }}-longpolling.loadbalancer.server.port: 8072
@@ -161,6 +169,11 @@
       {#- Longpolling router #}
       {%- if not domain_group.path_prefixes %}
       {%- set longpolling_route = "PathPrefix(`/longpolling/`)" if odoo_version < 16 else "Path(`/websocket`)" -%}
+      {%- if odoo_version >= 16 %}
+      {%- set ws_middlewares = _ns.basic_middlewares + ["override-ws-headers"] %}
+      {%- else %}
+      {%- set ws_middlewares = _ns.basic_middlewares %}
+      {%- endif %}
       {{-
         router(
           domain_group=domain_group,
@@ -168,7 +181,7 @@
           suffix="longpolling",
           rule="%s && %s" % (domains_rule(domain_group), longpolling_route),
           service="longpolling",
-          middlewares=_ns.basic_middlewares,
+          middlewares=ws_middlewares,
           priority=20,
         )
       }}
