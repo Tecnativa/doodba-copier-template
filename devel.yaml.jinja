@@ -1,12 +1,5 @@
 {%- import "_macros.jinja" as macros -%}
-{% set whitelisted_hosts = (
-  "cdnjs.cloudflare.com",
-  "fonts.googleapis.com",
-  "fonts.gstatic.com",
-  "www.google.com",
-  "www.googleapis.com",
-  "www.gravatar.com",
-) -%}
+{% set whitelisted_hosts = whitelisted_hosts_devel | default([]) -%}
 {% if compose_version == "v1" %}
 version: "2.4"
 
@@ -60,11 +53,11 @@ services:
       - ./odoo/auto:/opt/odoo/auto:rw,z
     depends_on:
       - db
-      {% for host in whitelisted_hosts -%}
-      - proxy_{{ host|replace(".", "_") }}
-      {% endfor -%}
       - smtp
       - wdb
+      {%- if whitelisted_hosts %}
+      - proxy_general
+      {%- endif %}
     command:
       - odoo
       - --limit-memory-soft=0
@@ -116,20 +109,36 @@ services:
       - "127.0.0.1:${PORT_PREFIX:-{{ macros.version_major(odoo_version) -}} }984:1984"
     # HACK https://github.com/Kozea/wdb/issues/136
     init: true
+{%- if whitelisted_hosts %}
 
-  # Whitelist outgoing traffic for tests, reports, etc.
-{%- for host in whitelisted_hosts %}
-  proxy_{{ host|replace(".", "_") }}:
-    image: ghcr.io/tecnativa/docker-whitelist:latest
+  odoo_net_setup:
+    image: ghcr.io/tecnativa/docker-whitelist-gateway-service:edge
+    network_mode: "service:odoo"
+    cap_add:
+      - NET_ADMIN
+    depends_on:
+      - odoo
+      - proxy_general
+    healthcheck:
+      disable: true
+    environment:
+      MODE_RUN: "net_setup"
+      GATEWAY_NAME: "proxy_general"
+
+  proxy_general:
+    image: ghcr.io/tecnativa/docker-whitelist-gateway-service:edge
+    cap_add:
+      - NET_ADMIN
     networks:
       default:
         aliases:
-          - {{ host }}
+          - proxy_general
       public:
     environment:
-      TARGET: {{ host }}
-      PRE_RESOLVE: 1
-{% endfor %}
+      ALLOWED_HOSTS: >-
+        {{ whitelisted_hosts | join(" ") }}
+
+{%- endif %}
 networks:
   default:
     internal: ${DOODBA_NETWORK_INTERNAL-true}

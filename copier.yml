@@ -354,6 +354,44 @@ domains_test:
     💡 The 1st host from the 1st domain that has no `path_prefixes` will be considered
     the main one. In the example above, it'd be `demo1.main.com`.
 
+whitelisted_hosts_test:
+  type: yaml
+  multiline: true
+  default: []
+  help: |
+    Extra external hosts to allow from **test/demo** instances (optional).
+
+    Example:
+      - api.example.com
+      - example.com
+
+    If you provide one or more hostnames/IPs here, the template will inject the
+    docker-whitelist-gateway setup in `test.yaml`, so the Odoo container can only
+    resolve/reach those hosts (plus whatever is already reachable via your existing
+    `globalwhitelist_shared` network).
+
+    Leave empty (`[]`) to keep the current behavior (no additional egress).
+
+whitelisted_hosts_devel:
+  type: yaml
+  multiline: true
+  default:
+    - cdnjs.cloudflare.com
+    - fonts.googleapis.com
+    - fonts.gstatic.com
+    - www.google.com
+    - www.googleapis.com
+    - www.gravatar.com
+  placeholder: |
+    - api.example.com
+    - example.com
+  help: |
+    Extra external hosts to allow from **devel** environment (optional).
+
+    If you provide one or more hostnames/IPs here, the template will inject the
+    docker-whitelist-gateway setup in `devel.yaml`, so the Odoo container can only
+    resolve/reach those hosts.
+
 paths_without_crawlers:
   multiline: true
   default:
