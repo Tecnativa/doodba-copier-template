@@ -3,6 +3,7 @@
 {%- import "_traefik2_labels.yml.jinja" as traefik2_labels -%}
 {%- import "_traefik3_labels.yml.jinja" as traefik3_labels -%}
 {%- set _key = traefik2_labels.key(project_name, odoo_version, "test") -%}
+{%- set _whitelisted_hosts_test = whitelisted_hosts_test|default([]) -%}
 {% if compose_version == "v1" %}
 version: "2.4"
 
@@ -35,6 +36,9 @@ services:
     depends_on:
       - db
       - smtp
+    {%- if _whitelisted_hosts_test %}
+      - proxy_general
+    {%- endif %}
     networks:
       default:
       globalwhitelist_shared:
@@ -145,7 +149,35 @@ services:
     entrypoint: [sh, -c]
     command:
       - test -r /etc/mailhog/auth && export MH_AUTH_FILE=/etc/mailhog/auth; exec MailHog
+  {% if _whitelisted_hosts_test %}
+  odoo_net_setup:
+    image: ghcr.io/tecnativa/docker-whitelist-gateway-service:edge
+    network_mode: "service:odoo"
+    cap_add:
+      - NET_ADMIN
+    depends_on:
+      - odoo
+      - proxy_general
+    healthcheck:
+      disable: true
+    environment:
+      MODE_RUN: "net_setup"
+      GATEWAY_NAME: "proxy_general"
 
+  proxy_general:
+    image: ghcr.io/tecnativa/docker-whitelist-gateway-service:edge
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    networks:
+      default:
+        aliases:
+          - proxy_general
+      public:
+    environment:
+      ALLOWED_HOSTS: >-
+        {{ _whitelisted_hosts_test|join(' ') }}
+  {% endif %}
 networks:
   default:
     internal: ${DOODBA_NETWORK_INTERNAL-true}
@@ -158,6 +190,10 @@ networks:
 
   inverseproxy_shared:
     external: true
+  {%- endif %}
+
+  {%- if _whitelisted_hosts_test %}
+  public:
   {%- endif %}
 
 volumes:

@@ -150,14 +150,19 @@ stuff.
 
 ## How can I whitelist a service and allow external access to it?
 
-This can become useful when you have isolated environments (like in `devel.yaml` and
-`test.yaml` by default) but you need to allow some external API access for them. I.e.,
-you could use Google Fonts API for your customer's reports, and those reports would take
-forever and end up rendering badly in staging environments.
+This can become useful when you have isolated environments (like in devel.yaml and
+test.yaml by default) but you still need to allow access to some external APIs. For
+example, a project might need to fetch assets from services like Google Fonts in order
+to correctly render reports in development or staging environments.
 
-In such case, we recommend using the
-[tecnativa/whitelist](https://hub.docker.com/r/tecnativa/whitelist/) image. Read its
-docs there.
+The template now allows configuring this directly through the Copier questions. When
+generating or updating a project, you can specify the external hosts that should be
+reachable from devel or test. If any hosts are provided, the template automatically
+injects the docker-whitelist-gateway setup in the corresponding compose file, allowing
+the Odoo container to access only those hosts.
+
+If no hosts are defined, the environment keeps the default isolated networking
+behaviour.
 
 ## How do I develop for an external repo, such as OCA?
 
