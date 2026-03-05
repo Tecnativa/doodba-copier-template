@@ -645,6 +645,17 @@ backup_email_to:
     Where to send those backup reports?
   default: ""
 
+backup_smtp_report_success:
+  type: bool
+  when: *backup_present
+  help: >-
+    Keep a close eye on your backup jobs!
+
+    If enabled (default), backup jobs report via SMTP regardless of exit status.
+
+    Otherwise, backup jobs only report via SMTP if one or more jobs failed.
+  default: true
+
 backup_deletion:
   default: false
   type: bool
