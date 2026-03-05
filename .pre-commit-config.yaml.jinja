@@ -7,6 +7,7 @@
 {%- set proj_rev.ruff = "v0.1.3" %}
 {%- set proj_rev.pre_commit_hooks = "v4.5.0" %}
 {%- set proj_rev.odoo_pre_commit_hooks = "v0.0.29" %}
+{%- set proj_rev.refurb = "v2.2.0" %}
 {%- if odoo_version < 16 %}
   {%- set proj_rev.pylint_odoo = "v8.0.0" %}
 {%- elif odoo_version < 17 %}
@@ -66,6 +67,13 @@ repos:
         args: ["--fix"]
   {% endif -%}
   {% if odoo_version >= 13 -%}
+  {% if use_refurb -%}
+  - repo: https://github.com/dosisod/refurb
+    rev: {{ proj_rev.refurb }}
+    hooks:
+      - id: refurb
+        exclude: migrations/.*
+  {% endif -%}
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: {{ proj_rev.ruff }}
     hooks:

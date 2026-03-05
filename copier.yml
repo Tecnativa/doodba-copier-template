@@ -230,6 +230,14 @@ project_license:
     Odoo Enterprise Edition License v1.0: OEEL-1.0
     Odoo Proprietary License v1.0: OPL-1.0
 
+use_refurb:
+  default: false
+  type: bool
+  help:
+    Use refurb (https://github.com/dosisod/refurb) for refurbishing and modernizing
+    Python codebase.
+  when: "{{ odoo_version >= 13.0 }}"
+
 gitlab_url:
   type: str
   help: >-
