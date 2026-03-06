@@ -45,6 +45,9 @@ services:
     {%- if odoo_proxy == "traefik" and domains_test %}
       inverseproxy_shared:
     {%- endif %}
+    {%- if _whitelisted_hosts_test %}
+      whitelist:
+    {%- endif %}
     labels:
       doodba.domain.main: {{ macros.first_main_domain(domains_test)|tojson }}
       {%- if odoo_proxy == "traefik" and domains_test %}
@@ -173,6 +176,11 @@ services:
       default:
         aliases:
           - proxy_general
+      {%- if _whitelisted_hosts_test %}
+      whitelist:
+        aliases:
+          - proxy_general
+      {%- endif %}
       public:
     environment:
       ALLOWED_HOSTS: >-
@@ -194,6 +202,7 @@ networks:
 
   {%- if _whitelisted_hosts_test %}
   public:
+  whitelist:
   {%- endif %}
 
 volumes:
