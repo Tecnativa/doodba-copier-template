@@ -14,7 +14,7 @@ python = "^3.8.1"
 [tool.poetry.dev-dependencies]
 black = "^24.8.0"
 flake8 = "^6.1.0"
-invoke = "^2.2.0"
+invoke = "^2.2.1"
 pylint = "^3.0.2"
 pytest = "^8.3.5"
 pytest-xdist = "^3.3.1"
