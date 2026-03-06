@@ -6,6 +6,7 @@ Contains common helpers to develop using this child project.
 """
 
 import json
+import operator
 import os
 import shutil
 import stat
@@ -227,13 +228,13 @@ def write_code_workspace_file(c, cw_path=None):
     cw_config.setdefault("settings", {})
     cw_config["settings"].update(
         {
-            "python.autoComplete.extraPaths": [f"{str(SRC_PATH)}/odoo"],
-            "python.analysis.extraPaths": [f"{str(SRC_PATH)}/odoo"],
+            "python.autoComplete.extraPaths": [f"{SRC_PATH}/odoo"],
+            "python.analysis.extraPaths": [f"{SRC_PATH}/odoo"],
             "python.formatting.provider": "none",
             "python.linting.flake8Enabled": True,
-            "python.linting.ignorePatterns": [f"{str(SRC_PATH)}/odoo/**/*.py"],
+            "python.linting.ignorePatterns": [f"{SRC_PATH}/odoo/**/*.py"],
             "python.linting.pylintArgs": [
-                f"--init-hook=\"import sys;sys.path.append('{str(SRC_PATH)}/odoo')\"",
+                f"--init-hook=\"import sys;sys.path.append('{SRC_PATH}/odoo')\"",
                 "--load-plugins=pylint_odoo",
             ],
             "python.linting.pylintEnabled": True,
@@ -464,7 +465,7 @@ def write_code_workspace_file(c, cw_path=None):
         ],
     }
     # Sort project folders
-    cw_config["folders"].sort(key=lambda x: x["path"])
+    cw_config["folders"].sort(key=operator.itemgetter("path"))
     # Put Odoo folder just before private and top folder and map to debugpy
     odoo = SRC_PATH / "odoo"
     if odoo.is_dir():
@@ -575,10 +576,7 @@ def start(c, detach=True, debugpy=False, _reload=True, port_prefix=0):
         if detach:
             cmd += " --detach"
         with c.cd(str(PROJECT_ROOT)):
-            env = dict(
-                UID_ENV,
-                DOODBA_DEBUGPY_ENABLE=str(int(debugpy)),
-            )
+            env = UID_ENV | {"DOODBA_DEBUGPY_ENABLE": str(int(debugpy))}
             if port_prefix:
                 env["PORT_PREFIX"] = str(port_prefix)
             result = c.run(
@@ -717,10 +715,9 @@ def updatepot(
     for new_file in new_files:
         file_name = os.path.basename(new_file)
         if file_name.endswith("~"):
-            os.remove(new_file)
+            Path(new_file).unlink()
             continue
-        with open(new_file) as fd:
-            content = fd.read()
+        content = Path(new_file).read_text()
         new_lines = []
         for line in content.splitlines():
             if remove_dates and (
@@ -730,8 +727,7 @@ def updatepot(
                 continue
             new_lines.append(line)
         content = "\n".join(new_lines)
-        with open(new_file, "w") as fd:
-            fd.write(content.strip() + "\n")
+        Path(new_file).write_text(content.strip() + "\n")
     _logger.info(".po[t] files updated")
     precommit_cmd = (
         f"pre-commit run --files {' '.join(iglob(f'{glob}/*.po*'))}--color=always"
@@ -831,10 +827,7 @@ def _test_in_debug_mode(c, odoo_command):
         with c.cd(str(PROJECT_ROOT)):
             c.run(
                 cmd,
-                env=dict(
-                    UID_ENV,
-                    DOODBA_DEBUGPY_ENABLE="1",
-                ),
+                env=UID_ENV | {"DOODBA_DEBUGPY_ENABLE": "1"},
                 pty=True,
             )
         _logger.info("Waiting for services to spin up...")
@@ -1226,7 +1219,7 @@ def restore_snapshot(
                     db_list.append((db_name, db_date))
                 except ValueError:
                     continue
-            snapshot_name = max(db_list, key=lambda x: x[1])[0]
+            snapshot_name = max(db_list, key=operator.itemgetter(1))[0]
             if not snapshot_name:
                 raise exceptions.PlatformError(
                     f"No snapshot found for destination_db {destination_db}"
