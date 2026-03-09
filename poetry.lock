@@ -607,14 +607,14 @@ setuptools = "*"
 
 [[package]]
 name = "packaging"
-version = "23.2"
+version = "26.0"
 description = "Core utilities for Python packages"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 groups = ["main", "dev"]
 files = [
-    {file = "packaging-23.2-py3-none-any.whl", hash = "sha256:8c491190033a9af7e1d931d0b5dacc2ef47509b34dd0de67ed209b5203fc88c7"},
-    {file = "packaging-23.2.tar.gz", hash = "sha256:048fb0e9405036518eaaf48a55953c750c11e1a1b68e0dd1a9d62ed0c092cfc5"},
+    {file = "packaging-26.0-py3-none-any.whl", hash = "sha256:b36f1fef9334a5588b4166f8bcd26a14e521f2b55e6b9de3aaa80d3ff7a37529"},
+    {file = "packaging-26.0.tar.gz", hash = "sha256:00243ae351a257117b6a241061796684b084ed1c516a08c48a3f7e147a9d80b4"},
 ]
 
 [[package]]
@@ -1207,4 +1207,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.8.1"
-content-hash = "585fe5e66eb565f8afc4646b12483761929bfdfebef56babc5d9be3c7810f430"
+content-hash = "1a2ec9da7d2c92a8c039178701141c51b72c8a7ba3d27503eca68cbb0ca0b1f6"
