@@ -138,6 +138,7 @@ services:
     environment:
       ALLOWED_HOSTS: >-
         {{ whitelisted_hosts | join(" ") }}
+      DNS_INTERNAL_NAMES: "odoo proxy_general db smtp"
 
 {%- endif %}
 networks:
