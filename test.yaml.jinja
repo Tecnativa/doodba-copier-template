@@ -185,6 +185,7 @@ services:
     environment:
       ALLOWED_HOSTS: >-
         {{ _whitelisted_hosts_test|join(' ') }}
+      DNS_INTERNAL_NAMES: "odoo proxy_general {{ _key }}-db smtplocal"
   {% endif %}
 networks:
   default:
