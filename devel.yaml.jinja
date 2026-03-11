@@ -49,6 +49,9 @@ services:
       WDB_WEB_PORT: "${PORT_PREFIX:-{{ macros.version_major(odoo_version) -}} }984"
       # To avoid installing demo data export DOODBA_WITHOUT_DEMO=all
       WITHOUT_DEMO: "${DOODBA_WITHOUT_DEMO-false}"
+      {%- if whitelisted_hosts %}
+      WDB_SOCKET_SERVER: "wdb_internal"
+      {%- endif %}
     volumes:
       - ./odoo/custom:/opt/odoo/custom:ro,z
       - ./odoo/auto:/opt/odoo/auto:rw,z
@@ -87,7 +90,13 @@ services:
 
   pgweb:
     image: docker.io/sosedoff/pgweb
-    networks: *public
+    networks:
+      default:
+      {%- if whitelisted_hosts %}
+        aliases:
+          - wdb_internal
+      {%- endif %}
+      public:
     ports:
       - "127.0.0.1:${PORT_PREFIX:-{{ macros.version_major(odoo_version) -}} }081:8081"
     environment:
@@ -138,7 +147,7 @@ services:
     environment:
       ALLOWED_HOSTS: >-
         {{ whitelisted_hosts | join(" ") }}
-      DNS_INTERNAL_NAMES: "odoo proxy_general db smtp"
+      DNS_INTERNAL_NAMES: "odoo proxy_general db smtp wdb_internal"
 
 {%- endif %}
 networks:
