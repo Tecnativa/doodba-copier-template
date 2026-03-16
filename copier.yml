@@ -711,3 +711,15 @@ backup_passphrase:
     restore backups.
 
     Which will be your backups passphrase?
+
+issue_tracker_url:
+  type: str
+  default: ""
+  help: >-
+    To enable Towncrier, write here the base URL of issues for your issue tracker,
+    without trailing slash. The issue ID will be appended to the provided URL.
+
+    Example: if the URL is `https://gitlab.com/Tecnativa/your-doodba-project/-/issues`
+
+    then the changelog for issue 12345 will point to:
+    `https://gitlab.com/Tecnativa/your-doodba-project/-/issues/12345`
