@@ -83,6 +83,11 @@ services:
     environment:
       POSTGRES_DB: *dbname
       POSTGRES_PASSWORD: odoopassword
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -q -U $$POSTGRES_USER"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
   {%- endif %}
 
   pgweb:
@@ -91,9 +96,10 @@ services:
     ports:
       - "127.0.0.1:${PORT_PREFIX:-{{ macros.version_major(odoo_version) -}} }081:8081"
     environment:
-      DATABASE_URL: postgres://{{ postgres_username }}:odoopassword@db:5432/devel?sslmode=disable
+      PGWEB_DATABASE_URL: postgres://{{ postgres_username }}:odoopassword@db:5432/devel?sslmode=disable
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   smtp:
     extends:
