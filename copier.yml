@@ -711,3 +711,18 @@ backup_passphrase:
     restore backups.
 
     Which will be your backups passphrase?
+
+backup_backend_password:
+  secret: true
+  type: str
+  default: example-backup-backend-password
+  when: *backup_present
+  help: >-
+    ⚠️ This password is critical for security, so keep it safe. You will need it to
+    restore backups.
+
+    This password is supported by most duplicity backends (like SFTP) which are password
+    capable. If your backend uses it, setting it here will safely store it in an
+    environment variable, that is more secure than setting it in the backend url.
+
+    Which will be your backups password?
