@@ -6,3 +6,6 @@ AWS_ACCESS_KEY_ID={{ backup_aws_access_key_id }}
 AWS_SECRET_ACCESS_KEY={{ backup_aws_secret_access_key }}
 {%- endif %}
 PASSPHRASE={{ backup_passphrase }}
+{%- if backup_backend_password %}
+BACKEND_PASSWORD={{ backup_backend_password }}
+{%- endif %}
