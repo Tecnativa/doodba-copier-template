@@ -4,6 +4,7 @@
 {%- import "_traefik3_labels.yml.jinja" as traefik3_labels -%}
 {%- set _key = traefik2_labels.key(project_name, odoo_version, "test") -%}
 {%- set _whitelisted_hosts_test = whitelisted_hosts_test|default([]) -%}
+{%- set domain_spec = domain_spec|default(domains_test) -%}
 {% if compose_version == "v1" %}
 version: "2.4"
 
@@ -30,8 +31,8 @@ services:
       ODOO_QUEUE_JOB_CHANNELS: "root:1"
       PGHOST: {{ _key }}-db
     restart: unless-stopped
-    {%- if domains_test %}
-    hostname: {{ macros.first_main_domain(domains_test)|tojson }}
+    {%- if domain_spec %}
+    hostname: {{ macros.first_main_domain(domain_spec)|tojson }}
     {%- endif %}
     depends_on:
       - db
@@ -42,19 +43,19 @@ services:
     networks:
       default:
       globalwhitelist_shared:
-    {%- if odoo_proxy == "traefik" and domains_test %}
+    {%- if odoo_proxy == "traefik" and domain_spec %}
       inverseproxy_shared:
     {%- endif %}
     {%- if _whitelisted_hosts_test %}
       whitelist:
     {%- endif %}
     labels:
-      doodba.domain.main: {{ macros.first_main_domain(domains_test)|tojson }}
-      {%- if odoo_proxy == "traefik" and domains_test %}
+      doodba.domain.main: {{ macros.first_main_domain(domain_spec)|tojson }}
+      {%- if odoo_proxy == "traefik" and domain_spec %}
       traefik.enable: "true"
-      {{- traefik1_labels.odoo(domains_test, ["/"], odoo_version) }}
+      {{- traefik1_labels.odoo(domain_spec, ["/"], odoo_version) }}
       {{- traefik2_labels.odoo(
-        domains_test,
+        domain_spec,
         cidr_whitelist,
         _key,
         odoo_version,
@@ -93,17 +94,17 @@ services:
       default:
         aliases:
           - smtplocal
-    {%- if odoo_proxy == "traefik" and domains_test %}
+    {%- if odoo_proxy == "traefik" and domain_spec %}
       inverseproxy_shared:
     {%- endif %}
     labels:
-      doodba.domain.main: {{ macros.first_main_domain(domains_test)|tojson }}
-      {%- if odoo_proxy == "traefik" and domains_test %}
+      doodba.domain.main: {{ macros.first_main_domain(domain_spec)|tojson }}
+      {%- if odoo_proxy == "traefik" and domain_spec %}
       traefik.docker.network: "inverseproxy_shared"
       traefik.enable: "true"
       {#- Traefik v1 labels #}
       traefik.frontend.passHostHeader: "true"
-      {%- call(domain_group) macros.domains_loop_grouped(domains_test|rejectattr("redirect_to")|rejectattr("path_prefixes")) %}
+      {%- call(domain_group) macros.domains_loop_grouped(domain_spec|rejectattr("redirect_to")|rejectattr("path_prefixes")) %}
       {{-
         traefik1_labels.router(
           prefix="mailhog",
@@ -121,7 +122,7 @@ services:
       traefik.http.middlewares.{{ _key }}-mailhog-stripprefix.stripPrefix.prefixes: /smtpfake/
       traefik.http.services.{{ _key }}-mailhog.loadbalancer.server.port: 8025
       {{- traefik2_labels.common_middlewares(_key, cidr_whitelist) }}
-      {%- call(domain_group) macros.domains_loop_grouped(domains_test|rejectattr("redirect_to")|rejectattr("path_prefixes")) %}
+      {%- call(domain_group) macros.domains_loop_grouped(domain_spec|rejectattr("redirect_to")|rejectattr("path_prefixes")) %}
       {#- Remember basic middlewares for this domain group #}
       {%- set _ns = namespace(basic_middlewares=[]) -%}
       {%- if cidr_whitelist %}
