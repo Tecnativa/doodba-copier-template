@@ -1,7 +1,7 @@
-{%- import "_macros.jinja" as macros -%}
-{%- import "_traefik1_labels.yml.jinja" as traefik1_labels -%}
-{%- import "_traefik2_labels.yml.jinja" as traefik2_labels -%}
-{%- import "_traefik3_labels.yml.jinja" as traefik3_labels -%}
+{%- import "macros/_macros.jinja" as macros -%}
+{%- import "macros/_traefik1_labels.yml.jinja" as traefik1_labels -%}
+{%- import "macros/_traefik2_labels.yml.jinja" as traefik2_labels -%}
+{%- import "macros/_traefik3_labels.yml.jinja" as traefik3_labels -%}
 {%- set _key = traefik2_labels.key(project_name, odoo_version, "test") -%}
 {%- set _whitelisted_hosts_test = whitelisted_hosts_test|default([]) -%}
 {% if compose_version == "v1" %}
