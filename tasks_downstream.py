@@ -68,11 +68,12 @@ _logger = getLogger(__name__)
 
 def _override_docker_command(service, command, file, orig_file=None):
     # Read config from main file
+    docker_compose_file_version = None
     if orig_file:
         with open(orig_file) as fd:
             orig_docker_config = yaml.safe_load(fd.read())
             docker_compose_file_version = orig_docker_config.get("version")
-    else:
+    if not docker_compose_file_version:
         docker_compose_file_version = "2.4"
     docker_config = {
         "services": {service: {"command": command}},
