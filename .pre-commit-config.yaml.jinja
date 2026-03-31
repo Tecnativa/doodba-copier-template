@@ -167,6 +167,15 @@ repos:
         args:
           - --color
           - --fix
+  {% if issue_tracker_url %}
+  - repo: https://github.com/twisted/towncrier
+    rev: 25.8.0
+    hooks:
+      - id: towncrier-update
+        name: towncrier check
+        files: $changelog\.d/
+        args: ["check", "--compare-with", "origin/main"]
+  {% endif %}
   - <<: *maintainer_tools
     hooks:
       # Generate readme is last, so its digest includes changes from above

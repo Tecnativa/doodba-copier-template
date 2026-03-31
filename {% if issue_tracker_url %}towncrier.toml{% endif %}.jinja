@@ -1,0 +1,55 @@
+[tool.towncrier]
+name = "{{ project_name }}"
+directory = "changelog.d"
+filename = "CHANGELOG.md"
+start_string = "<!-- towncrier release notes start -->\n"
+title_format = "## [{version}]({{ gitlab_url }}/-/tree/{version}) - {project_date}"
+issue_format = "[#{issue}]({{ issue_tracker_url }}/{issue})"
+
+# https://www.conventionalcommits.org/en/v1.0.0/
+[[tool.towncrier.type]]
+directory = "feat"
+name = "Features"
+showcontent = true
+[[tool.towncrier.type]]
+directory = "fix"
+name = "Fixes"
+showcontent = true
+[[tool.towncrier.type]]
+directory = "perf"
+name = "Performance"
+showcontent = true
+[[tool.towncrier.type]]
+directory = "docs"
+name = "Documentation"
+showcontent = true
+[[tool.towncrier.type]]
+directory = "ci"
+name = "CI Improvements"
+showcontent = true
+[[tool.towncrier.type]]
+directory = "build"
+name = "Build changes"
+showcontent = true
+[[tool.towncrier.type]]
+directory = "chore"
+name = "Chores"
+showcontent = false
+[[tool.towncrier.type]]
+directory = "test"
+name = "Tests"
+showcontent = false
+[[tool.towncrier.type]]
+directory = "refactor"
+name = "Refactor"
+showcontent = false
+[[tool.towncrier.type]]
+directory = "style"
+name = "Style"
+showcontent = false
+
+# Project specific type
+[[tool.towncrier.type]]
+directory = "misc"
+name = "Other changes"
+showcontent = true
