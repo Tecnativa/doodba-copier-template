@@ -100,6 +100,7 @@
       traefik.http.middlewares.{{ key }}-addSTS.headers.forceSTSHeader: "true"
       traefik.http.middlewares.{{ key }}-forceSecure.redirectScheme.scheme: https
       traefik.http.middlewares.{{ key }}-forceSecure.redirectScheme.permanent: "true"
+      traefik.http.middlewares.{{ key }}-customHeaders.headers.customrequestheaders.server: odoo
       {%- if cidr_whitelist %}
       {#- Declare whitelist middleware #}
       ? traefik.http.middlewares.{{ key }}-whitelist.IPWhiteList.sourceRange
@@ -142,6 +143,7 @@
           suffix="redirect",
           middlewares=_ns.basic_middlewares + [
             "compress",
+            "customHeaders",
             "redirect-%d" % domain_group.loop.index0,
           ],
           priority=10,
@@ -160,6 +162,7 @@
           middlewares=_ns.basic_middlewares + [
             "buffering",
             "compress",
+            "customHeaders",
           ],
           priority=1,
         )
@@ -202,6 +205,7 @@
             "buffering",
             "compress",
             "forbid-crawlers",
+            "customHeaders",
           ],
           priority=10,
         )
