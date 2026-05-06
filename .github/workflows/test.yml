@@ -69,16 +69,16 @@ jobs:
             python-version: "3.10"
             traefik-version: 3
           - odoo-version: "15.0"
-            python-version: "3.9"
+            python-version: "3.10"
             traefik-version: 2
           - odoo-version: "15.0"
-            python-version: "3.9"
+            python-version: "3.10"
             traefik-version: 3
           - odoo-version: "14.0"
-            python-version: "3.9"
+            python-version: "3.10"
             traefik-version: 3
           - odoo-version: "13.0"
-            python-version: "3.9"
+            python-version: "3.10"
             traefik-version: 3
 
     steps:
