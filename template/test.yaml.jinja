@@ -175,6 +175,8 @@ services:
       DOCKER_PRIMARY_SERVICE: "odoo"
       ALLOWED_HOSTS: >-
         {{ _whitelisted_hosts_test|join(' ') }}
+    env_file:
+      - .docker/proxy.env
 
   proxy_general:
     image: ghcr.io/tecnativa/docker-whitelist-gateway-service:edge
@@ -192,6 +194,8 @@ services:
       MODE_RUN: "gateway"
       ALLOWED_HOSTS: >-
         {{ _whitelisted_hosts_test|join(' ') }}
+    env_file:
+      - .docker/proxy.env
   {% endif %}
 networks:
   default:
