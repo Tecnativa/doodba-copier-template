@@ -8,7 +8,8 @@ services:
   odoo_proxy:
     image: ghcr.io/tecnativa/docker-whitelist:latest
     depends_on:
-      - odoo
+      odoo:
+        condition: service_healthy
     networks: &public
       default:
       public:
@@ -56,17 +57,31 @@ services:
       - ./odoo/custom:/opt/odoo/custom:ro,z
       - ./odoo/auto:/opt/odoo/auto:rw,z
     depends_on:
-      - db
-      - smtp
-      - wdb
+      db:
+        condition: service_healthy
+      smtp:
+        condition: service_started
+      wdb:
+        condition: service_started
       {%- if whitelisted_hosts %}
-      - proxy_general
+      proxy_general:
+        condition: service_started
       {%- endif %}
     {%- if whitelisted_hosts %}
     networks:
       default:
       whitelist:
     {%- endif %}
+    healthcheck:
+      {%- if odoo_version >= 14 %}
+      test: ["CMD-SHELL", "curl -sf http://localhost:8069/web/health || exit 1"]
+      {%- else %}
+      test: ["CMD-SHELL", "curl -sf http://localhost:8069/web/database/selector || exit 1"]
+      {%- endif %}
+      start_period: 30s
+      interval: 10s
+      timeout: 5s
+      retries: 5
     command:
       - odoo
       - --limit-memory-soft=0
