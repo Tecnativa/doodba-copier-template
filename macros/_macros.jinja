@@ -19,6 +19,7 @@
             {%- set domain_group.path_prefixes = _domain_group.path_prefixes|default([], true) %}
             {%- set domain_group.redirect_to = _domain_group.redirect_to|default(none) %}
             {%- set domain_group.redirect_permanent = _domain_group.redirect_permanent|default(False) %}
+            {%- set domain_group.extra_middlewares = _domain_group.extra_middlewares|default([], true) %}
             {%- set domain_group.loop = loop %}
             {{- caller(domain_group) }}
         {%- endif %}

@@ -296,6 +296,8 @@ domains_prod:
     - entrypoints: List of entrypoint names to use when creating this rule. Default: [].
       Leave empty to apply this rule on all available entrypoints. Those are defined
       in your Traefik deployment.
+    - extra_middlewares: List of extra traefik middlewares to use.
+
 
     See https://www.tecnativa.com/r/Anu for an example.
 
@@ -352,6 +354,8 @@ domains_test:
     - entrypoints: List of entrypoint names to use when creating this rule. Default: [].
       Leave empty to apply this rule on all available entrypoints. Those are defined
       in your Traefik deployment.
+    - extra_middlewares: List of extra traefik middlewares to use.
+
 
     See https://www.tecnativa.com/r/Y0v for an example.
 
@@ -407,6 +411,7 @@ domains_migration:
     - entrypoints: List of entrypoint names to use when creating this rule. Default: [].
       Leave empty to apply this rule on all available entrypoints. Those are defined
       in your Traefik deployment.
+    - extra_middlewares: List of extra traefik middlewares to use.
 
     See https://www.tecnativa.com/r/Y0v for an example.
 
@@ -417,6 +422,19 @@ domains_migration:
 
     💡 The 1st host from the 1st domain that has no `path_prefixes` will be considered
     the main one. In the example above, it'd be `demo1.main.com`.
+extra_compose_labels:
+  type: yaml
+  multiline: true
+  default: {}
+  placeholder: |
+    # Example middleware to redirect example.com/oldpath/** to exmple.com/**
+    traefik.http.middlewares.strip_old_path.stripPrefix.prefixes: /oldpath,/old_path
+
+  help:
+    Traefik labels to place on the odoo container alongside the ones generated from
+    domains. Useful if you need something not currently supported by the domain label
+    generator.
+
 whitelisted_hosts_test:
   type: yaml
   multiline: true

@@ -50,6 +50,9 @@ services:
       whitelist:
     {%- endif %}
     labels:
+      {% for label, value in extra_compose_labels.items() -%}
+      {{ label}}: {{ value}}
+      {% endfor -%}
       doodba.domain.main: {{ macros.first_main_domain(domain_spec)|tojson }}
       {%- if odoo_proxy == "traefik" and domain_spec %}
       traefik.enable: "true"
