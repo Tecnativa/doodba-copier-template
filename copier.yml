@@ -485,25 +485,6 @@ whitelisted_hosts_devel:
     docker-whitelist-gateway setup in `devel.yaml`, so the Odoo container can only
     resolve/reach those hosts.
 
-whitelist_docker_project_devel:
-  type: str
-  when: "{{ (whitelisted_hosts_devel or []) | length > 0 }}"
-  default: "{{ project_name | replace('.', '-') }}"
-  help: >-
-    Docker Compose project name used by the whitelist sidecar in devel to discover
-    internal services through Docker metadata.
-
-whitelist_docker_project_test:
-  type: str
-  when: "{{ (whitelisted_hosts_test or []) | length > 0 }}"
-  default: "demo-{{ project_name | replace('.', '-') }}-{{ odoo_version | int }}"
-  help: >-
-    Docker Compose project name used by the whitelist sidecar in test/demo to discover
-    internal services through Docker metadata.
-
-    The proposed default matches our usual naming convention, but this value may need to
-    change depending on how each company/person deploys the project.
-
 paths_without_crawlers:
   multiline: true
   default:

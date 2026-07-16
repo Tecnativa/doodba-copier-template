@@ -151,8 +151,6 @@ services:
       GATEWAY_NAME: "proxy_general"
       DNS_LOCAL: "1"
       DNS_INTERNAL_FROM_DOCKER: "1"
-      DOCKER_PROJECT: "${COMPOSE_PROJECT_NAME:-{{ whitelist_docker_project_devel }}}"
-      DOCKER_PRIMARY_SERVICE: "odoo"
       ALLOWED_HOSTS: &proxy_allowed_hosts >-
         {{ whitelisted_hosts | join(" ") }}
 
