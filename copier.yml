@@ -18,6 +18,7 @@ _skip_if_exists:
 _tasks:
   - invoke after-update
   - invoke develop
+  - pre-commit run --all-files || true
 
 _migrations:
   - version: v1.0.0
