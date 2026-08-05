@@ -3,7 +3,7 @@
 {%- import "macros/_traefik2_labels.yml.jinja" as traefik2_labels -%}
 {%- import "macros/_traefik3_labels.yml.jinja" as traefik3_labels -%}
 {%- set _key = traefik2_labels.key(project_name, odoo_version, "test") -%}
-{%- set _whitelisted_hosts_test = whitelisted_hosts_test|default([]) -%}
+{%- set whitelisted_hosts = whitelisted_hosts_test|default([]) -%}
 {%- set domain_spec = domain_spec|default(domains_test) -%}
 {% if compose_version == "v1" %}
 version: "2.4"
@@ -17,6 +17,7 @@ services:
     env_file:
       - .docker/odoo.env
       - .docker/db-access.env
+
     environment:
       DOODBA_ENVIRONMENT: "${DOODBA_ENVIRONMENT-test}"
       LIST_DB: "{{ odoo_listdb_staging | tojson }}"
@@ -31,23 +32,31 @@ services:
       ODOO_QUEUE_JOB_CHANNELS: "root:1"
       PGHOST: {{ _key }}-db
     restart: unless-stopped
-    {%- if domain_spec %}
-    hostname: {{ macros.first_main_domain(domain_spec)|tojson }}
-    {%- endif %}
     depends_on:
       - db
       - smtp
-    {%- if _whitelisted_hosts_test %}
-      - proxy_general
+      - gatekeeper
+    network_mode: service:gatekeeper
+    command:
+      - odoo
+      - --workers=3
+      - --max-cron-threads=1
+
+  gatekeeper:
+    extends:
+      file: common.yaml
+      service: gatekeeper
+    {%- if domain_spec %}
+    hostname: {{ macros.first_main_domain(domain_spec)|tojson }}
     {%- endif %}
+    environment:
+      REFRESH_INTERVAL: 300
+      ALLOWED_HOSTS: >-
+        {{ whitelisted_hosts|join(' ') }}
     networks:
       default:
-      globalwhitelist_shared:
     {%- if odoo_proxy == "traefik" and domain_spec %}
       inverseproxy_shared:
-    {%- endif %}
-    {%- if _whitelisted_hosts_test %}
-      whitelist:
     {%- endif %}
     labels:
       doodba.domain.main: {{ macros.first_main_domain(domain_spec)|tojson }}
@@ -63,11 +72,7 @@ services:
         [],
         project_name,
       ) }}
-    {%- endif %}
-    command:
-      - odoo
-      - --workers=3
-      - --max-cron-threads=1
+      {%- endif %}
 
   {% if postgres_version -%}
   db:
@@ -153,61 +158,18 @@ services:
     entrypoint: [sh, -c]
     command:
       - test -r /etc/mailhog/auth && export MH_AUTH_FILE=/etc/mailhog/auth; exec MailHog
-  {% if _whitelisted_hosts_test %}
-  odoo_net_setup:
-    image: ghcr.io/tecnativa/docker-whitelist-gateway-service:edge
-    network_mode: "service:odoo"
-    cap_add:
-      - NET_ADMIN
-    depends_on:
-      - odoo
-      - proxy_general
-    healthcheck:
-      disable: true
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    environment:
-      MODE_RUN: "net_setup"
-      GATEWAY_NAME: "proxy_general"
-      DNS_LOCAL: "1"
-      DNS_INTERNAL_FROM_DOCKER: "1"
-      ALLOWED_HOSTS: &proxy_allowed_hosts >-
-        {{ _whitelisted_hosts_test|join(' ') }}
 
-  proxy_general:
-    image: ghcr.io/tecnativa/docker-whitelist-gateway-service:edge
-    restart: unless-stopped
-    cap_add:
-      - NET_ADMIN
-    sysctls:
-      net.ipv4.ip_forward: "1"
-    networks:
-      whitelist:
-        aliases:
-          - proxy_general
-      public:
-    environment:
-      MODE_RUN: "gateway"
-      ALLOWED_HOSTS: *proxy_allowed_hosts
-  {% endif %}
 networks:
   default:
     internal: ${DOODBA_NETWORK_INTERNAL-true}
     driver_opts:
       encrypted: 1
-
-  globalwhitelist_shared:
-    external: true
   {%- if odoo_proxy == "traefik" %}
 
   inverseproxy_shared:
     external: true
   {%- endif %}
 
-  {%- if _whitelisted_hosts_test %}
-  public:
-  whitelist:
-  {%- endif %}
 
 volumes:
   filestore:
