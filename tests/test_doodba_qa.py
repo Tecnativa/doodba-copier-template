@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from copier import run_copy
@@ -17,16 +18,17 @@ def test_doodba_qa(tmp_path: Path, supported_odoo_version: float):
         overwrite=True,
         unsafe=True,
     )
-    docker.pull("tecnativa/doodba-qa", quiet=True)
+    docker.pull("ghcr.io/tecnativa/doodba-qa:edge", quiet=True)
 
     def _execute_qa(cmd):
         return docker.run(
-            "tecnativa/doodba-qa",
+            "ghcr.io/tecnativa/doodba-qa:edge",
             command=cmd,
             envs={
                 "ADDON_CATEGORIES": "-p",
                 "COMPOSE_FILE": "test.yaml",
                 "ODOO_VERSION": supported_odoo_version,
+                "DOODBA_GITHUB_TOKEN": os.environ.get("DOODBA_GITHUB_TOKEN", " "),
             },
             privileged=True,
             remove=True,
@@ -37,6 +39,7 @@ def test_doodba_qa(tmp_path: Path, supported_odoo_version: float):
             workdir=tmp_path,
         )
 
+    _execute_qa(["shutdown"])
     try:
         _execute_qa(["secrets-setup"])
         _execute_qa(["networks-autocreate"])

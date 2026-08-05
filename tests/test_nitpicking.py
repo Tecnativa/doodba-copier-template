@@ -68,8 +68,9 @@ def test_doodba_main_domain_label(cloned_template: Path, single_project_path: Pa
         prod_config.services["odoo"].labels["doodba.domain.main"]
         == "yes.prod.example.com"
     )
+    # Since proxy v3, labels go on the gatekeeper container for test/devel
     assert (
-        test_config.services["odoo"].labels["doodba.domain.main"]
+        test_config.services["gatekeeper"].labels["doodba.domain.main"]
         == "yes.test.example.com"
     )
     # These labels must be present to avoid that Traefik 1 builds its own
@@ -80,7 +81,8 @@ def test_doodba_main_domain_label(cloned_template: Path, single_project_path: Pa
         prod_config.services["odoo"].labels["traefik.domain"] == "yes.prod.example.com"
     )
     assert (
-        test_config.services["odoo"].labels["traefik.domain"] == "yes.test.example.com"
+        test_config.services["gatekeeper"].labels["traefik.domain"]
+        == "yes.test.example.com"
     )
 
 
@@ -190,10 +192,10 @@ def test_cidr_whitelist_rules(
         ]
         == "123.123.123.123/24, 456.456.456.456"
     )
-    assert f"{key}-test-whitelist" in test_config.services["odoo"].labels[
+    assert f"{key}-test-whitelist" in test_config.services["gatekeeper"].labels[
         f"traefik.http.routers.{key}-test-forbiddenCrawlers-0.middlewares"
     ].split(", ")
-    assert f"{key}-test-whitelist" in test_config.services["odoo"].labels[
+    assert f"{key}-test-whitelist" in test_config.services["gatekeeper"].labels[
         f"traefik.http.routers.{key}-test-longpolling-0.middlewares"
     ].split(", ")
     assert f"{key}-test-whitelist" in test_config.services["smtp"].labels[
