@@ -24,7 +24,7 @@ services:
       ODOO_BUS_PUBLIC_SAMESITE_WS: 1
       {%- endif %}
       # To install demo data export DOODBA_WITHOUT_DEMO=false
-      WITHOUT_DEMO: "${DOODBA_WITHOUT_DEMO-all}"
+      WITHOUT_DEMO: "${DOODBA_WITHOUT_DEMO-{{ 'all' if odoo_version < 19.0 else 'True'}}}"
       SMTP_PORT: "1025"
       SMTP_SERVER: smtplocal
       # Just in case you use queue_job
