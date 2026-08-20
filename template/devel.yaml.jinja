@@ -18,7 +18,7 @@ services:
       - "127.0.0.1:${PORT_PREFIX:-{{ macros.version_major(odoo_version) -}} }072:8072"
     environment:
       PORT: "6899 8069 8072"
-      TARGET: odoo
+      TARGET: gatekeeper
 
   odoo:
     extends:
@@ -59,14 +59,8 @@ services:
       - db
       - smtp
       - wdb
-      {%- if whitelisted_hosts %}
-      - proxy_general
-      {%- endif %}
-    {%- if whitelisted_hosts %}
-    networks:
-      default:
-      whitelist:
-    {%- endif %}
+      - gatekeeper
+    network_mode: service:gatekeeper
     command:
       - odoo
       - --limit-memory-soft=0
@@ -82,7 +76,20 @@ services:
       {%- else %}
       - --dev=reload,qweb,werkzeug,xml,access
       {%- endif %}
-
+  gatekeeper:
+    extends:
+      file: common.yaml
+      service: gatekeeper
+    {%- if domain_spec %}
+    hostname: {{ macros.first_main_domain(domain_spec)|tojson }}
+    {%- endif %}
+    environment:
+      REFRESH_INTERVAL: 300
+      ALLOWED_HOSTS: >-
+        {{ whitelisted_hosts|join(' ') }}
+    networks:
+      default:
+      public:
   {% if postgres_version -%}
   db:
     extends:
@@ -132,51 +139,10 @@ services:
       - "127.0.0.1:${PORT_PREFIX:-{{ macros.version_major(odoo_version) -}} }984:1984"
     # HACK https://github.com/Kozea/wdb/issues/136
     init: true
-{%- if whitelisted_hosts %}
-
-  odoo_net_setup:
-    image: ghcr.io/tecnativa/docker-whitelist-gateway-service:edge
-    network_mode: "service:odoo"
-    cap_add:
-      - NET_ADMIN
-    depends_on:
-      - odoo
-      - proxy_general
-    healthcheck:
-      disable: true
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    environment:
-      MODE_RUN: "net_setup"
-      GATEWAY_NAME: "proxy_general"
-      DNS_LOCAL: "1"
-      DNS_INTERNAL_FROM_DOCKER: "1"
-      ALLOWED_HOSTS: &proxy_allowed_hosts >-
-        {{ whitelisted_hosts | join(" ") }}
-
-  proxy_general:
-    image: ghcr.io/tecnativa/docker-whitelist-gateway-service:edge
-    cap_add:
-      - NET_ADMIN
-    sysctls:
-      net.ipv4.ip_forward: "1"
-    networks:
-      whitelist:
-        aliases:
-          - proxy_general
-      public:
-    environment:
-      MODE_RUN: "gateway"
-      ALLOWED_HOSTS: *proxy_allowed_hosts
-
-{%- endif %}
 networks:
   default:
     internal: ${DOODBA_NETWORK_INTERNAL-true}
   public:
-{%- if whitelisted_hosts %}
-  whitelist:
-{%- endif %}
 
 volumes:
   filestore:

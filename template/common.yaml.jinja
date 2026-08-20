@@ -32,7 +32,17 @@ services:
       traefik.frontend.passHostHeader: "true"
       traefik.port: "8069"
     {%- endif %}
-
+  gatekeeper:
+    image: ghcr.io/tecnativa/allowlist-gatekeeper:pr-1
+    cap_add:
+      - NET_ADMIN
+    {%- if odoo_proxy == "traefik" %}
+    labels:
+      traefik.backend.buffering.retryExpression: IsNetworkError() && Attempts() < 5
+      traefik.docker.network: "inverseproxy_shared"
+      traefik.frontend.passHostHeader: "true"
+      traefik.port: "8069"
+    {%- endif %}
   {% if postgres_version -%}
   db:
     image: ghcr.io/tecnativa/postgres-autoconf:{{ postgres_version }}-alpine
