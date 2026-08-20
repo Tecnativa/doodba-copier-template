@@ -250,6 +250,286 @@ gitlab_url:
 
     Example: `https://gitlab.com/Tecnativa/your-doodba-project`.
   default: ""
+postgres_version:
+  default: >-
+    {% if odoo_version <= 12.0 %}13 {% elif odoo_version <= 14.0 %}16 {% else %}18{%
+    endif %}
+  help: >-
+    Which PostgreSQL version do you want to deploy? (Recommended: for new instances
+    always use the latest version. Version 9.6 has no backup support.)
+  choices:
+    I will use an external PostgreSQL server: ""
+    "9.6": "9.6"
+    "10": "10"
+    "11": "11"
+    "12": "12"
+    "13": "13"
+    "14": "14"
+    "15": "15"
+    "16": "16"
+    "17": "17"
+    "18": "18"
+  validator: >-
+    {% if postgres_version|int > 0 %} {% if (odoo_version >= 16.0 and
+    postgres_version|int < 12) or (odoo_version >= 14.0 and postgres_version|int < 10)
+    %}  The postgres version is too low for the selected Odoo version. {% elif
+    odoo_version <= 12.0 and postgres_version|int > 13 %}  The postgres version is too
+    high for the selected Odoo version. {% elif odoo_version <= 14.0 and
+    postgres_version|int > 16 %} The postgres version is too high for the selected Odoo
+    version. {% endif %} {% endif %}
+postgres_username:
+  type: str
+  default: odoo
+  help: >-
+    Which user name will be used to connect to the postgres server?
+
+postgres_dbname:
+  type: str
+  default: prod
+  help: >-
+    💡 If database names differ among environments, operations like restoring a database
+    from an alien environment will be harder to maintain, but can provide additional
+    security. It's up to you. We default to "prod" for historical reasons.
+
+    What is going to be the main database name?
+
+postgres_password:
+  secret: true
+  default: example-db-password
+  type: str
+  help: >-
+    What will be your postgres user password?
+
+postgres_exposed:
+  default: false
+  type: bool
+  help: >-
+    Do you want to expose database service?
+
+postgres_exposed_port:
+  default: 5432
+  type: int
+  when: &db_exposed "{{ postgres_exposed and traefik_version != 3 }}"
+  help: >-
+    Indicate the port to connect to the database.
+
+odoo_dbfilter:
+  default: "^{{ postgres_dbname }}"
+  type: str
+  help: >-
+    Set your Odoo db filter. It must be a regexp that matches the domain name being
+    visited. It is useful if you use Odoo in SaaS mode. Only applied to production
+    environment.
+
+smtp_default_from:
+  type: str
+  help: >-
+    Now, let's start configuring outgoing mail.
+
+    In case an email coming out from odoo doesn't have a valid `From:` header address,
+    which address should be the default one that sends the email?
+  default: ""
+
+smtp_relay_host:
+  type: str
+  help: >-
+    ⚠️ If you leave this answer empty, all next SMTP settings will be ignored.
+
+    If you supply a valid SMTP host, production Odoo will be able to send emails without
+    needing to configure any `ir.mail_server` record, because Doodba will configure it
+    to use a mail relay that will manage a local mail queue before sending it to the
+    real SMTP endpoint (saving your mails from bad network conditions). The same relay
+    will be used to send backup reports.
+
+    So, what is your SMTP host?
+
+    Example: mail.example.com
+  default: ""
+
+smtp_relay_port:
+  type: int
+  default: 587
+  when: &has_smtp "{{ smtp_relay_host and true }}"
+  help: >-
+    Indicate the port to connect in the SMTP server you just defined.
+
+    ⚠️ NEVER use port 465 👉 https://github.com/tomav/docker-mailserver/issues/1428
+
+smtp_relay_user:
+  type: str
+  when: *has_smtp
+  help: >-
+    Indicate the user to connect in the SMTP server you just defined.
+
+    For Odoo to work fine, this user needs to be able to do mail spoofing.
+  default: ""
+
+smtp_relay_password:
+  secret: true
+  type: str
+  default: example-smtp-password
+  when: *has_smtp
+  help: >-
+    What is your SMTP password?
+
+smtp_relay_version:
+  type: str
+  when: *has_smtp
+  default: "13"
+  help: >-
+    Doodba uses docker-mailserver as the local mail relay.
+
+    Which version of the image do you want to use? You can check which ones are
+    available in
+    https://github.com/orgs/docker-mailserver/packages/container/docker-mailserver/versions
+
+smtp_canonical_default:
+  type: str
+  when: *has_smtp
+  help: >-
+    Usually, if you send mails like "user@example.com", the canonical domain would be
+    "example.com".
+
+    This canonical domain should have correct SPF, DKIM and DMARC settings that allow
+    the SMTP host to send mails in its name.
+
+    When Odoo tries to send a mail that does not come from a canonical domain, the
+    domain you indicate here will be used when rewriting the address with SRS
+    (https://en.wikipedia.org/wiki/SRS).
+
+    What's your canonical domain?
+  default: ""
+
+smtp_canonical_domains:
+  when: *has_smtp
+  help: >-
+    Supply a list of other domains authorized to send email from this Odoo instance and
+    SMTP host. They will not be affected by SRS. They also must have valid SPF, DKIM and
+    DMARC settings.
+
+    You do not need to repeat the canonical domain you indicated above.
+
+    Example: [examplemail.com, example.org]
+  default: []
+
+backup_dst:
+  type: str
+  when: "{{ postgres_version|int >= 10 }}"
+  help: >-
+    If you want to use an Amazon S3 bucket, write its URL like
+    `boto3+s3://example_bucket[/example/path]` to make sure it works fine.
+
+    If you want to use any other backend, supply any URL supported by Duplicity (our
+    choice backup engine; read http://duplicity.nongnu.org/vers8/duplicity.1.html#sect7
+    for those URL formats).
+
+    If you don't want backups, leave this empty.
+
+    Where should the backups be stored?
+  default: ""
+
+backup_image_version:
+  type: str
+  when: &backup_present "{{ backup_dst and true }}"
+  default: "latest"
+  help: >-
+    Doodba uses the docker-duplicity image to make the backups.
+
+    Which version of the image do you want to use? You can check which ones are
+    available in
+    https://github.com/orgs/Tecnativa/packages/container/docker-duplicity-postgres/versions
+    and
+    https://github.com/orgs/Tecnativa/packages/container/docker-duplicity-postgres-s3/versions
+
+backup_email_from:
+  type: str
+  when: *backup_present
+  help: >-
+    The backup container will send email reports if the SMTP relay is properly
+    configured.
+
+    What email address should it use to send them?
+  default: ""
+
+backup_email_to:
+  type: str
+  when: *backup_present
+  help: >-
+    Where to send those backup reports?
+  default: ""
+
+backup_smtp_report_success:
+  type: bool
+  when: *backup_present
+  help: >-
+    Keep a close eye on your backup jobs!
+
+    If enabled (default), backup jobs report via SMTP regardless of exit status.
+
+    Otherwise, backup jobs only report via SMTP if one or more jobs failed.
+  default: true
+
+backup_deletion:
+  default: false
+  type: bool
+  when: *backup_present
+  help: >-
+    If you're using S3, you probably want to delete outdated backups using bucket
+    lifecycle rules. If you use other storage backend, then you probably want to enable
+    outdated backups deletion using duplicity itself.
+
+    So, do you want to enable duplicity backup deletion via cron?
+
+backup_tz:
+  type: str
+  default: UTC
+  when: *backup_present
+  help: >-
+    Set the timezone used by the backup cron for reports.
+
+    Visit https://www.cyberciti.biz/faq/linux-unix-set-tz-environment-variable/ to know
+    how to obtain a valid value for this variable.
+
+backup_aws_access_key_id:
+  secret: true
+  type: str
+  default: ""
+  when: &backup_aws "{{ 's3:' in backup_dst|string }}"
+  help: >-
+    If you're using AWS S3 to store backups, provide here your access key ID.
+
+backup_aws_secret_access_key:
+  secret: true
+  type: str
+  default: ""
+  when: *backup_aws
+  help: >-
+    If you're using AWS S3 to store backups, provide here your secret access key.
+
+backup_passphrase:
+  secret: true
+  type: str
+  default: example-backup-passphrase
+  when: *backup_present
+  help: >-
+    ⚠️ This passphrase is critical for security, so keep it safe. You will need it to
+    restore backups.
+
+    Which will be your backups passphrase?
+backup_backend_password:
+  secret: true
+  type: str
+  default: example-backup-backend-password
+  when: *backup_present
+  help: >-
+    ⚠️ This password is critical for security, so keep it safe. You will need it to
+    restore backups.
+
+    This password is supported by most duplicity backends (like SFTP) which are password
+    capable. If your backend uses it, setting it here will safely store it in an
+    environment variable, that is more secure than setting it in the backend url.
+
+    Which will be your backups password?
 
 domains_prod:
   type: yaml
@@ -485,26 +765,8 @@ whitelisted_hosts_devel:
     docker-whitelist-gateway setup in `devel.yaml`, so the Odoo container can only
     resolve/reach those hosts.
 
-whitelist_docker_project_devel:
-  type: str
-  when: "{{ (whitelisted_hosts_devel or []) | length > 0 }}"
-  default: "{{ project_name | replace('.', '-') }}"
-  help: >-
-    Docker Compose project name used by the whitelist sidecar in devel to discover
-    internal services through Docker metadata.
-
-whitelist_docker_project_test:
-  type: str
-  when: "{{ (whitelisted_hosts_test or []) | length > 0 }}"
-  default: "demo-{{ project_name | replace('.', '-') }}-{{ odoo_version | int }}"
-  help: >-
-    Docker Compose project name used by the whitelist sidecar in test/demo to discover
-    internal services through Docker metadata.
-
-    The proposed default matches our usual naming convention, but this value may need to
-    change depending on how each company/person deploys the project.
-
 paths_without_crawlers:
+  type: yaml
   multiline: true
   default:
     - /web
@@ -521,6 +783,7 @@ paths_without_crawlers:
     https://docs.traefik.io/routing/routers/#rule
 
 paths_with_crawlers:
+  type: yaml
   multiline: true
   default:
     - /web/image/website
@@ -532,303 +795,21 @@ paths_with_crawlers:
     https://docs.traefik.io/routing/routers/#rule
 
 cidr_whitelist:
+  type: yaml
   multiline: true
-  default: null
+  default: []
   help: >-
     If you need to whitelist certain CIDR to allow only them to access your Odoo
     instance, set that here please.
 
     ⚠️ It must be a list. And this is only supported if you deploy with Traefik 2+.
-
-postgres_version:
-  default: >-
-    {% if odoo_version <= 12.0 %}13 {% elif odoo_version <= 14.0 %}16 {% else %}18{%
-    endif %}
-  help: >-
-    Which PostgreSQL version do you want to deploy? (Recommended: for new instances
-    always use the latest version. Version 9.6 has no backup support.)
-  choices:
-    I will use an external PostgreSQL server: ""
-    "9.6": "9.6"
-    "10": "10"
-    "11": "11"
-    "12": "12"
-    "13": "13"
-    "14": "14"
-    "15": "15"
-    "16": "16"
-    "17": "17"
-    "18": "18"
-  validator: >-
-    {% if postgres_version|int > 0 %} {% if (odoo_version >= 16.0 and
-    postgres_version|int < 12) or (odoo_version >= 14.0 and postgres_version|int < 10)
-    %}  The postgres version is too low for the selected Odoo version. {% elif
-    odoo_version <= 12.0 and postgres_version|int > 13 %}  The postgres version is too
-    high for the selected Odoo version. {% elif odoo_version <= 14.0 and
-    postgres_version|int > 16 %} The postgres version is too high for the selected Odoo
-    version. {% endif %} {% endif %}
-
-postgres_username:
-  type: str
-  default: odoo
-  help: >-
-    Which user name will be used to connect to the postgres server?
-
-postgres_dbname:
-  type: str
-  default: prod
-  help: >-
-    💡 If database names differ among environments, operations like restoring a database
-    from an alien environment will be harder to maintain, but can provide additional
-    security. It's up to you. We default to "prod" for historical reasons.
-
-    What is going to be the main database name?
-
-postgres_password:
-  secret: true
-  default: example-db-password
-  type: str
-  help: >-
-    What will be your postgres user password?
-
-postgres_exposed:
-  default: false
-  type: bool
-  help: >-
-    Do you want to expose database service?
-
-postgres_exposed_port:
-  default: 5432
-  type: int
-  when: &db_exposed "{{ postgres_exposed and traefik_version != 3 }}"
-  help: >-
-    Indicate the port to connect to the database.
-
 postgres_cidr_whitelist:
+  yaml:
   multiline: true
-  default: null
+  default: []
   when: *db_exposed
   help: >-
     If you need to whitelist certain CIDR to allow only them to access your Postgres
     instance, set that here please.
 
     ⚠️ It must be a list. And this is only supported if you deploy with Traefik 2+.
-
-odoo_dbfilter:
-  default: "^{{ postgres_dbname }}"
-  type: str
-  help: >-
-    Set your Odoo db filter. It must be a regexp that matches the domain name being
-    visited. It is useful if you use Odoo in SaaS mode. Only applied to production
-    environment.
-
-smtp_default_from:
-  type: str
-  help: >-
-    Now, let's start configuring outgoing mail.
-
-    In case an email coming out from odoo doesn't have a valid `From:` header address,
-    which address should be the default one that sends the email?
-  default: ""
-
-smtp_relay_host:
-  type: str
-  help: >-
-    ⚠️ If you leave this answer empty, all next SMTP settings will be ignored.
-
-    If you supply a valid SMTP host, production Odoo will be able to send emails without
-    needing to configure any `ir.mail_server` record, because Doodba will configure it
-    to use a mail relay that will manage a local mail queue before sending it to the
-    real SMTP endpoint (saving your mails from bad network conditions). The same relay
-    will be used to send backup reports.
-
-    So, what is your SMTP host?
-
-    Example: mail.example.com
-  default: ""
-
-smtp_relay_port:
-  type: int
-  default: 587
-  when: &has_smtp "{{ smtp_relay_host and true }}"
-  help: >-
-    Indicate the port to connect in the SMTP server you just defined.
-
-    ⚠️ NEVER use port 465 👉 https://github.com/tomav/docker-mailserver/issues/1428
-
-smtp_relay_user:
-  type: str
-  when: *has_smtp
-  help: >-
-    Indicate the user to connect in the SMTP server you just defined.
-
-    For Odoo to work fine, this user needs to be able to do mail spoofing.
-  default: ""
-
-smtp_relay_password:
-  secret: true
-  type: str
-  default: example-smtp-password
-  when: *has_smtp
-  help: >-
-    What is your SMTP password?
-
-smtp_relay_version:
-  type: str
-  when: *has_smtp
-  default: "13"
-  help: >-
-    Doodba uses docker-mailserver as the local mail relay.
-
-    Which version of the image do you want to use? You can check which ones are
-    available in
-    https://github.com/orgs/docker-mailserver/packages/container/docker-mailserver/versions
-
-smtp_canonical_default:
-  type: str
-  when: *has_smtp
-  help: >-
-    Usually, if you send mails like "user@example.com", the canonical domain would be
-    "example.com".
-
-    This canonical domain should have correct SPF, DKIM and DMARC settings that allow
-    the SMTP host to send mails in its name.
-
-    When Odoo tries to send a mail that does not come from a canonical domain, the
-    domain you indicate here will be used when rewriting the address with SRS
-    (https://en.wikipedia.org/wiki/SRS).
-
-    What's your canonical domain?
-  default: ""
-
-smtp_canonical_domains:
-  when: *has_smtp
-  help: >-
-    Supply a list of other domains authorized to send email from this Odoo instance and
-    SMTP host. They will not be affected by SRS. They also must have valid SPF, DKIM and
-    DMARC settings.
-
-    You do not need to repeat the canonical domain you indicated above.
-
-    Example: [examplemail.com, example.org]
-  default: []
-
-backup_dst:
-  type: str
-  when: "{{ postgres_version|int >= 10 }}"
-  help: >-
-    If you want to use an Amazon S3 bucket, write its URL like
-    `boto3+s3://example_bucket[/example/path]` to make sure it works fine.
-
-    If you want to use any other backend, supply any URL supported by Duplicity (our
-    choice backup engine; read http://duplicity.nongnu.org/vers8/duplicity.1.html#sect7
-    for those URL formats).
-
-    If you don't want backups, leave this empty.
-
-    Where should the backups be stored?
-  default: ""
-
-backup_image_version:
-  type: str
-  when: &backup_present "{{ backup_dst and true }}"
-  default: "latest"
-  help: >-
-    Doodba uses the docker-duplicity image to make the backups.
-
-    Which version of the image do you want to use? You can check which ones are
-    available in
-    https://github.com/orgs/Tecnativa/packages/container/docker-duplicity-postgres/versions
-    and
-    https://github.com/orgs/Tecnativa/packages/container/docker-duplicity-postgres-s3/versions
-
-backup_email_from:
-  type: str
-  when: *backup_present
-  help: >-
-    The backup container will send email reports if the SMTP relay is properly
-    configured.
-
-    What email address should it use to send them?
-  default: ""
-
-backup_email_to:
-  type: str
-  when: *backup_present
-  help: >-
-    Where to send those backup reports?
-  default: ""
-
-backup_smtp_report_success:
-  type: bool
-  when: *backup_present
-  help: >-
-    Keep a close eye on your backup jobs!
-
-    If enabled (default), backup jobs report via SMTP regardless of exit status.
-
-    Otherwise, backup jobs only report via SMTP if one or more jobs failed.
-  default: true
-
-backup_deletion:
-  default: false
-  type: bool
-  when: *backup_present
-  help: >-
-    If you're using S3, you probably want to delete outdated backups using bucket
-    lifecycle rules. If you use other storage backend, then you probably want to enable
-    outdated backups deletion using duplicity itself.
-
-    So, do you want to enable duplicity backup deletion via cron?
-
-backup_tz:
-  type: str
-  default: UTC
-  when: *backup_present
-  help: >-
-    Set the timezone used by the backup cron for reports.
-
-    Visit https://www.cyberciti.biz/faq/linux-unix-set-tz-environment-variable/ to know
-    how to obtain a valid value for this variable.
-
-backup_aws_access_key_id:
-  secret: true
-  type: str
-  default: ""
-  when: &backup_aws "{{ 's3:' in backup_dst|string }}"
-  help: >-
-    If you're using AWS S3 to store backups, provide here your access key ID.
-
-backup_aws_secret_access_key:
-  secret: true
-  type: str
-  default: ""
-  when: *backup_aws
-  help: >-
-    If you're using AWS S3 to store backups, provide here your secret access key.
-
-backup_passphrase:
-  secret: true
-  type: str
-  default: example-backup-passphrase
-  when: *backup_present
-  help: >-
-    ⚠️ This passphrase is critical for security, so keep it safe. You will need it to
-    restore backups.
-
-    Which will be your backups passphrase?
-
-backup_backend_password:
-  secret: true
-  type: str
-  default: example-backup-backend-password
-  when: *backup_present
-  help: >-
-    ⚠️ This password is critical for security, so keep it safe. You will need it to
-    restore backups.
-
-    This password is supported by most duplicity backends (like SFTP) which are password
-    capable. If your backend uses it, setting it here will safely store it in an
-    environment variable, that is more secure than setting it in the backend url.
-
-    Which will be your backups password?
