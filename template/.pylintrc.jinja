@@ -1,127 +1,32 @@
-[MASTER]
-load-plugins=pylint_odoo
-score=n
-
-[ODOOLINT]
-{%- if odoo_version < 16 %}
-readme_template_url="https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"
-manifest_required_authors={{ project_author }}
-manifest_required_keys=license
-manifest_deprecated_keys=description,active
-license_allowed=AGPL-3,GPL-2,GPL-2 or any later version,GPL-3,GPL-3 or any later version,LGPL-3,OPL-1,OEEL-1
-valid_odoo_versions={{ odoo_version }}
-{%- else %}
-readme-template-url="https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"
-manifest-required-authors={{ project_author }}
-manifest-required-keys=license
-manifest-deprecated-keys=description,active
-license-allowed=AGPL-3,GPL-2,GPL-2 or any later version,GPL-3,GPL-3 or any later version,LGPL-3,OPL-1,OEEL-1
-valid-odoo-versions={{ odoo_version }}
-{%- endif %}
-
-[MESSAGES CONTROL]
-disable=all
-
+{% extends "template/.pylintrc-mandatory.jinja" %}
+{% block note %}
 # This .pylintrc contains optional AND mandatory checks and is meant to be
 # loaded in an IDE to have it check everything, in the hope this will make
 # optional checks more visible to contributors who otherwise never look at a
 # green travis to see optional checks that failed.
 # .pylintrc-mandatory containing only mandatory checks is used the pre-commit
 # config as a blocking check.
-
-# messages that do not cause the lint step to fail
-enable=attribute-deprecated,
-    consider-merging-classes-inherited,
-    invalid-commit,
-    license-allowed,
-    manifest-author-string,
-    manifest-deprecated-key,
-    {%- if project_author %}
-    manifest-required-author,
-    {%- endif %}
-    manifest-required-key,
-    manifest-version-format,
-    method-compute,
-    method-inverse,
-    method-required-super,
-    method-search,
-    missing-readme,
-    odoo-addons-relative-import,
-    print-used,
-    sql-injection,
-    translation-field,
-    translation-required,
-    use-vim-comment,
-    {%- if odoo_version < 16 %}
-    anomalous-backslash-in-string,
-    api-one-deprecated,
-    api-one-multi-together,
-    assignment-from-none,
-    class-camelcase,
-    dangerous-default-value,
-    dangerous-view-replace-wo-priority,
-    duplicate-id-csv,
-    duplicate-key,
-    duplicate-xml-fields,
-    duplicate-xml-record-id,
-    eval-referenced,
-    eval-used,
-    incoherent-interpreter-exec-perm,
-    missing-import-error,
+{% endblock %}
+{% block optional_checks %},
+{%- if odoo_version <= 18 %}
     missing-manifest-dependency,
-    openerp-exception-warning,
-    pointless-statement,
-    pointless-string-statement,
-    redundant-keyword-arg,
-    redundant-modulename-xml,
-    reimported,
-    relative-import,
-    return-in-init,
-    rst-syntax-error,
-    too-few-format-args,
-    unreachable,
-    wrong-tabs-instead-of-spaces,
-    xml-syntax-error,
+    too-complex,
+{%- endif %}
+{%- if odoo_version >= 15 and odoo_version <= 18 %}
     create-user-wo-reset-password,
     dangerous-filter-wo-user,
-    deprecated-module,
     file-not-used,
     missing-newline-extrafiles,
     no-utf8-coding-comment,
     old-api7-method-defined,
+    unnecessary-utf8-coding-comment,
+{%- endif %}
+    # messages that do not cause the lint step to fail
+    consider-merging-classes-inherited,
+    deprecated-module,
+    invalid-commit,
+    missing-readme,
+    odoo-addons-relative-import,
     redefined-builtin,
-    too-complex,
-    unnecessary-utf8-coding-comment
-    {%- else %}
-    attribute-string-redundant,
-    bad-builtin-groupby,
-    context-overridden,
-    development-status-allowed,
-    except-pass,
-    external-request-timeout,
-    manifest-data-duplicated,
-    manifest-maintainers-list,
-    missing-return,
-    no-raise-unlink,
-    no-wizard-in-models,
-    no-write-in-compute,
-    odoo-exception-warning,
-    renamed-field-parameter,
-    resource-not-exist,
-    test-folder-imported,
-    translation-contains-variable,
-    translation-format-interpolation,
-    translation-format-truncated,
-    translation-fstring-interpolation,
-    translation-not-lazy,
-    translation-positional-used,
-    translation-too-few-args,
-    translation-too-many-args,
-    translation-unsupported-format,
-    website-manifest-key-not-valid-uri
-    {%- endif %}
-
-[REPORTS]
-msg-template={path}:{line}: [{msg_id}({symbol}), {obj}] {msg}
-output-format=colorized
-reports=no
+    manifest-external-assets
+{% endblock %}
