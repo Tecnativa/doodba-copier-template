@@ -195,7 +195,7 @@ def write_code_workspace_file(c, cw_path=None):
         with open(cw_path) as cw_fd:
             cw_config = json.load(cw_fd)
     except (FileNotFoundError, json.decoder.JSONDecodeError):
-        pass  # Nevermind, we start with a new config
+        _logger.info("No existing workspace configuration found, creating a new one")
     # Static settings
     cw_config.setdefault("settings", {})
     cw_config["settings"].update(
