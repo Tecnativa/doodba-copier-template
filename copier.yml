@@ -95,6 +95,39 @@ _migrations:
         - "{{ _copier_conf.answers_file }}"
         - "9.6.0"
         - "--varname=whitelisted_hosts_test"
+pg_per_odoo:
+  when: False
+  type: yaml
+  # Odoo 11-13 supports pg 9.6 but that version is not supported by the backup service
+  # and is necessary to be able to perform all tests
+  default:
+    11.0:
+      oldest: "10"
+      latest: "13"
+    12.0:
+      oldest: "10"
+      latest: "13"
+    13.0:
+      oldest: "10"
+      latest: "16"
+    14.0:
+      oldest: "10"
+      latest: "16"
+    15.0:
+      oldest: "10"
+      latest: "17"
+    16.0:
+      oldest: "12"
+      latest: "18"
+    17.0:
+      oldest: "12"
+      latest: "18"
+    18.0:
+      oldest: "12"
+      latest: "18"
+    19.0:
+      oldest: "12"
+      latest: "18"
 
 # Questions for the user
 odoo_version:
@@ -542,14 +575,12 @@ cidr_whitelist:
 
 postgres_version:
   default: >-
-    {% if odoo_version <= 12.0 %}13 {% elif odoo_version <= 14.0 %}16 {% else %}18{%
-    endif %}
+    {{ pg_per_odoo[odoo_version]['latest'] }}
   help: >-
     Which PostgreSQL version do you want to deploy? (Recommended: for new instances
-    always use the latest version. Version 9.6 has no backup support.)
+    always use the latest version.)
   choices:
     I will use an external PostgreSQL server: ""
-    "9.6": "9.6"
     "10": "10"
     "11": "11"
     "12": "12"
@@ -560,13 +591,10 @@ postgres_version:
     "17": "17"
     "18": "18"
   validator: >-
-    {% if postgres_version|int > 0 %} {% if (odoo_version >= 16.0 and
-    postgres_version|int < 12) or (odoo_version >= 14.0 and postgres_version|int < 10)
-    %}  The postgres version is too low for the selected Odoo version. {% elif
-    odoo_version <= 12.0 and postgres_version|int > 13 %}  The postgres version is too
-    high for the selected Odoo version. {% elif odoo_version <= 14.0 and
-    postgres_version|int > 16 %} The postgres version is too high for the selected Odoo
-    version. {% endif %} {% endif %}
+    {% if not (pg_per_odoo[odoo_version]['oldest'] | int <= (postgres_version | int) <=
+    pg_per_odoo[odoo_version]['latest']|int) %} Version must be between {{
+    pg_per_odoo[odoo_version]['oldest'] }} and {{ pg_per_odoo[odoo_version]['latest']
+    }}. {% endif %}
 
 postgres_username:
   type: str

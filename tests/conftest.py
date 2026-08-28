@@ -29,53 +29,15 @@ SUPPORTED_ODOO_VERSIONS = tuple(
     v for v in ALL_ODOO_VERSIONS if v >= OLDEST_SUPPORTED_ODOO_VERSION
 )
 LAST_ODOO_VERSION = max(SUPPORTED_ODOO_VERSIONS)
-SELECTED_ODOO_VERSIONS = (
-    frozenset(map(float, os.environ.get("SELECTED_ODOO_VERSIONS", "").split()))
-    or ALL_ODOO_VERSIONS
-)
-PRERELEASE_ODOO_VERSIONS = {19.0}
+SELECTED_ODOO_VERSIONS = frozenset(
+    map(float, os.environ.get("SELECTED_ODOO_VERSIONS", "").split())
+) or [ALL_ODOO_VERSIONS[-1]]
+PRERELEASE_ODOO_VERSIONS = {20.0}
 
 # Postgres versions
 ALL_PSQL_VERSIONS = tuple(COPIER_SETTINGS["postgres_version"]["choices"])
 LATEST_PSQL_VER = ALL_PSQL_VERSIONS[-1]
-DBVER_PER_ODOO = {
-    11.0: {
-        "oldest": "10",  # Odoo supports 9.6, but that version is not supported by the backup service and is necessary to be able to perform all tests
-        "latest": "13",  # DB Authentication method limitation
-    },
-    12.0: {
-        "oldest": "10",  # Odoo supports 9.6, but that version is not supported by the backup service and is necessary to be able to perform all tests
-        "latest": "13",
-    },
-    13.0: {
-        "oldest": "10",  # Odoo supports 9.6, but that version is not supported by the backup service and is necessary to be able to perform all tests
-        "latest": "16",
-    },
-    14.0: {
-        "oldest": "10",
-        "latest": "16",
-    },
-    15.0: {
-        "oldest": "10",
-        "latest": "17",
-    },
-    16.0: {
-        "oldest": "12",
-        "latest": LATEST_PSQL_VER,
-    },
-    17.0: {
-        "oldest": "12",
-        "latest": LATEST_PSQL_VER,
-    },
-    18.0: {
-        "oldest": "12",
-        "latest": LATEST_PSQL_VER,
-    },
-    19.0: {
-        "oldest": "12",
-        "latest": LATEST_PSQL_VER,
-    },
-}
+DBVER_PER_ODOO = COPIER_SETTINGS["pg_per_odoo"]["default"]
 
 
 @pytest.fixture(autouse=True)
