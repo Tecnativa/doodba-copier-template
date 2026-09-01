@@ -51,7 +51,7 @@ services:
       {%- endif %}
       WDB_WEB_PORT: "${PORT_PREFIX:-{{ macros.version_major(odoo_version) -}} }984"
       # To avoid installing demo data export DOODBA_WITHOUT_DEMO=all
-      WITHOUT_DEMO: "${DOODBA_WITHOUT_DEMO-false}"
+      WITHOUT_DEMO: "${DOODBA_WITHOUT_DEMO-{{ 'true' if odoo_version >= 19 else 'false'}}}"
     volumes:
       - ./odoo/custom:/opt/odoo/custom:ro,z
       - ./odoo/auto:/opt/odoo/auto:rw,z
