@@ -17,11 +17,13 @@ services:
         ODOO_VERSION: "{{ macros.version_minor(odoo_version) }}"
         UID: "${UID:-1000}"
         GID: "${GID:-1000}"
+        GITHUB_TOKEN: "${DOODBA_GITHUB_TOKEN}"
     environment:
       EMAIL_FROM: "{{ smtp_default_from|default("", true) }}"
       PGDATABASE: &dbname {{ postgres_dbname }}
       PGUSER: &dbuser "{{ postgres_username }}"
       PROXY_MODE: "{% if odoo_proxy %}true{% else %}false{% endif %}"
+      GITHUB_TOKEN: "${DOODBA_GITHUB_TOKEN}"
     tty: true
     volumes:
       - filestore:/var/lib/odoo

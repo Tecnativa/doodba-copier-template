@@ -26,7 +26,7 @@ env:
   PRE_COMMIT_HOME: ${{ github.workspace }}/.cache.~/pre-commit
   PYTEST_ADDOPTS: ${{ github.event.inputs.pytest_addopts }}
   PYTHONIOENCODING: "UTF-8"
-
+  DOODBA_GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
@@ -80,7 +80,6 @@ jobs:
           - odoo-version: "13.0"
             python-version: "3.9"
             traefik-version: 3
-
     steps:
       # Shared steps
       - uses: *checkout
