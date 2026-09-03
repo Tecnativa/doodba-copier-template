@@ -73,7 +73,7 @@ def any_odoo_version(request) -> float:
     return request.param
 
 
-@pytest.fixture(params=SUPPORTED_ODOO_VERSIONS)
+@pytest.fixture(params=SUPPORTED_ODOO_VERSIONS, scope="class")
 def supported_odoo_version(request) -> float:
     """Returns any usable odoo version."""
     if request.param not in SELECTED_ODOO_VERSIONS:
@@ -81,7 +81,7 @@ def supported_odoo_version(request) -> float:
     return request.param
 
 
-@pytest.fixture()
+@pytest.fixture(scope="class")
 def cloned_template():
     """This repo cloned to a temporary destination.
 
