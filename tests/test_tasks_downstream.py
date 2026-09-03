@@ -10,7 +10,6 @@ from python_on_whales import DockerClient
 from python_on_whales.exceptions import DockerException
 
 from .conftest import (
-    DBVER_PER_ODOO,
     build_file_tree,
     generate_test_addon,
     safe_stop_env,
@@ -27,10 +26,6 @@ def _install_status(module):
             "-tc",
             f"select state from ir_module_module where name='{module}'",
         ],
-        # envs={
-        #     'LOG_LEVEL': 'WARNING',
-        #     'PGDATABASE': dbname,
-        # },
         remove=True,
         tty=False,
     ).strip()
@@ -45,10 +40,6 @@ def _get_config_param(key):
             "-tc",
             f"select value from ir_config_parameter where key='{key}'",
         ],
-        # envs={
-        #     'LOG_LEVEL': 'WARNING',
-        #     'PGDATABASE': dbname,
-        # },
         remove=True,
         tty=False,
     ).strip()
@@ -82,45 +73,64 @@ def _tests_ran(stdout, odoo_version, addon_name):
 
 
 @pytest.mark.sequential
-def test_resetdb(
-    cloned_template: Path,
-    supported_odoo_version: float,
-    tmp_path: Path,
-):
-    """Test the dropdb task.
-
-    On this test flow, other downsream tasks are also tested:
-
-    - img-build
-    - git-aggregate
-    - stop --purge
-    - snapshot
-    - restore-snapshot
+class TestDoodbaTasks:
     """
-    try:
-        with local.cwd(tmp_path):
-            data = {
-                "odoo_version": supported_odoo_version,
-                "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
-                "postgres_dbname": "devel",
-            }
-            run_copy(
-                src_path=str(cloned_template),
-                data=data,
-                vcs_ref="HEAD",
-                defaults=True,
-                overwrite=True,
-                unsafe=True,
-            )
+    End-to-end tests for the main doodba invoke tasks.
+    """
+
+    @pytest.fixture(scope="class")
+    @classmethod
+    def cloned_project(
+        cls,
+        cloned_template: Path,
+        supported_odoo_version: float,
+        tmp_path_factory: Path,
+    ):
+        tmp_path = tmp_path_factory.mktemp("cloned_project")
+        """Generate a fresh project from the template for this test."""
+        data = {
+            "odoo_version": supported_odoo_version,
+            "postgres_dbname": "devel",
+        }
+        run_copy(
+            src_path=str(cloned_template),
+            dst_path=str(tmp_path),
+            data=data,
+            vcs_ref="HEAD",
+            defaults=True,
+            overwrite=True,
+            unsafe=True,
+        )
+
+        yield tmp_path
+
+    @pytest.fixture(autouse=True, scope="function")
+    def cloned_project_setup(self, cloned_project):
+        safe_stop_env(cloned_project)
+        yield cloned_project
+        safe_stop_env(cloned_project)
+
+    def test_resetdb(self, cloned_project: Path, supported_odoo_version: float):
+        """Test the dropdb task.
+
+        On this test flow, other downstream tasks are also tested:
+
+        - img-build
+        - git-aggregate
+        - stop --purge
+        - snapshot
+        - restore-snapshot
+        """
+        with local.cwd(cloned_project):
             # Imagine the user is in the src subfolder for these tasks
-            with local.cwd(tmp_path / "odoo" / "custom" / "src"):
+            with local.cwd(cloned_project / "odoo" / "custom" / "src"):
                 invoke("img-build")
                 invoke("git-aggregate")
             # No ir_module_module table exists yet
             with pytest.raises(DockerException):
                 _install_status("base")
             # Imagine the user is in the odoo subrepo for these tasks
-            with local.cwd(tmp_path / "odoo" / "custom" / "src" / "odoo"):
+            with local.cwd(cloned_project / "odoo" / "custom" / "src" / "odoo"):
                 # This should install just "base"
                 stdout = invoke("resetdb", "--no-populate")
             assert "Creating database cache" in stdout
@@ -173,41 +183,19 @@ def test_resetdb(
             # Restore snapshot
             invoke("restore-snapshot", "--snapshot-name", "db_with_sale")
             assert _install_status("sale") == "installed"
-    finally:
-        safe_stop_env(tmp_path / "odoo" / "custom" / "src" / "odoo")
 
+    def test_start(self, cloned_project: Path, supported_odoo_version: float):
+        """Test the start task.
 
-@pytest.mark.sequential
-def test_start(
-    cloned_template: Path,
-    supported_odoo_version: float,
-    tmp_path: Path,
-):
-    """Test the start task.
+        On this test flow, other downstream tasks are also tested:
 
-    On this test flow, other downsream tasks are also tested:
-
-    - img-build
-    - git-aggregate
-    - stop --purge
-    """
-    try:
-        with local.cwd(tmp_path):
-            data = {
-                "odoo_version": supported_odoo_version,
-                "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
-                "postgres_dbname": "devel",
-            }
-            run_copy(
-                src_path=str(cloned_template),
-                data=data,
-                vcs_ref="HEAD",
-                defaults=True,
-                overwrite=True,
-                unsafe=True,
-            )
+        - img-build
+        - git-aggregate
+        - stop --purge
+        """
+        with local.cwd(cloned_project):
             # Imagine the user is in the src subfolder for these tasks
-            with local.cwd(tmp_path / "odoo" / "custom" / "src"):
+            with local.cwd(cloned_project / "odoo" / "custom" / "src"):
                 invoke("img-build")
                 stdout = invoke("git-aggregate")
             # Test normal call
@@ -216,50 +204,27 @@ def test_start(
             assert "pre-commit installed" in stdout
             invoke("start")
             # Test "--debugpy and wait time call
-            safe_stop_env(tmp_path)
+            safe_stop_env(cloned_project)
             stdout = invoke("start", "--debugpy")
             assert socket_is_open("127.0.0.1", int(supported_odoo_version) * 1000 + 899)
             # Check if auto-reload is disabled
             docker = DockerClient()
             container_logs = docker.compose.logs("odoo")
             assert "dev=reload" not in container_logs
-    finally:
-        safe_stop_env(
-            tmp_path,
-        )
 
+    def test_install_test(self, cloned_project: Path, supported_odoo_version: float):
+        """Test the install and test tasks.
 
-@pytest.mark.sequential
-def test_install_test(
-    cloned_template: Path,
-    supported_odoo_version: float,
-    tmp_path: Path,
-):
-    """Test the install and test tasks.
+        On this test flow, other downstream tasks are also tested:
 
-    On this test flow, other downsream tasks are also tested:
-
-    - img-build
-    - git-aggregate
-    - stop --purge
-    """
-    try:
-        with local.cwd(tmp_path):
-            data = {
-                "odoo_version": supported_odoo_version,
-                "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
-            }
-            run_copy(
-                src_path=str(cloned_template),
-                data=data,
-                vcs_ref="HEAD",
-                defaults=True,
-                overwrite=True,
-                unsafe=True,
-            )
+        - img-build
+        - git-aggregate
+        - stop --purge
+        """
+        with local.cwd(cloned_project):
             # Imagine the user is in the src subfolder for these tasks
             # and the DB is clean
-            with local.cwd(tmp_path / "odoo" / "custom" / "src"):
+            with local.cwd(cloned_project / "odoo" / "custom" / "src"):
                 invoke("img-build")
                 invoke("git-aggregate")
                 invoke("resetdb")
@@ -271,7 +236,13 @@ def test_install_test(
                 assert _install_status("utm") == "uninstalled"
                 # Change to "utm" subfolder and install
                 with local.cwd(
-                    tmp_path / "odoo" / "custom" / "src" / "odoo" / "addons" / "utm"
+                    cloned_project
+                    / "odoo"
+                    / "custom"
+                    / "src"
+                    / "odoo"
+                    / "addons"
+                    / "utm"
                 ):
                     # Install "utm" based on current folder
                     stdout = invoke("install")
@@ -289,58 +260,41 @@ def test_install_test(
             _tests_ran(stdout, supported_odoo_version, module_name)
             # Change to subfolder and test
             with local.cwd(
-                tmp_path / "odoo" / "custom" / "src" / "odoo" / "addons" / module_name
+                cloned_project
+                / "odoo"
+                / "custom"
+                / "src"
+                / "odoo"
+                / "addons"
+                / module_name
             ):
                 # Test module based on current folder
                 stdout = invoke("test", retcode=None)
                 _tests_ran(stdout, supported_odoo_version, module_name)
             # Test --debugpy and wait time call with
-            safe_stop_env(tmp_path, purge=False)
+            safe_stop_env(cloned_project, purge=False)
             invoke("test", "-m", module_name, "--debugpy", retcode=None)
             assert socket_is_open("127.0.0.1", int(supported_odoo_version) * 1000 + 899)
             stdout = _wait_for_test_to_start()
-    finally:
-        safe_stop_env(
-            tmp_path,
-        )
 
+    @pytest.mark.skip_for_prereleases
+    def test_test_tasks(self, cloned_project: Path, supported_odoo_version: float):
+        """Test the tasks associated with the Odoo test flow.
 
-@pytest.mark.sequential
-@pytest.mark.skip_for_prereleases
-def test_test_tasks(
-    cloned_template: Path,
-    supported_odoo_version: float,
-    tmp_path: Path,
-):
-    """Test the tasks associated with the Odoo test flow.
+        On this test flow, the following tasks are tested:
 
-    On this test flow, the following tasks are tested:
+        - img-build
+        - git-aggregate
+        - stop --purge
+        - resetdb --dependencies
+        - test [options]
 
-    - img-build
-    - git-aggregate
-    - stop --purge
-    - resetdb --dependencies
-    - test [options]
-
-    This test will be skipped for prereleased versions of Doodba
-    """
-    try:
-        with local.cwd(tmp_path):
-            data = {
-                "odoo_version": supported_odoo_version,
-                "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
-            }
-            run_copy(
-                src_path=str(cloned_template),
-                data=data,
-                vcs_ref="HEAD",
-                defaults=True,
-                overwrite=True,
-                unsafe=True,
-            )
+        This test will be skipped for prereleased versions of Doodba
+        """
+        with local.cwd(cloned_project):
             # Imagine the user is in the src subfolder for these tasks
             # and the DB is clean
-            with local.cwd(tmp_path / "odoo" / "custom" / "src"):
+            with local.cwd(cloned_project / "odoo" / "custom" / "src"):
                 invoke("img-build")
                 invoke("git-aggregate")
             module_name = "note" if supported_odoo_version < 17 else "project_todo"
@@ -358,7 +312,7 @@ def test_test_tasks(
             _tests_ran(stdout, supported_odoo_version, module_name)
             if supported_odoo_version >= 11:
                 # Prepare environment for all private addons and "test" them
-                with local.cwd(tmp_path / "odoo" / "custom" / "src" / "private"):
+                with local.cwd(cloned_project / "odoo" / "custom" / "src" / "private"):
                     generate_test_addon(
                         "test_module", supported_odoo_version, dependencies='["mail"]'
                     )
@@ -370,7 +324,7 @@ def test_test_tasks(
                 # Ensure "test_module" was installed and tests ran
                 assert _install_status("test_module") == "installed"
                 # Prepare environment for OCA addons and test them
-                with local.cwd(tmp_path / "odoo" / "custom" / "src"):
+                with local.cwd(cloned_project / "odoo" / "custom" / "src"):
                     build_file_tree(
                         {
                             "addons.yaml": """\
@@ -380,9 +334,10 @@ def test_test_tasks(
                         }
                     )
                 invoke("git-aggregate")
-                if supported_odoo_version < 18.0:
-                    # TODO: Put 19.0 once 'account_invoice_refund_link' is migrated to Odoo 18.0
-                    # Skip the tests for 'account_invoice_refund_link' as it's not available yet
+                # TODO: Update once 'account_invoice_refund_link' is migrated to newer
+                # odoo versions.
+                # Skipped when not available
+                if supported_odoo_version < 20.0:
                     invoke("resetdb", "--extra", "--private", "--dependencies")
                     assert (
                         _install_status("mail") == "installed"
@@ -396,17 +351,17 @@ def test_test_tasks(
                         _install_status("account_invoice_refund_link") == "uninstalled"
                     )
                     stdout = invoke("test", "--private", "--extra", retcode=None)
-                    # Ensure "test_module" and "account_invoice_refund_link" were installed
                     assert _install_status("test_module") == "installed"
                     assert _install_status("account_invoice_refund_link") == "installed"
                     _tests_ran(
                         stdout, supported_odoo_version, "account_invoice_refund_link"
                     )
             # Test --test-tags
-            if supported_odoo_version >= 12 and supported_odoo_version < 18.0:
-                # TODO: Put 19.0 once 'account_invoice_refund_link' is migrated to Odoo 18.0
-                # Skip the tests for 'account_invoice_refund_link' as it's not available yet
-                with local.cwd(tmp_path / "odoo" / "custom" / "src" / "private"):
+            if supported_odoo_version >= 12 and supported_odoo_version < 20.0:
+                # TODO: Update once 'account_invoice_refund_link' is migrated to newer
+                # odoo versions.
+                # Skipped when not available
+                with local.cwd(cloned_project / "odoo" / "custom" / "src" / "private"):
                     generate_test_addon(
                         "test_module",
                         supported_odoo_version,
@@ -431,7 +386,3 @@ def test_test_tasks(
                         supported_odoo_version,
                         "account_invoice_refund_link",
                     )
-    finally:
-        safe_stop_env(
-            tmp_path,
-        )

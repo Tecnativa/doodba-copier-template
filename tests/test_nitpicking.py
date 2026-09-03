@@ -222,7 +222,6 @@ def test_code_workspace_file(
         str(tmp_path),
         data={
             "odoo_version": supported_odoo_version,
-            "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
             "project_author": "Tecnativa",
         },
         vcs_ref="HEAD",
@@ -310,8 +309,8 @@ def test_dotdocker_ignore_content(tmp_path: Path, cloned_template: Path):
     )
     with local.cwd(tmp_path):
         git("add", ".")
-        git("commit", "-am", "hello", retcode=1)
-        git("commit", "-am", "hello")
+        local["pre-commit"]("run", "--all-files", "--show-diff-on-failure", retcode=1)
+        git("commit", "-am", "Hello World")
         (tmp_path / ".docker" / "some-file").touch()
         assert not git("status", "--porcelain")
 

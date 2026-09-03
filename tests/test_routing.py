@@ -152,7 +152,7 @@ def test_multiple_domains(
             assert bad_response.status_code == 404
             assert "Server" not in bad_response.headers  # 404 comes from Traefik
             assert bad_response.url == f"http://main3.{base_domain}:8080/web"
-            # main3 will route to odoo in /alt/foo but fail with 404 from there, no HTTPS
+            # main3 will route to odoo in /alt/foo but then fail with 404, no HTTPS
             bad_response = requests.get(
                 f"http://main3.{base_domain}:8080/alt/foo",
             )

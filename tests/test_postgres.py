@@ -20,24 +20,23 @@ def test_postgresql_client_versions(
     dbver_raw = DBVER_PER_ODOO[supported_odoo_version][dbver]
     dbver_mver = dbver_raw.split(".")[0]
     dc_prod = DockerClient(compose_files=["prod.yaml"])
+    run_copy(
+        str(cloned_template),
+        str(tmp_path),
+        data={
+            "odoo_version": supported_odoo_version,
+            "project_name": uuid.uuid4().hex,
+            "odoo_proxy": "",
+            "postgres_version": dbver_raw,
+            "backup_dst": "/tmp/dummy",
+        },
+        vcs_ref="HEAD",
+        defaults=True,
+        overwrite=True,
+        unsafe=True,
+    )
     with local.cwd(tmp_path):
-        print(str(cloned_template))
-        assert True
-        run_copy(
-            str(cloned_template),
-            dst_path=".",
-            data={
-                "odoo_version": supported_odoo_version,
-                "project_name": uuid.uuid4().hex,
-                "odoo_proxy": "",
-                "postgres_version": dbver_raw,
-                "backup_dst": "/tmp/dummy",
-            },
-            vcs_ref="test",
-            defaults=True,
-            overwrite=True,
-            unsafe=True,
-        )
+        dc_prod.compose.down(remove_orphans=True, volumes=True)
         try:
             dc_prod.compose.build()
             odoo_pgdump_stdout = dc_prod.compose.run(
@@ -74,4 +73,4 @@ def test_postgresql_client_versions(
                 odoo_pgdump_mver == db_pgdump_mver == backup_pgdump_mver == dbver_mver
             )
         finally:
-            dc_prod.compose.rm(stop=True, volumes=True)
+            dc_prod.compose.down(remove_orphans=True, volumes=True)
