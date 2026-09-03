@@ -11,9 +11,10 @@ from typing import Union
 
 import pytest
 import yaml
+from copier import run_copy
 from plumbum import ProcessExecutionError, local
 from plumbum.cmd import git, invoke
-from python_on_whales import DockerClient
+from python_on_whales import DockerClient, DockerException, docker
 
 _logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ SUPPORTED_ODOO_VERSIONS = tuple(
 LAST_ODOO_VERSION = max(SUPPORTED_ODOO_VERSIONS)
 SELECTED_ODOO_VERSIONS = frozenset(
     map(float, os.environ.get("SELECTED_ODOO_VERSIONS", "").split())
-) or [ALL_ODOO_VERSIONS[-1]]
+) or [LAST_ODOO_VERSION]
 PRERELEASE_ODOO_VERSIONS = {20.0}
 
 # Postgres versions
@@ -73,7 +74,7 @@ def any_odoo_version(request) -> float:
     return request.param
 
 
-@pytest.fixture(params=SUPPORTED_ODOO_VERSIONS)
+@pytest.fixture(params=SUPPORTED_ODOO_VERSIONS, scope="class")
 def supported_odoo_version(request) -> float:
     """Returns any usable odoo version."""
     if request.param not in SELECTED_ODOO_VERSIONS:
@@ -81,7 +82,7 @@ def supported_odoo_version(request) -> float:
     return request.param
 
 
-@pytest.fixture()
+@pytest.fixture(scope="class")
 def cloned_template():
     """This repo cloned to a temporary destination.
 
@@ -172,8 +173,8 @@ def traefik_host(request):
                 "--docker.watch",
                 "--docker",
                 "--entryPoints=Name:web-alt Address::8080 Compress:on",
-                "--entryPoints=Name:web-insecure Address::80 Redirect.EntryPoint:web-main",
-                "--entryPoints=Name:web-main Address::443 Compress:on TLS TLS.minVersion:VersionTLS12",
+                "--entryPoints=Name:web-insecure Address::80 Redirect.EntryPoint:web-main",  # noqa: E501
+                "--entryPoints=Name:web-main Address::443 Compress:on TLS TLS.minVersion:VersionTLS12",  # noqa: E501
                 "--logLevel=debug",
             ],
         )
@@ -235,9 +236,7 @@ def build_file_tree(spec: dict[Union[str, Path], str], dedent: bool = True):
 
 def socket_is_open(host, port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    if sock.connect_ex((host, port)) == 0:
-        return True
-    return False
+    return sock.connect_ex((host, port)) == 0
 
 
 def generate_test_addon(
@@ -327,17 +326,7 @@ def generate_test_addon(
     build_file_tree(file_tree)
 
 
-def _containers_running(exec_path):
-    with local.cwd(exec_path):
-        docker = DockerClient()
-        containers_list = docker.container.list(all=True)
-        if len(containers_list) > 0:
-            _logger.error(containers_list)
-            return True
-        return False
-
-
-def safe_stop_env(exec_path, purge=True):
+def invoke_stop(exec_path, purge=True):
     with local.cwd(exec_path):
         try:
             args = ["stop"]
@@ -350,8 +339,8 @@ def safe_stop_env(exec_path, purge=True):
                 and "has active endpoints" not in e.stdout
             ):
                 raise e
-            assert not _containers_running(exec_path), (
-                "Containers running or not removed. 'stop [--purge]' command did not work."
+            assert not docker.compose.ps(), (
+                "Containers running or not removed. 'stop [--purge]' command did not work."  # noqa: E501
             )
 
 
@@ -378,3 +367,73 @@ def bypass_pre_commit():
     finally:
         # Restore original binary
         shutil.move(pre_commit_path_str + "-old", pre_commit_path_str)
+
+
+def create_env_file(path, data):
+    file = path / ".env"
+    file.write_text("\n".join(f"{key}={value}" for key, value in data.items()) + "\n")
+
+
+def stop_project(path):
+    for file in ["prod.yaml", "test.yaml", "devel.yaml", "migration.yaml"]:
+        try:
+            DockerClient(
+                compose_project_directory=path, compose_files=[file]
+            ).compose.down(quiet=True, remove_orphans=True, volumes=True)
+        except DockerException:
+            pass
+
+
+@pytest.fixture(scope="function")
+def single_project_path(tmp_path: Path):
+    """Creates a tmp folder, switches context to it, and esures removal after"""
+    with local.cwd(tmp_path):
+        yield tmp_path
+        stop_project(tmp_path)
+
+
+class SharedTemplate:
+    port_prefix = None
+
+    @pytest.fixture(scope="class")
+    @classmethod
+    def shared_project_data(
+        cls,
+        supported_odoo_version: float,
+    ):
+        return {
+            "odoo_version": supported_odoo_version,
+        }
+
+    @pytest.fixture(scope="class")
+    @classmethod
+    def shared_project(
+        cls,
+        cloned_template: Path,
+        shared_project_data: dict,
+        tmp_path_factory: Path,
+    ):
+        """Generate a fresh project from the template for this class."""
+        tmp_path = tmp_path_factory.mktemp(cls.__name__.replace("Test", "test_"))
+        run_copy(
+            src_path=str(cloned_template),
+            dst_path=str(tmp_path),
+            data=shared_project_data,
+            vcs_ref="HEAD",
+            defaults=True,
+            overwrite=True,
+            unsafe=True,
+        )
+        # Use a diferent prefix to avoid colision with other tests
+        if cls.port_prefix:
+            create_env_file(tmp_path, {"PORT_PREFIX": cls.port_prefix})
+        with local.cwd(tmp_path):
+            docker.compose.pull(quiet=True, ignore_pull_failures=True)
+            yield tmp_path
+            stop_project(tmp_path)
+
+    @pytest.fixture(autouse=True, scope="function")
+    def shared_project_setup(self, shared_project):
+        stop_project(shared_project)
+        yield shared_project
+        stop_project(shared_project)

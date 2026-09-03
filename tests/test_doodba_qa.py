@@ -1,9 +1,7 @@
 from pathlib import Path
 
 from copier import run_copy
-from python_on_whales import DockerClient
-
-from .conftest import DBVER_PER_ODOO
+from python_on_whales import docker
 
 
 def test_doodba_qa(tmp_path: Path, supported_odoo_version: float):
@@ -13,14 +11,13 @@ def test_doodba_qa(tmp_path: Path, supported_odoo_version: float):
         tmp_path,
         data={
             "odoo_version": supported_odoo_version,
-            "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
         },
         vcs_ref="HEAD",
         defaults=True,
         overwrite=True,
         unsafe=True,
     )
-    docker = DockerClient()
+    docker.pull("tecnativa/doodba-qa", quiet=True)
 
     def _execute_qa(cmd):
         return docker.run(
