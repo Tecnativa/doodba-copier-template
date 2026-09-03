@@ -38,6 +38,10 @@ PRERELEASE_ODOO_VERSIONS = {20.0}
 ALL_PSQL_VERSIONS = tuple(COPIER_SETTINGS["postgres_version"]["choices"])
 LATEST_PSQL_VER = ALL_PSQL_VERSIONS[-1]
 DBVER_PER_ODOO = COPIER_SETTINGS["pg_per_odoo"]["default"]
+yaml.SafeLoader.add_constructor(
+    "!override",
+    lambda loader, node: loader.construct_sequence(node),
+)
 
 
 @pytest.fixture(autouse=True)

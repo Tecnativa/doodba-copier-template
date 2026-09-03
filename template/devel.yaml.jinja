@@ -82,6 +82,22 @@ services:
       {%- else %}
       - --dev=reload,qweb,werkzeug,xml,access
       {%- endif %}
+  devel-setup:
+    profiles: ["devel-setup"]
+    extends: odoo
+    entrypoint: autoaggregate
+    environment:
+      DEPTH_DEFAULT: 100
+      # XXX Export these variables before running setup to own the files
+      UID: "${DOODBA_GITAGGREGATE_UID:-1000}"
+      GID: "${DOODBA_GITAGGREGATE_GID:-1000}"
+      UMASK: "$DOODBA_UMASK"
+    depends_on: !override []
+    user: root
+    networks: !override
+      - public
+    volumes: !override
+      - ./odoo/custom/src:/opt/odoo/custom/src:rw,z
 
   {% if postgres_version -%}
   db:
