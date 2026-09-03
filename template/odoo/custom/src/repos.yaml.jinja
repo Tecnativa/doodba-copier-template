@@ -6,9 +6,15 @@
     # for a sane value of 100 commits)
     depth: $DEPTH_DEFAULT
   remotes:
+    {%- if with_github_access_token %}
+    ocb: https://${GITHUB_ACCESS_TOKEN}@github.com/OCA/OCB.git
+    odoo: https://${GITHUB_ACCESS_TOKEN}@github.com/odoo/odoo.git
+    openupgrade: https://${GITHUB_ACCESS_TOKEN}@github.com/OCA/OpenUpgrade.git
+    {%- else %}
     ocb: https://github.com/OCA/OCB.git
     odoo: https://github.com/odoo/odoo.git
     openupgrade: https://github.com/OCA/OpenUpgrade.git
+    {%- endif %}
   target: ocb $ODOO_VERSION
   merges:
     - ocb $ODOO_VERSION

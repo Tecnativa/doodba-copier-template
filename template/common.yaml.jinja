@@ -17,6 +17,9 @@ services:
         ODOO_VERSION: "{{ macros.version_minor(odoo_version) }}"
         UID: "${UID:-1000}"
         GID: "${GID:-1000}"
+        {%- if with_github_access_token != "" %}
+        GITHUB_ACCESS_TOKEN: "${GITHUB_ACCESS_TOKEN}"
+        {%- endif %}
     environment:
       EMAIL_FROM: "{{ smtp_default_from|default("", true) }}"
       PGDATABASE: &dbname {{ postgres_dbname }}

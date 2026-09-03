@@ -33,6 +33,11 @@ services:
       - public
     volumes:
       - ./odoo/custom/src:/opt/odoo/custom/src:rw,z
+
+    {%- if with_github_access_token != "" %}
+    env_file:
+      - .docker/github_access.env
+    {%- endif %}
     environment:
       DEPTH_DEFAULT: 100
       # XXX Export these variables before running setup to own the files

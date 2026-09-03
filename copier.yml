@@ -14,6 +14,7 @@ _skip_if_exists:
   - odoo/custom/src/private/*/
   - odoo/custom/src/repos.yaml
   - odoo/custom/ssh/*
+  - .docker/github_access.env
 
 _tasks:
   - invoke after-update
@@ -271,6 +272,18 @@ use_refurb:
     Use refurb (https://github.com/dosisod/refurb) for refurbishing and modernizing
     Python codebase.
   when: "{{ odoo_version >= 13.0 }}"
+
+with_github_access_token:
+  type: bool
+  default: false
+  help: Select if you want to login to github using an access token
+
+github_access_token:
+  when: "{{ with_github_access_token }}"
+  secret: true
+  default: ""
+  type: str
+  help: Give the access token that you will use.
 
 gitlab_url:
   type: str

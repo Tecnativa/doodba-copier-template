@@ -1,0 +1,5 @@
+ARG ODOO_VERSION
+{%- if with_github_access_token != "" %}
+ARG DEFAULT_REPO_PATTERN="https://${GITHUB_ACCESS_TOKEN}:github.com/OCA/{}.git"
+{%- endif %}
+FROM ghcr.io/tecnativa/doodba:${ODOO_VERSION}-onbuild
