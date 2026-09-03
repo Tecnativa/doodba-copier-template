@@ -3,7 +3,7 @@ from shutil import rmtree
 
 import pytest
 import yaml
-from copier.main import run_copy
+from copier import run_copy
 from plumbum import local
 from plumbum.cmd import git, invoke
 
@@ -31,6 +31,7 @@ def test_default_settings(
         Path(tmp_path, "odoo", "auto").rmdir()
         git("add", ".")
         git("commit", "-am", "Hello World", retcode=1)  # pre-commit fails
+        git("add", ".")
         git("commit", "-am", "Hello World")
 
 

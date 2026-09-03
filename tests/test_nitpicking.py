@@ -311,6 +311,7 @@ def test_dotdocker_ignore_content(tmp_path: Path, cloned_template: Path):
     with local.cwd(tmp_path):
         git("add", ".")
         git("commit", "-am", "hello", retcode=1)
+        git("add", ".")
         git("commit", "-am", "hello")
         (tmp_path / ".docker" / "some-file").touch()
         assert not git("status", "--porcelain")

@@ -131,12 +131,12 @@ repos:
       {%- if odoo_version >= 11 %}
       - id: debug-statements
       {%- endif %}
-      {% if odoo_version < 19 %}
+      {%- if odoo_version < 19 %}
       - id: fix-encoding-pragma
         {%- if odoo_version >= 11 %}
         args: ["--remove"]
         {%- endif %}
-      {% endif %}
+      {%- endif %}
       - id: check-case-conflict
       - id: check-docstring-first
       - id: check-executables-have-shebangs

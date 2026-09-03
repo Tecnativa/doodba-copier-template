@@ -52,6 +52,10 @@ UID_ENV.update(
         ),
     }
 )
+yaml.SafeLoader.add_constructor(
+    "!override",
+    lambda loader, node: loader.construct_sequence(node),
+)
 SERVICES_WAIT_TIME = int(os.environ.get("SERVICES_WAIT_TIME", 4))
 ODOO_VERSION = float(
     yaml.safe_load((PROJECT_ROOT / "common.yaml").read_text())["services"]["odoo"][

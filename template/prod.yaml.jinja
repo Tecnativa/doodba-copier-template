@@ -6,10 +6,10 @@
 {%- import "macros/_traefik3_labels.yml.jinja" as traefik3_labels -%}
 {%- import "macros/_traefik3_paths_labels.yml.jinja" as traefik3_labels_2 -%}
 {%- set _key = traefik2_labels.key(project_name, odoo_version, "prod") -%}
-{% if compose_version == "v1" %}
+{%- if compose_version == "v1" %}
 version: "2.4"
 
-{% endif %}
+{%- endif %}
 services:
   odoo:
     extends:

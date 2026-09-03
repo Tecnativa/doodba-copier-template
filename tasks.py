@@ -5,31 +5,12 @@ and are related to the maintenance of this template project, not the child
 projects generated with it.
 """
 
-import re
 from pathlib import Path
-from unittest import mock
 
 from invoke import task
-from invoke.util import yaml
 
 TEMPLATE_ROOT = Path(__file__).parent.resolve()
-ESSENTIALS = ("git", "python3", "poetry")
-
-
-def _load_copier_conf():
-    """Load copier.yml."""
-    with open("copier.yml") as copier_fd:
-        # HACK https://stackoverflow.com/a/44875714/1468388
-        # TODO Remove hack when https://github.com/pyinvoke/invoke/issues/708 is fixed
-        with mock.patch.object(
-            yaml.reader.Reader,
-            "NON_PRINTABLE",
-            re.compile(
-                "[^\x09\x0a\x0d\x20-\x7e\x85\xa0-"
-                "\ud7ff\ue000-\ufffd\U00010000-\U0010ffff]"
-            ),
-        ):
-            return yaml.safe_load(copier_fd)
+ESSENTIALS = ("git", "python3", "uv")
 
 
 @task
@@ -50,9 +31,9 @@ def develop(c):
     """Set up a development environment."""
     with c.cd(str(TEMPLATE_ROOT)):
         c.run("git submodule update --init --checkout --recursive")
-        # Use poetry to set up development environment in a local venv
-        c.run("poetry install")
-        c.run("poetry run pre-commit install")
+        # Use uv to set up development environment in a local venv
+        c.run("uv sync")
+        c.run("uv run pre-commit install")
 
 
 @task(develop)
@@ -63,7 +44,7 @@ def lint(c, verbose=False):
         flags.append("--verbose")
     flags = " ".join(flags)
     with c.cd(str(TEMPLATE_ROOT)):
-        c.run(f"poetry run pre-commit run {flags}")
+        c.run(f"uv run pre-commit run {flags}")
 
 
 @task(develop)
@@ -78,10 +59,10 @@ def test(c, verbose=False, sequential=False, docker=True):
     if not docker:
         flags.append("--skip-docker-tests")
     if sequential:
-        flags.extend(["-m", "sequential"])
+        flags.extend(["--dist", "no", "-m", "sequential"])
     else:
-        flags.extend(["-n", "auto", "-m", '"not sequential"'])
+        flags.extend(["-m", '"not sequential"'])
     flags = " ".join(flags)
-    cmd = f"poetry run pytest {flags} tests"
+    cmd = f"uv run pytest {flags} tests"
     with c.cd(str(TEMPLATE_ROOT)):
         c.run(cmd)
