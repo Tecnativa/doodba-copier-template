@@ -5,8 +5,6 @@ from copier import run_copy
 from plumbum import local
 from python_on_whales import DockerClient
 
-from .conftest import DBVER_PER_ODOO
-
 
 @pytest.mark.parametrize("backup_deletion", (False, True))
 @pytest.mark.parametrize(
@@ -30,7 +28,6 @@ def _test_backup_config(
         "backup_dst": backup_dst,
         "backup_image_version": backup_image_version,
         "odoo_version": supported_odoo_version,
-        "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
         "smtp_relay_host": smtp_relay_host,
     }
     # Remove parameter if False, to test this is the properly default value
@@ -96,7 +93,6 @@ def test_dbfilter_default(
             dst_path=".",
             data={
                 "odoo_version": supported_odoo_version,
-                "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
                 "backup_dst": "file:///here",
             },
             vcs_ref="test",
@@ -124,7 +120,6 @@ def test_dbfilter_custom_odoo_extensions(
             dst_path=".",
             data={
                 "odoo_version": supported_odoo_version,
-                "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
                 "backup_dst": "file:///here",
                 "odoo_dbfilter": "^%d_%h$",
             },
