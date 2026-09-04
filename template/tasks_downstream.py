@@ -30,6 +30,11 @@ try:
 except ImportError:
     from invoke.util import yaml
 
+yaml.SafeLoader.add_constructor(
+    "!override",
+    lambda loader, node: loader.construct_sequence(node),
+)
+
 PROJECT_ROOT = Path(__file__).parent.absolute()
 SRC_PATH = PROJECT_ROOT / "odoo" / "custom" / "src"
 UID_ENV = {
@@ -636,7 +641,7 @@ def git_aggregate(c):
     """
     with c.cd(str(PROJECT_ROOT)):
         c.run(
-            DOCKER_COMPOSE_CMD + " --file setup-devel.yaml run --rm -T odoo",
+            DOCKER_COMPOSE_CMD + " run --rm -T devel-setup",
             env=UID_ENV,
         )
     write_code_workspace_file(c)
