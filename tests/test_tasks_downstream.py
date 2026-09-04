@@ -380,9 +380,10 @@ def test_test_tasks(
                         }
                     )
                 invoke("git-aggregate")
-                if supported_odoo_version < 18.0:
-                    # TODO: Put 19.0 once 'account_invoice_refund_link' is migrated to Odoo 18.0
-                    # Skip the tests for 'account_invoice_refund_link' as it's not available yet
+                # TODO: Update once 'account_invoice_refund_link' is migrated to newer
+                # odoo versions.
+                # Skipped when not available
+                if supported_odoo_version < 20.0:
                     invoke("resetdb", "--extra", "--private", "--dependencies")
                     assert (
                         _install_status("mail") == "installed"
@@ -396,16 +397,16 @@ def test_test_tasks(
                         _install_status("account_invoice_refund_link") == "uninstalled"
                     )
                     stdout = invoke("test", "--private", "--extra", retcode=None)
-                    # Ensure "test_module" and "account_invoice_refund_link" were installed
                     assert _install_status("test_module") == "installed"
                     assert _install_status("account_invoice_refund_link") == "installed"
                     _tests_ran(
                         stdout, supported_odoo_version, "account_invoice_refund_link"
                     )
             # Test --test-tags
-            if supported_odoo_version >= 12 and supported_odoo_version < 18.0:
-                # TODO: Put 19.0 once 'account_invoice_refund_link' is migrated to Odoo 18.0
-                # Skip the tests for 'account_invoice_refund_link' as it's not available yet
+            if supported_odoo_version >= 12 and supported_odoo_version < 20.0:
+                # TODO: Update once 'account_invoice_refund_link' is migrated to newer
+                # odoo versions.
+                # Skipped when not available
                 with local.cwd(tmp_path / "odoo" / "custom" / "src" / "private"):
                     generate_test_addon(
                         "test_module",

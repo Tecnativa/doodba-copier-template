@@ -5,10 +5,10 @@
 {%- set _key = traefik2_labels.key(project_name, odoo_version, "test") -%}
 {%- set _whitelisted_hosts_test = whitelisted_hosts_test|default([]) -%}
 {%- set domain_spec = domain_spec|default(domains_test) -%}
-{% if compose_version == "v1" %}
+{%- if compose_version == "v1" %}
 version: "2.4"
 
-{% endif %}
+{%- endif %}
 services:
   odoo:
     extends:
@@ -153,6 +153,7 @@ services:
     entrypoint: [sh, -c]
     command:
       - test -r /etc/mailhog/auth && export MH_AUTH_FILE=/etc/mailhog/auth; exec MailHog
+
   {% if _whitelisted_hosts_test %}
   odoo_net_setup:
     image: ghcr.io/tecnativa/docker-whitelist-gateway-service:edge
@@ -192,6 +193,7 @@ services:
       MODE_RUN: "gateway"
       ALLOWED_HOSTS: *proxy_allowed_hosts
   {% endif %}
+
 networks:
   default:
     internal: ${DOODBA_NETWORK_INTERNAL-true}

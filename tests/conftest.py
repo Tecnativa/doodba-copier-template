@@ -31,13 +31,17 @@ SUPPORTED_ODOO_VERSIONS = tuple(
 LAST_ODOO_VERSION = max(SUPPORTED_ODOO_VERSIONS)
 SELECTED_ODOO_VERSIONS = frozenset(
     map(float, os.environ.get("SELECTED_ODOO_VERSIONS", "").split())
-) or [ALL_ODOO_VERSIONS[-1]]
+) or [LAST_ODOO_VERSION]
 PRERELEASE_ODOO_VERSIONS = {20.0}
 
 # Postgres versions
 ALL_PSQL_VERSIONS = tuple(COPIER_SETTINGS["postgres_version"]["choices"])
 LATEST_PSQL_VER = ALL_PSQL_VERSIONS[-1]
 DBVER_PER_ODOO = COPIER_SETTINGS["pg_per_odoo"]["default"]
+yaml.SafeLoader.add_constructor(
+    "!override",
+    lambda loader, node: loader.construct_sequence(node),
+)
 
 
 @pytest.fixture(autouse=True)
@@ -168,8 +172,8 @@ def traefik_host(request):
                 "--docker.watch",
                 "--docker",
                 "--entryPoints=Name:web-alt Address::8080 Compress:on",
-                "--entryPoints=Name:web-insecure Address::80 Redirect.EntryPoint:web-main",
-                "--entryPoints=Name:web-main Address::443 Compress:on TLS TLS.minVersion:VersionTLS12",
+                "--entryPoints=Name:web-insecure Address::80 Redirect.EntryPoint:web-main",  # noqa: E501
+                "--entryPoints=Name:web-main Address::443 Compress:on TLS TLS.minVersion:VersionTLS12",  # noqa: E501
                 "--logLevel=debug",
             ],
         )
@@ -347,7 +351,8 @@ def safe_stop_env(exec_path, purge=True):
             ):
                 raise e
             assert not _containers_running(exec_path), (
-                "Containers running or not removed. 'stop [--purge]' command did not work."
+                "Containers running or not removed. "
+                "'stop [--purge]' command did not work."
             )
 
 

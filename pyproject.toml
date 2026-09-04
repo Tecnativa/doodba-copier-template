@@ -1,49 +1,45 @@
-[tool.poetry]
-authors = ["Jairo Llopis <jairo.llopis@tecnativa.com>"]
-description = "Copier template to maintain Doodba integration projects"
-license = "BSL-1.0"
+[project]
 name = "doodba-copier-template"
 version = "0.1.0"
-package-mode = false
+description = "Copier template to maintain Doodba integration projects"
+authors = [{ name = "Jairo Llopis", email = "jairo.llopis@tecnativa.com" }]
+requires-python = ">=3.8.1,<4"
+license = "BSL-1.0"
+dependencies = [
+    "copier>=9",
+    "plumbum>=1.8.2",
+]
 
-[tool.poetry.dependencies]
-copier = ">=9"
-plumbum = "^1.8.2"
-python = "^3.8.1"
+[dependency-groups]
+dev = [
+    "invoke>=2.2.1",
+    "pylint>=3.2.7",
+    "pytest>=8.3.5",
+    "pytest-xdist>=3.3.1",
+    "requests>=2.32.4",
+    "pre-commit>=3.3.3",
+    "python-on-whales>=0.81.0",
+]
 
-[tool.poetry.dev-dependencies]
-black = "^24.8.0"
-flake8 = "^6.1.0"
-invoke = "^2.2.1"
-pylint = "^3.2.7"
-pytest = "^8.3.5"
-pytest-xdist = "^3.3.1"
-packaging = "^26.0"
-requests = "^2.32.4"
-pre-commit = "^3.3.3"
-python-on-whales = "^0.81.0"
+[tool.pytest.ini_options]
+usefixtures = ["versionless_odoo_autoskip"]
+addopts = "-s -ra -n auto"
+markers = """
+    sequential: marks tests that cannot run in parallel (deselect with '-m "not sequential"')
+    skip_for_prereleases: marks tests that will be skipped for prereleases (deselect with '-m "not skip_for_prereleases"')
 
-[tool.isort]
-# See https://github.com/psf/black
-combine_as_imports = true
-force_grid_wrap = 0
-include_trailing_comma = true
-line_length = 88
-multi_line_output = 3
-use_parentheses = true
+"""
 
-[build-system]
-build-backend = "poetry.masonry.api"
-requires = ["poetry>=0.12"]
-
-# ruff
 
 [tool.ruff]
 fix = true
 target-version = "py39"
+line-length = 88
 
 [tool.ruff.lint]
 extend-select = [
-    "UP",  # pyupgrade
+    "UP", # pyupgrade
     "I",  # isort
+    "E",
+    "F",
 ]

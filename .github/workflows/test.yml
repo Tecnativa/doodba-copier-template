@@ -19,27 +19,19 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   LANG: "en_US.utf-8"
   LC_ALL: "en_US.utf-8"
-  PIP_CACHE_DIR: ${{ github.workspace }}/.cache.~/pip
-  PIPX_HOME: ${{ github.workspace }}/.cache.~/pipx
-  POETRY_CACHE_DIR: ${{ github.workspace }}/.cache.~/pypoetry
-  POETRY_VIRTUALENVS_IN_PROJECT: "true"
-  PRE_COMMIT_HOME: ${{ github.workspace }}/.cache.~/pre-commit
   PYTEST_ADDOPTS: ${{ github.event.inputs.pytest_addopts }}
   PYTHONIOENCODING: "UTF-8"
   DOODBA_GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 jobs:
   pre-commit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: &checkout actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      - uses: &setup-python actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+      - uses: &checkout-action actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        name: Checkout project
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
-          python-version: "3.12"
-
-      - uses: snok/install-poetry@a783c322200f0519c7926aa6faa857c4e23e9263 # v1.4.2
-        with:
-          version: 2.4.1
-      - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
+          python-version: "3.11"
+      - uses: tox-dev/action-pre-commit-uv@e09b8958484dfe71f4ac3bc7afb230ba506402ec # v1.0.5
 
   test:
     runs-on: ubuntu-latest
@@ -80,36 +72,26 @@ jobs:
           - odoo-version: "13.0"
             python-version: "3.9"
             traefik-version: 3
+    env:
+      UV_PYTHON: ${{ matrix.python-version }}
     steps:
       # Shared steps
-      - uses: *checkout
+      - uses: *checkout-action
         with:
           fetch-depth: 0 # Fetch all history for all tags and branches
-      - name: Install python
-        uses: *setup-python
-        with:
-          python-version: ${{ matrix.python-version }}
       - name: Set up Docker Compose
         uses: docker/setup-compose-action@16feee727cbdc83b6a014e6cc26fec4a79bcf30c # v2.2.0
         with:
           version: v2.40.3
-      - name: Generate cache key CACHE
-        run:
-          echo "CACHE=${{ secrets.CACHE_DATE }} ${{ runner.os }} $(python -VV |
-          sha256sum | cut -d' ' -f1) ${{ hashFiles('pyproject.toml') }} ${{
-          hashFiles('poetry.lock') }} ${{ hashFiles('.pre-commit-config.yaml') }}" >>
-          $GITHUB_ENV
-      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
-          path: |
-            .cache.~
-            .venv
-            ~/.local/bin
-          key: venv ${{ env.CACHE }}
-      - run: pip install poetry
-      - name: Patch $PATH
-        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-      - run: poetry install --no-root
+          python-version: ${{ matrix.python-version }}
+          # Install a specific version of uv.
+          version: "0.12.5"
+      - name: Install the project
+        run: uv sync --locked --all-extras --dev
+
       # Precreate shared networks to avoid race conditions
       - run: docker network create inverseproxy_shared
       - run: docker network create globalwhitelist_shared
@@ -117,13 +99,11 @@ jobs:
       - run: git config --global user.name CI
       - run: git config --global user.email CI@GITHUB
       # Run all tests, which includes linters
-      # Non concurrent first (in parallel)
-      - run: poetry run invoke test
+      - run: uv run pytest tests -m "not sequential"
         env:
           SELECTED_ODOO_VERSIONS: ${{ matrix.odoo-version }}
           TRAEFIK_VERSION: ${{ matrix.traefik-version }}
-      # Concurrent tests (isolated)
-      - run: poetry run invoke test --sequential
+      - run: uv run pytest tests --dist no -m "sequential"
         env:
           SELECTED_ODOO_VERSIONS: ${{ matrix.odoo-version }}
           TRAEFIK_VERSION: ${{ matrix.traefik-version }}
