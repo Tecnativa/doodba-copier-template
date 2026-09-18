@@ -3,29 +3,11 @@
 This file is executed through invoke by copier when updating child projects.
 """
 
-import re
 import shutil
 from pathlib import Path
-from unittest import mock
 
 from invoke import task
 from invoke.util import yaml
-
-
-def _load_yaml(yaml_path):
-    """Load a yaml file."""
-    with open(yaml_path) as yaml_fd:
-        # HACK https://stackoverflow.com/a/44875714/1468388
-        # TODO Remove hack when https://github.com/pyinvoke/invoke/issues/708 is fixed
-        with mock.patch.object(
-            yaml.reader.Reader,
-            "NON_PRINTABLE",
-            re.compile(
-                "[^\x09\x0a\x0d\x20-\x7e\x85\xa0-"
-                "\ud7ff\ue000-\ufffd\U00010000-\U0010ffff]"
-            ),
-        ):
-            return yaml.safe_load(yaml_fd)
 
 
 @task
@@ -102,7 +84,7 @@ def update_domains_structure(c, dst_path, answers_rel_path):
     - domains_test is a list of dicts
     """
     answers_path = Path(dst_path, answers_rel_path)
-    answers_yaml = _load_yaml(answers_path)
+    answers_yaml = yaml.safe_load(answers_path)
     # Update domains_prod
     domain_prod = answers_yaml.pop("domain_prod", None)
     domain_prod_alternatives = answers_yaml.pop("domain_prod_alternatives", None)
@@ -146,7 +128,7 @@ def update_no_license(c, dst_path, answers_rel_path):
     This migrates old answers to this new format.
     """
     answers_path = Path(dst_path, answers_rel_path)
-    answers_yaml = _load_yaml(answers_path)
+    answers_yaml = yaml.safe_load(answers_path)
     if (
         not answers_yaml.get("project_license")
         or answers_yaml.get("project_license") == "no_license"
@@ -173,7 +155,7 @@ def db_filter_prefix_default(c, dst_path, answers_rel_path):
     Update answers for projects that didn't change the default.
     """
     answers_path = Path(dst_path, answers_rel_path)
-    answers_yaml = _load_yaml(answers_path)
+    answers_yaml = yaml.safe_load(answers_path)
     postgres_dbname = answers_yaml.get("postgres_dbname")
     if answers_yaml.get("odoo_dbfilter") == ".*" and postgres_dbname:
         # Replace odoo_dbfilter value in answers file
@@ -197,7 +179,7 @@ def db_filter_prefix_default(c, dst_path, answers_rel_path):
 
 
 def get_old_proxy_data(compose_file_path):
-    data = _load_yaml(compose_file_path)
+    data = yaml.safe_load(compose_file_path)
     services = data.get("services", {})
     domains = set()
     containers = set()
@@ -218,7 +200,7 @@ def get_old_proxy_data(compose_file_path):
 
 def _add_new_items_to_list(dst_path, answers_rel_path, varname, items):
     answers_path = Path(dst_path, answers_rel_path)
-    answers_yaml = _load_yaml(answers_path)
+    answers_yaml = yaml.safe_load(answers_path)
     if varname not in answers_yaml:
         answers_yaml[varname] = []
     for item in items:
@@ -239,8 +221,8 @@ def migrate_to_new_proxy(c, dst_path, answers_rel_path):
     _add_new_items_to_list(
         dst_path, answers_rel_path, "whitelisted_hosts_devel", devel_domains
     )
-    devel_data = _load_yaml(devel_compose)
-    test_data = _load_yaml(test_compose)
+    devel_data = yaml.safe_load(devel_compose)
+    test_data = yaml.safe_load(test_compose)
     devel_data["services"]["odoo"]["depends_on"] = [
         item
         for item in devel_data["services"]["odoo"]["depends_on"]
