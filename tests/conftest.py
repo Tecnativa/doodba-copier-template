@@ -32,7 +32,7 @@ SUPPORTED_ODOO_VERSIONS = tuple(
 LAST_ODOO_VERSION = max(SUPPORTED_ODOO_VERSIONS)
 SELECTED_ODOO_VERSIONS = frozenset(
     map(float, os.environ.get("SELECTED_ODOO_VERSIONS", "").split())
-) or [13.0]
+) or [LAST_ODOO_VERSION]
 PRERELEASE_ODOO_VERSIONS = {20.0}
 
 # Postgres versions
