@@ -70,8 +70,9 @@ def test_doodba_main_domain_label(cloned_template: Path, tmp_path: Path):
             prod_config.services["odoo"].labels["doodba.domain.main"]
             == "yes.prod.example.com"
         )
+        # Since proxy v3, labels go on the gatekeeper container for test/devel
         assert (
-            test_config.services["odoo"].labels["doodba.domain.main"]
+            test_config.services["gatekeeper"].labels["doodba.domain.main"]
             == "yes.test.example.com"
         )
         # These labels must be present to avoid that Traefik 1 builds its own
@@ -83,7 +84,7 @@ def test_doodba_main_domain_label(cloned_template: Path, tmp_path: Path):
             == "yes.prod.example.com"
         )
         assert (
-            test_config.services["odoo"].labels["traefik.domain"]
+            test_config.services["gatekeeper"].labels["traefik.domain"]
             == "yes.test.example.com"
         )
 
@@ -202,10 +203,10 @@ def test_cidr_whitelist_rules(
         ]
         == "123.123.123.123/24, 456.456.456.456"
     )
-    assert f"{key}-test-whitelist" in test_config.services["odoo"].labels[
+    assert f"{key}-test-whitelist" in test_config.services["gatekeeper"].labels[
         f"traefik.http.routers.{key}-test-forbiddenCrawlers-0.middlewares"
     ].split(", ")
-    assert f"{key}-test-whitelist" in test_config.services["odoo"].labels[
+    assert f"{key}-test-whitelist" in test_config.services["gatekeeper"].labels[
         f"traefik.http.routers.{key}-test-longpolling-0.middlewares"
     ].split(", ")
     assert f"{key}-test-whitelist" in test_config.services["smtp"].labels[
@@ -222,7 +223,6 @@ def test_code_workspace_file(
         str(tmp_path),
         data={
             "odoo_version": supported_odoo_version,
-            "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
             "project_author": "Tecnativa",
         },
         vcs_ref="HEAD",
@@ -310,8 +310,8 @@ def test_dotdocker_ignore_content(tmp_path: Path, cloned_template: Path):
     )
     with local.cwd(tmp_path):
         git("add", ".")
-        git("commit", "-am", "hello", retcode=1)
-        git("commit", "-am", "hello")
+        local["pre-commit"]("run", "--all-files", "--show-diff-on-failure", retcode=1)
+        git("commit", "-am", "Hello World")
         (tmp_path / ".docker" / "some-file").touch()
         assert not git("status", "--porcelain")
 

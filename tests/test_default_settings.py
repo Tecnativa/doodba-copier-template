@@ -3,34 +3,31 @@ from shutil import rmtree
 
 import pytest
 import yaml
-from copier.main import run_copy
+from copier import run_copy
 from plumbum import local
 from plumbum.cmd import git, invoke
-
-from .conftest import DBVER_PER_ODOO
 
 
 def test_default_settings(
     tmp_path: Path, supported_odoo_version: float, cloned_template: Path
 ):
     """Test that a template can be rendered from zero for each version."""
-    with local.cwd(cloned_template):
-        run_copy(
-            ".",
-            str(tmp_path),
-            data={"odoo_version": supported_odoo_version},
-            vcs_ref="test",
-            defaults=True,
-            overwrite=True,
-            unsafe=True,
-        )
+    run_copy(
+        str(cloned_template),
+        str(tmp_path),
+        data={"odoo_version": supported_odoo_version},
+        vcs_ref="test",
+        defaults=True,
+        overwrite=True,
+        unsafe=True,
+    )
     with local.cwd(tmp_path):
         # TODO When copier runs pre-commit before extracting diff, make sure
         # here that it works as expected
         Path(tmp_path, "odoo", "auto", "addons").rmdir()
         Path(tmp_path, "odoo", "auto").rmdir()
         git("add", ".")
-        git("commit", "-am", "Hello World", retcode=1)  # pre-commit fails
+        local["pre-commit"]("run", "--all-files", "--show-diff-on-failure", retcode=1)
         git("commit", "-am", "Hello World")
 
 
@@ -50,10 +47,7 @@ def test_pre_commit_autoinstall(
     run_copy(
         str(cloned_template),
         str(tmp_path),
-        data={
-            "odoo_version": supported_odoo_version,
-            "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
-        },
+        data={"odoo_version": supported_odoo_version},
         vcs_ref="HEAD",
         defaults=True,
         overwrite=True,
