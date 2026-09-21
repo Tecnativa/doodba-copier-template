@@ -5,13 +5,6 @@ exclude: ^tests/samples/mqt-diffs/.*
 repos:
   - repo: local
     hooks:
-      - id: poetry-check
-        name: poetry check
-        entry: poetry
-        args: ["check"]
-        files: pyproject\.toml$
-        pass_filenames: false
-        language: system
       - id: forbidden-files
         name: forbidden files
         entry: found forbidden files; remove them

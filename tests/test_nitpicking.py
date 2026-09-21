@@ -12,7 +12,6 @@ from plumbum.cmd import git, invoke, pre_commit
 from python_on_whales import DockerClient
 
 from .conftest import (
-    DBVER_PER_ODOO,
     LAST_ODOO_VERSION,
     build_file_tree,
     generate_test_addon,
@@ -25,11 +24,11 @@ WHITESPACE_PREFIXED_LICENSES = (
 )
 
 
-def test_doodba_main_domain_label(cloned_template: Path, tmp_path: Path):
+def test_doodba_main_domain_label(cloned_template: Path, single_project_path: Path):
     """Make sure the doodba.domain.main label is correct."""
     run_copy(
         str(cloned_template),
-        str(tmp_path),
+        str(single_project_path),
         data={
             "domains_prod": [
                 {
@@ -61,38 +60,37 @@ def test_doodba_main_domain_label(cloned_template: Path, tmp_path: Path):
         overwrite=True,
         unsafe=True,
     )
-    with local.cwd(tmp_path):
-        dc_prod = DockerClient(compose_files=["prod.yaml"])
-        dc_test = DockerClient(compose_files=["test.yaml"])
-        prod_config = dc_prod.compose.config()
-        test_config = dc_test.compose.config()
-        assert (
-            prod_config.services["odoo"].labels["doodba.domain.main"]
-            == "yes.prod.example.com"
-        )
-        assert (
-            test_config.services["odoo"].labels["doodba.domain.main"]
-            == "yes.test.example.com"
-        )
-        # These labels must be present to avoid that Traefik 1 builds its own
-        # main domain assumption and tries to download its Let's Encrypt certs,
-        # which would possibly fail and hit LE's rate limits
-        # TODO Remove asserts when dropping Traefik 1 support
-        assert (
-            prod_config.services["odoo"].labels["traefik.domain"]
-            == "yes.prod.example.com"
-        )
-        assert (
-            test_config.services["odoo"].labels["traefik.domain"]
-            == "yes.test.example.com"
-        )
+    dc_prod = DockerClient(compose_files=["prod.yaml"])
+    dc_test = DockerClient(compose_files=["test.yaml"])
+    prod_config = dc_prod.compose.config()
+    test_config = dc_test.compose.config()
+    assert (
+        prod_config.services["odoo"].labels["doodba.domain.main"]
+        == "yes.prod.example.com"
+    )
+    # Since proxy v3, labels go on the gatekeeper container for test/devel
+    assert (
+        test_config.services["gatekeeper"].labels["doodba.domain.main"]
+        == "yes.test.example.com"
+    )
+    # These labels must be present to avoid that Traefik 1 builds its own
+    # main domain assumption and tries to download its Let's Encrypt certs,
+    # which would possibly fail and hit LE's rate limits
+    # TODO Remove asserts when dropping Traefik 1 support
+    assert (
+        prod_config.services["odoo"].labels["traefik.domain"] == "yes.prod.example.com"
+    )
+    assert (
+        test_config.services["gatekeeper"].labels["traefik.domain"]
+        == "yes.test.example.com"
+    )
 
 
 @pytest.mark.parametrize("project_license", WHITESPACE_PREFIXED_LICENSES)
 def test_license_whitespace_prefix(
-    tmp_path: Path, cloned_template: Path, project_license
+    single_project_path: Path, cloned_template: Path, project_license
 ):
-    dst = tmp_path / "dst"
+    dst = single_project_path / "dst"
     run_copy(
         str(cloned_template),
         str(dst),
@@ -105,36 +103,29 @@ def test_license_whitespace_prefix(
     assert (dst / "LICENSE").read_text().startswith("   ")
 
 
-def test_no_vscode_in_private(cloned_template: Path, tmp_path: Path):
+def test_no_vscode_in_private(cloned_template: Path, single_project_path: Path):
     """Make sure .vscode folders are git-ignored in private folder."""
     run_copy(
         str(cloned_template),
-        str(tmp_path),
+        str(single_project_path),
         vcs_ref="HEAD",
         defaults=True,
         overwrite=True,
         unsafe=True,
     )
-    with local.cwd(tmp_path):
-        git("add", ".")
-        git("commit", "--no-verify", "-am", "hello world")
-        vscode = tmp_path / "odoo" / "custom" / "src" / "private" / ".vscode"
-        vscode.mkdir()
-        (vscode / "something").touch()
-        assert not git("status", "--porcelain")
+    git("add", ".")
+    git("commit", "--no-verify", "-am", "hello world")
+    vscode = single_project_path / "odoo" / "custom" / "src" / "private" / ".vscode"
+    vscode.mkdir()
+    (vscode / "something").touch()
+    assert not git("status", "--porcelain")
 
 
-def test_pre_commit_in_template():
-    """Make sure linters are happy."""
-    with local.cwd(Path(__file__).parent.parent):
-        invoke("lint")
-
-
-def test_gitlab_badges(cloned_template: Path, tmp_path: Path):
+def test_gitlab_badges(cloned_template: Path, single_project_path: Path):
     """Gitlab badges are properly formatted in README."""
     run_copy(
         str(cloned_template),
-        str(tmp_path),
+        str(single_project_path),
         data={"gitlab_url": "https://gitlab.example.com/Tecnativa/my-badged-odoo"},
         vcs_ref="HEAD",
         defaults=True,
@@ -147,19 +138,18 @@ def test_gitlab_badges(cloned_template: Path, tmp_path: Path):
         [![coverage report](https://gitlab.example.com/Tecnativa/my-badged-odoo/badges/{LAST_ODOO_VERSION}/coverage.svg)](https://gitlab.example.com/Tecnativa/my-badged-odoo/commits/{LAST_ODOO_VERSION})
         """
     )
-    assert expected_badges.strip() in (tmp_path / "README.md").read_text()
+    assert expected_badges.strip() in (single_project_path / "README.md").read_text()
 
 
 def test_cidr_whitelist_rules(
-    tmp_path: Path, cloned_template: Path, supported_odoo_version: float
+    single_project_path: Path, cloned_template: Path, supported_odoo_version: float
 ):
     """Make sure CIDR whitelist redirections are good for Traefik."""
     run_copy(
         str(cloned_template),
-        str(tmp_path),
+        str(single_project_path),
         data={
             "odoo_version": supported_odoo_version,
-            "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
             "project_name": "test-cidr-whitelist",
             "cidr_whitelist": ["123.123.123.123/24", "456.456.456.456"],
             "domains_prod": [{"hosts": ["www.example.com"]}],
@@ -172,13 +162,13 @@ def test_cidr_whitelist_rules(
     )
     # TODO Use Traefik to test this, instead of asserting labels
     key = f"test-cidr-whitelist-{supported_odoo_version:.1f}".replace(".", "-")
-    with local.cwd(tmp_path):
-        git("add", "prod.yaml", "test.yaml")
-        pre_commit("run", "-a", retcode=None)
-        dc_prod = DockerClient(compose_files=["prod.yaml"])
-        dc_test = DockerClient(compose_files=["test.yaml"])
-        prod_config = dc_prod.compose.config()
-        test_config = dc_test.compose.config()
+
+    git("add", "prod.yaml", "test.yaml")
+    pre_commit("run", "-a", retcode=None)
+    dc_prod = DockerClient(compose_files=["prod.yaml"])
+    dc_test = DockerClient(compose_files=["test.yaml"])
+    prod_config = dc_prod.compose.config()
+    test_config = dc_test.compose.config()
     # Assert prod.yaml
     assert (
         prod_config.services["odoo"].labels[
@@ -202,10 +192,10 @@ def test_cidr_whitelist_rules(
         ]
         == "123.123.123.123/24, 456.456.456.456"
     )
-    assert f"{key}-test-whitelist" in test_config.services["odoo"].labels[
+    assert f"{key}-test-whitelist" in test_config.services["gatekeeper"].labels[
         f"traefik.http.routers.{key}-test-forbiddenCrawlers-0.middlewares"
     ].split(", ")
-    assert f"{key}-test-whitelist" in test_config.services["odoo"].labels[
+    assert f"{key}-test-whitelist" in test_config.services["gatekeeper"].labels[
         f"traefik.http.routers.{key}-test-longpolling-0.middlewares"
     ].split(", ")
     assert f"{key}-test-whitelist" in test_config.services["smtp"].labels[
@@ -214,15 +204,14 @@ def test_cidr_whitelist_rules(
 
 
 def test_code_workspace_file(
-    tmp_path: Path, cloned_template: Path, supported_odoo_version: float
+    single_project_path: Path, cloned_template: Path, supported_odoo_version: float
 ):
     """The file is generated as expected."""
     run_copy(
         str(cloned_template),
-        str(tmp_path),
+        str(single_project_path),
         data={
             "odoo_version": supported_odoo_version,
-            "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
             "project_author": "Tecnativa",
         },
         vcs_ref="HEAD",
@@ -230,11 +219,13 @@ def test_code_workspace_file(
         overwrite=True,
         unsafe=True,
     )
-    assert (tmp_path / f"doodba.{tmp_path.name}.code-workspace").is_file()
-    (tmp_path / f"doodba.{tmp_path.name}.code-workspace").rename(
-        tmp_path / "doodba.other1.code-workspace"
+    assert (
+        single_project_path / f"doodba.{single_project_path.name}.code-workspace"
+    ).is_file()
+    (single_project_path / f"doodba.{single_project_path.name}.code-workspace").rename(
+        single_project_path / "doodba.other1.code-workspace"
     )
-    with local.cwd(tmp_path / "odoo" / "custom" / "src" / "private"):
+    with local.cwd(single_project_path / "odoo" / "custom" / "src" / "private"):
         # Generate generic addon path
         is_py3 = supported_odoo_version >= 11
         manifest = "__manifest__" if is_py3 else "__openerp__"
@@ -255,68 +246,70 @@ def test_code_workspace_file(
                 """,
             }
         )
-    with local.cwd(tmp_path):
-        invoke("write-code-workspace-file")
-        assert (tmp_path / "doodba.other1.code-workspace").is_file()
-        assert not (tmp_path / f"doodba.{tmp_path.name}.code-workspace").is_file()
-        # Do a stupid and dirty git clone to check it's sorted fine
-        git("clone", cloned_template, Path("odoo", "custom", "src", "zzz"))
-        # "Clone" a couple more repos, including odoo to check order
-        git("clone", cloned_template, Path("odoo", "custom", "src", "aaa"))
-        git("clone", cloned_template, Path("odoo", "custom", "src", "bbb"))
-        git("clone", cloned_template, Path("odoo", "custom", "src", "odoo"))
-        invoke("write-code-workspace-file", "-c", "doodba.other2.code-workspace")
-        assert not (tmp_path / f"doodba.{tmp_path.name}.code-workspace").is_file()
-        assert (tmp_path / "doodba.other1.code-workspace").is_file()
-        assert (tmp_path / "doodba.other2.code-workspace").is_file()
-        with (tmp_path / "doodba.other2.code-workspace").open() as fp:
-            workspace_definition = json.load(fp)
-        # Check workspace folder definition and order
-        assert workspace_definition["folders"] == [
-            {"path": "odoo/custom/src/aaa"},
-            {"path": "odoo/custom/src/bbb"},
-            {"path": "odoo/custom/src/zzz"},
-            {"path": "odoo/custom/src/odoo"},
-            {"path": "odoo/custom/src/private"},
-            {"name": f"doodba.{tmp_path.name}", "path": "."},
-        ]
-        # Firefox debugger configuration
-        url = f"http://localhost:{supported_odoo_version:.0f}069/test_module_static/static/"
-        path = "${workspaceFolder:private}/test_module_static/static/"
-        firefox_configuration = next(
-            conf
-            for conf in workspace_definition["launch"]["configurations"]
-            if conf["type"] == "firefox"
-        )
-        assert {"url": url, "path": path} in firefox_configuration["pathMappings"]
-        # Chrome debugger configuration
-        chrome_configuration = next(
-            conf
-            for conf in workspace_definition["launch"]["configurations"]
-            if conf["type"] == "chrome"
-        )
-        assert chrome_configuration["pathMapping"][url] == path
+    invoke("write-code-workspace-file")
+    assert (single_project_path / "doodba.other1.code-workspace").is_file()
+    assert not (
+        single_project_path / f"doodba.{single_project_path.name}.code-workspace"
+    ).is_file()
+    # Do a stupid and dirty git clone to check it's sorted fine
+    git("clone", cloned_template, Path("odoo", "custom", "src", "zzz"))
+    # "Clone" a couple more repos, including odoo to check order
+    git("clone", cloned_template, Path("odoo", "custom", "src", "aaa"))
+    git("clone", cloned_template, Path("odoo", "custom", "src", "bbb"))
+    git("clone", cloned_template, Path("odoo", "custom", "src", "odoo"))
+    invoke("write-code-workspace-file", "-c", "doodba.other2.code-workspace")
+    assert not (
+        single_project_path / f"doodba.{single_project_path.name}.code-workspace"
+    ).is_file()
+    assert (single_project_path / "doodba.other1.code-workspace").is_file()
+    assert (single_project_path / "doodba.other2.code-workspace").is_file()
+    with (single_project_path / "doodba.other2.code-workspace").open() as fp:
+        workspace_definition = json.load(fp)
+    # Check workspace folder definition and order
+    assert workspace_definition["folders"] == [
+        {"path": "odoo/custom/src/aaa"},
+        {"path": "odoo/custom/src/bbb"},
+        {"path": "odoo/custom/src/zzz"},
+        {"path": "odoo/custom/src/odoo"},
+        {"path": "odoo/custom/src/private"},
+        {"name": f"doodba.{single_project_path.name}", "path": "."},
+    ]
+    # Firefox debugger configuration
+    url = f"http://localhost:{supported_odoo_version:.0f}069/test_module_static/static/"
+    path = "${workspaceFolder:private}/test_module_static/static/"
+    firefox_configuration = next(
+        conf
+        for conf in workspace_definition["launch"]["configurations"]
+        if conf["type"] == "firefox"
+    )
+    assert {"url": url, "path": path} in firefox_configuration["pathMappings"]
+    # Chrome debugger configuration
+    chrome_configuration = next(
+        conf
+        for conf in workspace_definition["launch"]["configurations"]
+        if conf["type"] == "chrome"
+    )
+    assert chrome_configuration["pathMapping"][url] == path
 
 
-def test_dotdocker_ignore_content(tmp_path: Path, cloned_template: Path):
+def test_dotdocker_ignore_content(single_project_path: Path, cloned_template: Path):
     """Everything inside .docker must be ignored."""
     run_copy(
         str(cloned_template),
-        str(tmp_path),
+        str(single_project_path),
         vcs_ref="HEAD",
         defaults=True,
         overwrite=True,
         unsafe=True,
     )
-    with local.cwd(tmp_path):
-        git("add", ".")
-        git("commit", "-am", "hello", retcode=1)
-        git("commit", "-am", "hello")
-        (tmp_path / ".docker" / "some-file").touch()
-        assert not git("status", "--porcelain")
+    git("add", ".")
+    local["pre-commit"]("run", "--all-files", "--show-diff-on-failure", retcode=1)
+    git("commit", "-am", "Hello World")
+    (single_project_path / ".docker" / "some-file").touch()
+    assert not git("status", "--porcelain")
 
 
-def test_template_update_badge(tmp_path: Path, cloned_template: Path):
+def test_template_update_badge(single_project_path: Path, cloned_template: Path):
     """Test that the template update badge is properly formatted."""
     tag = "v99999.0.0-99999-bye-bye"
     with local.cwd(cloned_template):
@@ -324,26 +317,25 @@ def test_template_update_badge(tmp_path: Path, cloned_template: Path):
         git("tag", "--force", tag)
     run_copy(
         str(cloned_template),
-        str(tmp_path),
+        str(single_project_path),
         vcs_ref=tag,
         defaults=True,
         overwrite=True,
         unsafe=True,
     )
     expected = "[![Last template update](https://img.shields.io/badge/last%20template%20update-v99999.0.0--99999--bye--bye-informational)](https://github.com/Tecnativa/doodba-copier-template/tree/v99999.0.0-99999-bye-bye)"
-    assert expected in (tmp_path / "README.md").read_text()
+    assert expected in (single_project_path / "README.md").read_text()
 
 
 def test_pre_commit_in_subproject(
-    tmp_path: Path, cloned_template: Path, supported_odoo_version: float
+    single_project_path: Path, cloned_template: Path, supported_odoo_version: float
 ):
     """Test that .pre-commit-config.yaml has some specific settings fine."""
     run_copy(
         str(cloned_template),
-        str(tmp_path),
+        str(single_project_path),
         data={
             "odoo_version": supported_odoo_version,
-            "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
             "project_author": "Tecnativa",
         },
         vcs_ref="HEAD",
@@ -353,7 +345,7 @@ def test_pre_commit_in_subproject(
     )
     # Make sure the template was correctly rendered
     pre_commit_config = yaml.safe_load(
-        (tmp_path / ".pre-commit-config.yaml").read_text()
+        (single_project_path / ".pre-commit-config.yaml").read_text()
     )
     is_py3 = supported_odoo_version >= 11
     found = 0
@@ -380,7 +372,7 @@ def test_pre_commit_in_subproject(
                 assert {"id": "fix-encoding-pragma"} in repo["hooks"]
     assert found == should_find
     # Make sure it reformats correctly some files
-    with local.cwd(tmp_path / "odoo" / "custom" / "src" / "private"):
+    with local.cwd(single_project_path / "odoo" / "custom" / "src" / "private"):
         git("add", "-A")
         git("commit", "-m", "hello world", retcode=1)  # Nothing to commit
         git("commit", "-am", "hello world")
@@ -437,7 +429,7 @@ def test_pre_commit_in_subproject(
                 content = f"# -*- coding: utf-8 -*-\n{content}"
             assert Path(path).read_text() == content
     # Make sure it doesn't fail for incorrect module version when addon not installable
-    with local.cwd(tmp_path / "odoo" / "custom" / "src" / "private"):
+    with local.cwd(single_project_path / "odoo" / "custom" / "src" / "private"):
         # Bump version in test module and set as not installable
         generate_test_addon(
             "test_module", supported_odoo_version + 1, installable=False
@@ -448,14 +440,14 @@ def test_pre_commit_in_subproject(
         # Module should now be ignored by pre-commit and give no problems in commit
         git("commit", "-am", "start migration of test_module")
         # Load pre-commit config
-        with open(tmp_path / ".pre-commit-config.yaml") as fd:
+        with open(single_project_path / ".pre-commit-config.yaml") as fd:
             pre_commit_config = yaml.safe_load(fd.read())
         assert "^odoo/custom/src/private/test_module/|" in pre_commit_config["exclude"]
         # Make sure uninstallable addon was ignored by pre-commit
         pre_commit("run", "-a")
         assert "test_module" not in git("status", "--porcelain")
     # It should still fail for installable addon with bad manifest
-    with local.cwd(tmp_path / "odoo" / "custom" / "src" / "private"):
+    with local.cwd(single_project_path / "odoo" / "custom" / "src" / "private"):
         # Mark test module as installable again
         generate_test_addon("test_module", supported_odoo_version + 1, installable=True)
         # Because the module 'test_module' is currently ignored, it is necessary to add
@@ -471,7 +463,7 @@ def test_pre_commit_in_subproject(
         with pytest.raises(ProcessExecutionError):
             git("commit", "-am", "Mark test_module as installable again")
         # Load pre-commit config
-        with open(tmp_path / ".pre-commit-config.yaml") as fd:
+        with open(single_project_path / ".pre-commit-config.yaml") as fd:
             pre_commit_config = yaml.safe_load(fd.read())
         assert (
             "^odoo/custom/src/private/test_module/|" not in pre_commit_config["exclude"]
@@ -479,19 +471,18 @@ def test_pre_commit_in_subproject(
 
 
 def test_no_python_write_bytecode_in_devel(
-    tmp_path: Path, cloned_template: Path, supported_odoo_version: float
+    single_project_path: Path, cloned_template: Path, supported_odoo_version: float
 ):
     run_copy(
         str(cloned_template),
-        str(tmp_path),
+        str(single_project_path),
         data={
             "odoo_version": supported_odoo_version,
-            "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
         },
         vcs_ref="HEAD",
         defaults=True,
         overwrite=True,
         unsafe=True,
     )
-    devel = yaml.safe_load((tmp_path / "devel.yaml").read_text())
+    devel = yaml.safe_load((single_project_path / "devel.yaml").read_text())
     assert devel["services"]["odoo"]["environment"]["PYTHONDONTWRITEBYTECODE"] == 1

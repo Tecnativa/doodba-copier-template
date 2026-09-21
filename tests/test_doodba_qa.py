@@ -1,9 +1,8 @@
+import os
 from pathlib import Path
 
 from copier import run_copy
-from python_on_whales import DockerClient
-
-from .conftest import DBVER_PER_ODOO
+from python_on_whales import docker
 
 
 def test_doodba_qa(tmp_path: Path, supported_odoo_version: float):
@@ -13,23 +12,23 @@ def test_doodba_qa(tmp_path: Path, supported_odoo_version: float):
         tmp_path,
         data={
             "odoo_version": supported_odoo_version,
-            "postgres_version": DBVER_PER_ODOO[supported_odoo_version]["latest"],
         },
         vcs_ref="HEAD",
         defaults=True,
         overwrite=True,
         unsafe=True,
     )
-    docker = DockerClient()
+    docker.pull("ghcr.io/tecnativa/doodba-qa:edge", quiet=True)
 
     def _execute_qa(cmd):
         return docker.run(
-            "tecnativa/doodba-qa",
+            "ghcr.io/tecnativa/doodba-qa:edge",
             command=cmd,
             envs={
                 "ADDON_CATEGORIES": "-p",
                 "COMPOSE_FILE": "test.yaml",
                 "ODOO_VERSION": supported_odoo_version,
+                "DOODBA_GITHUB_TOKEN": os.environ.get("DOODBA_GITHUB_TOKEN", " "),
             },
             privileged=True,
             remove=True,
@@ -40,6 +39,7 @@ def test_doodba_qa(tmp_path: Path, supported_odoo_version: float):
             workdir=tmp_path,
         )
 
+    _execute_qa(["shutdown"])
     try:
         _execute_qa(["secrets-setup"])
         _execute_qa(["networks-autocreate"])
