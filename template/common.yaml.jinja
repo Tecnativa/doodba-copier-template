@@ -105,7 +105,7 @@ services:
       }}"
       SRS_SENDER_CLASSES: envelope_sender,header_sender
   {%- endif %}
-  {%- if backup_dst and postgres_version|int >= 10 %}
+  {%- if backup_dst and postgres_version|float >= 10 %}
 
   backup:
     image: ghcr.io/tecnativa/docker-duplicity-postgres{% if backup_dst.startswith(('boto3+s3://', 's3://', 's3+http://')) %}-s3{% endif %}:{{ backup_image_version }}

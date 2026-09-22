@@ -98,14 +98,26 @@ _migrations:
 pg_per_odoo:
   when: False
   type: yaml
-  # Odoo 11-13 supports pg 9.6 but that version is not supported by the backup service
+  # Odoo 13 supports pg 9.6 but that version is not supported by the backup service
   # and is necessary to be able to perform all tests
   default:
+    7.0:
+      oldest: "9.6"
+      latest: "9.6"
+    8.0:
+      oldest: "9.6"
+      latest: "9.6"
+    9.0:
+      oldest: "9.6"
+      latest: "9.6"
+    10.0:
+      oldest: "9.6"
+      latest: "9.6"
     11.0:
-      oldest: "10"
+      oldest: "9.6"
       latest: "13"
     12.0:
-      oldest: "10"
+      oldest: "9.6"
       latest: "13"
     13.0:
       oldest: "10"
@@ -291,6 +303,7 @@ postgres_version:
     always use the latest version.)
   choices:
     I will use an external PostgreSQL server: ""
+    "9.6": "9.6"
     "10": "10"
     "11": "11"
     "12": "12"
@@ -301,8 +314,8 @@ postgres_version:
     "17": "17"
     "18": "18"
   validator: >-
-    {% if not (pg_per_odoo[odoo_version]['oldest'] | int <= (postgres_version | int) <=
-    pg_per_odoo[odoo_version]['latest']|int) %} Version must be between {{
+    {% if not (pg_per_odoo[odoo_version]['oldest'] | float <= (postgres_version | float)
+    <= pg_per_odoo[odoo_version]['latest']|float) %} Version must be between {{
     pg_per_odoo[odoo_version]['oldest'] }} and {{ pg_per_odoo[odoo_version]['latest']
     }}. {% endif %}
 postgres_username:

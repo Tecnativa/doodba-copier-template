@@ -178,8 +178,8 @@ def db_filter_prefix_default(c, dst_path, answers_rel_path):
         )
 
 
-def get_old_proxy_data(compose_file_path):
-    data = yaml.safe_load(compose_file_path)
+def get_old_proxy_data(compose_file_path: Path):
+    data = yaml.safe_load(compose_file_path.read_text())
     services = data.get("services", {})
     domains = set()
     containers = set()
@@ -200,13 +200,13 @@ def get_old_proxy_data(compose_file_path):
 
 def _add_new_items_to_list(dst_path, answers_rel_path, varname, items):
     answers_path = Path(dst_path, answers_rel_path)
-    answers_yaml = yaml.safe_load(answers_path)
-    if varname not in answers_yaml:
-        answers_yaml[varname] = []
+    answers_data = yaml.safe_load(answers_path.read_text())
+    if varname not in answers_data:
+        answers_data[varname] = []
     for item in items:
-        if item not in answers_yaml[varname]:
-            answers_yaml[varname].append(item)
-    answers_path.write_text(yaml.safe_dump(answers_yaml))
+        if item not in answers_data[varname]:
+            answers_data[varname].append(item)
+    answers_path.write_text(yaml.safe_dump(answers_data))
 
 
 @task
@@ -221,8 +221,8 @@ def migrate_to_new_proxy(c, dst_path, answers_rel_path):
     _add_new_items_to_list(
         dst_path, answers_rel_path, "whitelisted_hosts_devel", devel_domains
     )
-    devel_data = yaml.safe_load(devel_compose)
-    test_data = yaml.safe_load(test_compose)
+    devel_data = yaml.safe_load(devel_compose.read_text())
+    test_data = yaml.safe_load(test_compose.read_text())
     devel_data["services"]["odoo"]["depends_on"] = [
         item
         for item in devel_data["services"]["odoo"]["depends_on"]
