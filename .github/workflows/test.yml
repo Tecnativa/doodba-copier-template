@@ -14,7 +14,9 @@ on:
           Extra options for pytest; use -vv for full details; see
           https://docs.pytest.org/en/latest/example/simple.html#how-to-change-command-line-options-defaults
         required: false
-
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   LANG: "en_US.utf-8"
