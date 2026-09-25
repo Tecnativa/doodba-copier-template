@@ -29,10 +29,11 @@ TRAEFIK_VERSION = os.getenv("TRAEFIK_VERSION", "3")
 SUPPORTED_ODOO_VERSIONS = tuple(
     v for v in ALL_ODOO_VERSIONS if v >= OLDEST_SUPPORTED_ODOO_VERSION
 )
-LAST_ODOO_VERSION = max(SUPPORTED_ODOO_VERSIONS)
+DEFAULT_ODOO_VERSION = COPIER_SETTINGS["odoo_version"]["default"]
+
 SELECTED_ODOO_VERSIONS = frozenset(
     map(float, os.environ.get("SELECTED_ODOO_VERSIONS", "").split())
-) or [LAST_ODOO_VERSION]
+) or [max(SUPPORTED_ODOO_VERSIONS)]
 PRERELEASE_ODOO_VERSIONS = {20.0}
 
 # Postgres versions
@@ -116,14 +117,18 @@ def versionless_odoo_autoskip(request):
         "any_odoo_version" in request.fixturenames
         or "supported_odoo_version" in request.fixturenames
     )
-    if LAST_ODOO_VERSION not in SELECTED_ODOO_VERSIONS and not is_version_specific_test:
+    if (
+        DEFAULT_ODOO_VERSION not in SELECTED_ODOO_VERSIONS
+        and not is_version_specific_test
+    ):
         pytest.skip("version-independent test in old versioned odoo test session")
 
 
 @pytest.fixture(params=TRAEFIK_VERSION)
 def traefik_host(request):
     """Fixture to indicate where to find a running traefik instance."""
-    docker = DockerClient()
+    if not docker.network.exists("inverseproxy_shared"):
+        docker.network.create("inverseproxy_shared")
     if request.param == "3":
         traefik_container = docker.run(
             "traefik:v3.1.2",

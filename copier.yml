@@ -138,14 +138,17 @@ pg_per_odoo:
       oldest: "12"
       latest: "18"
     19.0:
-      oldest: "12"
+      oldest: "13"
+      latest: "18"
+    20.0:
+      oldest: "16"
       latest: "18"
 
 # Questions for the user
 odoo_version:
   help: On which odoo version is it based?
   type: float
-  default: 19.0
+  default: 20.0
   choices:
     - 7.0
     - 8.0
@@ -160,6 +163,7 @@ odoo_version:
     - 17.0
     - 18.0
     - 19.0
+    - 20.0
 
 odoo_proxy:
   default: traefik
