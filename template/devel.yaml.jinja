@@ -93,8 +93,6 @@ services:
       UMASK: "$DOODBA_UMASK"
     depends_on: !override []
     user: root
-    networks: !override
-      - public
     volumes: !override
       - ./odoo/custom/src:/opt/odoo/custom/src:rw,z
   gatekeeper:
