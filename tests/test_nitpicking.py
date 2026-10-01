@@ -12,7 +12,7 @@ from plumbum.cmd import git, invoke, pre_commit
 from python_on_whales import DockerClient
 
 from .conftest import (
-    LAST_ODOO_VERSION,
+    DEFAULT_ODOO_VERSION,
     build_file_tree,
     generate_test_addon,
 )
@@ -134,8 +134,8 @@ def test_gitlab_badges(cloned_template: Path, single_project_path: Path):
     )
     expected_badges = dedent(
         f"""
-        [![pipeline status](https://gitlab.example.com/Tecnativa/my-badged-odoo/badges/{LAST_ODOO_VERSION}/pipeline.svg)](https://gitlab.example.com/Tecnativa/my-badged-odoo/commits/{LAST_ODOO_VERSION})
-        [![coverage report](https://gitlab.example.com/Tecnativa/my-badged-odoo/badges/{LAST_ODOO_VERSION}/coverage.svg)](https://gitlab.example.com/Tecnativa/my-badged-odoo/commits/{LAST_ODOO_VERSION})
+        [![pipeline status](https://gitlab.example.com/Tecnativa/my-badged-odoo/badges/{DEFAULT_ODOO_VERSION}/pipeline.svg)](https://gitlab.example.com/Tecnativa/my-badged-odoo/commits/{DEFAULT_ODOO_VERSION})
+        [![coverage report](https://gitlab.example.com/Tecnativa/my-badged-odoo/badges/{DEFAULT_ODOO_VERSION}/coverage.svg)](https://gitlab.example.com/Tecnativa/my-badged-odoo/commits/{DEFAULT_ODOO_VERSION})
         """
     )
     assert expected_badges.strip() in (single_project_path / "README.md").read_text()
