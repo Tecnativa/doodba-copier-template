@@ -1135,6 +1135,29 @@ def stop(c, purge=False):
         c.run(cmd, pty=True)
 
 
+def _db_run_cmd(odoo_command):
+    """Return the compose command running a DB management command in odoo."""
+    cmd = f"{DOCKER_COMPOSE_CMD} run --rm -l traefik.enable=false"
+    if ODOO_VERSION >= 20:
+        # `odoo db` rejects the `--load-language` the entrypoint adds for a missing DB
+        cmd += " -e INITIAL_LANG="
+    return f"{cmd} odoo {odoo_command}"
+
+
+def _dropdb_cmd(dbname):
+    """Return the command to drop a DB and its filestore."""
+    if ODOO_VERSION >= 20:
+        return _db_run_cmd(f"odoo db drop {dbname}")
+    return _db_run_cmd(f"click-odoo-dropdb {dbname}")
+
+
+def _copydb_cmd(source_db, destination_db):
+    """Return the command to copy a DB and its filestore."""
+    if ODOO_VERSION >= 20:
+        return _db_run_cmd(f"odoo db duplicate {source_db} {destination_db}")
+    return _db_run_cmd(f"click-odoo-copydb {source_db} {destination_db}")
+
+
 @task(
     help={
         "dbname": "The DB that will be DESTROYED and recreated. Default: 'devel'.",
@@ -1177,7 +1200,7 @@ def resetdb(
         c.run(f"{DOCKER_COMPOSE_CMD} stop odoo", pty=True)
         _run = f"{DOCKER_COMPOSE_CMD} run --rm -l traefik.enable=false odoo"
         c.run(
-            f"{_run} click-odoo-dropdb {dbname}",
+            _dropdb_cmd(dbname),
             env=UID_ENV,
             warn=True,
             pty=True,
@@ -1294,16 +1317,15 @@ def snapshot(
 ):
     """Snapshot current database and filestore.
 
-    Uses click-odoo-copydb behind the scenes to make a snapshot.
+    Uses the DB management commands of the odoo image behind the scenes.
     """
     if not destination_db:
         destination_db = f"{source_db}-{datetime.now().strftime('%Y_%m_%d-%H_%M')}"
     with c.cd(str(PROJECT_ROOT)):
         cur_state = c.run(f"{DOCKER_COMPOSE_CMD} stop odoo db", pty=True).stdout
         _logger.info("Snapshoting current %s DB to %s", (source_db, destination_db))
-        _run = f"{DOCKER_COMPOSE_CMD} run --rm -l traefik.enable=false odoo"
         c.run(
-            f"{_run} click-odoo-copydb {source_db} {destination_db}",
+            _copydb_cmd(source_db, destination_db),
             env=UID_ENV,
             pty=True,
         )
@@ -1327,7 +1349,7 @@ def restore_snapshot(
 ):
     """Restore database and filestore snapshot.
 
-    Uses click-odoo-copydb behind the scenes to restore a DB snapshot.
+    Uses the DB management commands of the odoo image behind the scenes.
     """
     with c.cd(str(PROJECT_ROOT)):
         cur_state = c.run(f"{DOCKER_COMPOSE_CMD} stop odoo db", pty=True).stdout
@@ -1358,15 +1380,14 @@ def restore_snapshot(
                     f"No snapshot found for destination_db {destination_db}"
                 )
         _logger.info("Restoring snapshot %s to %s", (snapshot_name, destination_db))
-        _run = f"{DOCKER_COMPOSE_CMD} run --rm -l traefik.enable=false odoo"
         c.run(
-            f"{_run} click-odoo-dropdb {destination_db}",
+            _dropdb_cmd(destination_db),
             env=UID_ENV,
             warn=True,
             pty=True,
         )
         c.run(
-            f"{_run} click-odoo-copydb {snapshot_name} {destination_db}",
+            _copydb_cmd(snapshot_name, destination_db),
             env=UID_ENV,
             pty=True,
         )
