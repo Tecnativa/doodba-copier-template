@@ -18,7 +18,7 @@ services:
       - "127.0.0.1:${PORT_PREFIX:-{{ macros.version_major(odoo_version) -}} }072:8072"
     environment:
       PORT: "6899 8069 8072"
-      TARGET: gatekeeper
+      TARGET: {{ 'gatekeeper' if whitelisted_hosts else 'odoo'}}
 
   odoo:
     extends:
@@ -62,9 +62,11 @@ services:
         condition: service_started
       wdb:
         condition: service_started
+    {%- if whitelisted_hosts %}
       gatekeeper:
         condition: service_healthy
     network_mode: service:gatekeeper
+    {%- endif %}
     command:
       - odoo
       - --limit-memory-soft=0
@@ -95,6 +97,7 @@ services:
     user: root
     volumes: !override
       - ./odoo/custom/src:/opt/odoo/custom/src:rw,z
+  {%- if whitelisted_hosts %}
   gatekeeper:
     extends:
       file: common.yaml
@@ -109,6 +112,7 @@ services:
     networks:
       default:
       public:
+  {%- endif %}
   {% if postgres_version -%}
   db:
     extends:
