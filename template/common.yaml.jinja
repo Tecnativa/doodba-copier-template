@@ -53,6 +53,13 @@ services:
       POSTGRES_DB: *dbname
       POSTGRES_USER: *dbuser
       PGDATA: "/var/lib/postgresql/data"
+      {%- if postgres_exposed %}
+      {%- if postgres_exposed_enable_password %}
+      WAN_AUTH_METHOD: scram-sha-256
+      {%- endif %}
+      WAN_DATABASES: '{{ postgres_exposed_databases | tojson}}'
+      WAN_USERS: '{{ postgres_exposed_users | tojson}}'
+      {%- endif %}
       CONF_EXTRA: |
         work_mem = 512MB
     volumes:

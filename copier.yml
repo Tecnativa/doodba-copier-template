@@ -354,10 +354,15 @@ postgres_exposed:
 postgres_exposed_port:
   default: 5432
   type: int
-  when: &db_exposed "{{ postgres_exposed and traefik_version != 3 }}"
+  when: "{{ postgres_exposed and traefik_version != 3 }}"
   help: >-
     Indicate the port to connect to the database.
-
+postgres_exposed_enable_password:
+  default: false
+  type: bool
+  when: "{{ postgres_exposed }}"
+  help: >-
+    Allow access via password to exposed postgres db
 odoo_dbfilter:
   default: "^{{ postgres_dbname }}"
   type: str
@@ -849,12 +854,28 @@ cidr_whitelist:
 
     ⚠️ It must be a list. And this is only supported if you deploy with Traefik 2+.
 postgres_cidr_whitelist:
-  yaml:
+  type: yaml
   multiline: true
   default: []
-  when: *db_exposed
+  when: "{{ postgres_exposed }}"
   help: >-
     If you need to whitelist certain CIDR to allow only them to access your Postgres
     instance, set that here please.
 
     ⚠️ It must be a list. And this is only supported if you deploy with Traefik 2+.
+postgres_exposed_databases:
+  type: yaml
+  default: ["prod"]
+  when: "{{ postgres_exposed }}"
+  help: >-
+    Set here the databases that should be accesible from WAN when postgres is exposed.
+
+    ⚠️ It must be a list.
+postgres_exposed_users:
+  type: yaml
+  default: ["readonly_user"]
+  when: "{{ postgres_exposed }}"
+  help: >-
+    Set here the users that should be able to access postgres from WAN when its exposed.
+
+    ⚠️ It must be a list.
