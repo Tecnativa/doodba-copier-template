@@ -4,6 +4,7 @@ import pytest
 import yaml
 from plumbum import local
 from plumbum.cmd import git, invoke
+from python_on_whales import DockerClient
 
 from .conftest import SharedTemplate
 
@@ -22,6 +23,9 @@ class TestDefaultSettings(SharedTemplate):
         git("add", ".")
         local["pre-commit"]("run", "--all-files", "--show-diff-on-failure", retcode=1)
         git("commit", "-am", "Hello World")
+        # Assert all compose files are valid
+        for filename in ["prod.yaml", "test.yaml", "devel.yaml", "migration.yaml"]:
+            DockerClient(compose_files=[filename]).compose.config()
 
     def test_pre_commit_autoinstall(
         self, shared_project: Path, supported_odoo_version: float

@@ -36,16 +36,37 @@ services:
         condition: service_healthy
       smtp:
         condition: service_started
+    {%- if whitelisted_hosts %}
       gatekeeper:
         condition: service_healthy
     network_mode: service:gatekeeper
+    {%- else %}
+    networks:
+      default:
+    {%- if odoo_proxy == "traefik" and domain_spec %}
+      inverseproxy_shared:
+    {%- endif %}
+    {%- endif %}
     labels:
       doodba.domain.main: {{ macros.first_main_domain(domain_spec)|tojson }}
+      {%- if not whitelisted_hosts and odoo_proxy == "traefik" and domain_spec %}
+      traefik.enable: "true"
+      {{- traefik1_labels.odoo(domain_spec, ["/"], odoo_version) }}
+      {{- traefik2_labels.odoo(
+        domain_spec,
+        cidr_whitelist,
+        _key,
+        odoo_version,
+        ["/"],
+        [],
+        project_name,
+      ) }}
+      {%- endif %}
     command:
       - odoo
       - --workers=3
       - --max-cron-threads=1
-
+  {%- if whitelisted_hosts %}
   gatekeeper:
     extends:
       file: common.yaml
@@ -78,6 +99,7 @@ services:
         project_name,
       ) }}
       {%- endif %}
+    {%- endif %}
 
   {%- if postgres_version %}
   db:
