@@ -354,7 +354,7 @@ postgres_exposed:
 postgres_exposed_port:
   default: 5432
   type: int
-  when: &db_exposed "{{ postgres_exposed and traefik_version != 3 }}"
+  when: "{{ postgres_exposed and traefik_version != 3 }}"
   help: >-
     Indicate the port to connect to the database.
 
@@ -852,7 +852,7 @@ postgres_cidr_whitelist:
   yaml:
   multiline: true
   default: []
-  when: *db_exposed
+  when: "{{ postgres_exposed }}"
   help: >-
     If you need to whitelist certain CIDR to allow only them to access your Postgres
     instance, set that here please.
