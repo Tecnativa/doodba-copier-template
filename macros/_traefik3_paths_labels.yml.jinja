@@ -110,7 +110,7 @@
       traefik.http.middlewares.{{ key }}-forceSecure.redirectScheme.permanent: "true"
       {%- if cidr_whitelist %}
       {#- Declare whitelist middleware #}
-      ? traefik.http.middlewares.{{ key }}-whitelist.IPWhiteList.sourceRange
+      ? traefik.http.middlewares.{{ key }}-whitelist.ipAllowList.sourceRange
       : {% for cidr in cidr_whitelist -%}
         {{ cidr }}{% if not loop.last %}, {% endif %}
         {%- endfor %}
@@ -259,14 +259,14 @@
 
 {%- macro database(domain_groups_list, cidr_whitelist, key, port, project_name) %}
       {#- Service #}
-      traefik.tcp.routers.{{ key }}-database.entrypoints: postgres-entrypoint
+      traefik.tcp.routers.{{ key }}-database.entrypoints: postgres
       traefik.tcp.services.{{ key }}-database.loadbalancer.server.port: 5432
       traefik.tcp.routers.{{ key }}-database.tls: "true"
       traefik.tcp.routers.{{ key }}-database.tls.certResolver: letsencrypt
 
       {%- if cidr_whitelist %}
       {#- Declare whitelist middleware #}
-      ? traefik.tcp.middlewares.{{ key }}-whitelist.IPWhiteList.sourceRange
+      ? traefik.tcp.middlewares.{{ key }}-db-allowlist.ipAllowList.sourceRange
       : {% for cidr in cidr_whitelist -%}
         {{ cidr }}{% if not loop.last %}, {% endif %}
         {%- endfor %}
@@ -277,10 +277,12 @@
         {%- set ns_hosts.all_hosts = ns_hosts.all_hosts + domain_group.hosts %}
       {%- endfor %}
       traefik.tcp.routers.{{ key }}-database.rule: {{ domains_rule_sni(ns_hosts.all_hosts) }}
-
-      {#- Remember basic middlewares for this domain group #}
       {%- set _ns = namespace(basic_middlewares=[]) -%}
       {%- if cidr_whitelist %}
-        {%- set _ns.basic_middlewares = _ns.basic_middlewares + ["whitelist"] %}
+        {%- set _ns.basic_middlewares = _ns.basic_middlewares + ["db-allowlist"] %}
+      {%- endif %}
+      {%- if _ns.basic_middlewares %}
+      traefik.tcp.routers.{{ key }}-database.middlewares:
+        {{ key }}-{{ _ns.basic_middlewares|sort|join(", %s-" % key) }}
       {%- endif %}
 {%- endmacro %}
