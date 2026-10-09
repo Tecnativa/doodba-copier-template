@@ -100,6 +100,8 @@ class TestDoodbaTasks(SharedTemplate):
         - stop --purge
         - snapshot
         - restore-snapshot
+        - dumpdb
+        - restoredb
         """
         # Imagine the user is in the src subfolder for these tasks
         with local.cwd(shared_project / "odoo" / "custom" / "src"):
@@ -159,6 +161,18 @@ class TestDoodbaTasks(SharedTemplate):
                 invoke("preparedb")
         # DB should now be reset
         assert _install_status("sale") == "uninstalled"
+        # Dump the snapshot into a file and restore it
+        dump = shared_project / "backups" / "db_with_sale.zip"
+        invoke("dumpdb", str(dump), "-d", "db_with_sale")
+        assert dump.is_file()
+        # Replacing another existing DB needs confirmation
+        with pytest.raises(ProcessExecutionError):
+            invoke("restoredb", str(dump), "-d", "db_with_sale")
+        invoke("restoredb", str(dump))
+        assert _install_status("sale") == "installed"
+        if supported_odoo_version >= 16:
+            assert _get_config_param("database.is_neutralized").lower() == "true"
+        invoke("resetdb", "--no-populate")
         # Restore snapshot
         invoke("restore-snapshot", "--snapshot-name", "db_with_sale")
         assert _install_status("sale") == "installed"
