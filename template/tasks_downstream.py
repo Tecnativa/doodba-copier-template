@@ -10,9 +10,11 @@ import operator
 import os
 import platform
 import re
+import shlex
 import shutil
 import stat
 import subprocess
+import sys
 import tempfile
 import time
 import xml.etree.ElementTree as ET
@@ -1135,9 +1137,9 @@ def stop(c, purge=False):
         c.run(cmd, pty=True)
 
 
-def _db_run_cmd(odoo_command):
+def _db_run_cmd(odoo_command, run_opts=""):
     """Return the compose command running a DB management command in odoo."""
-    cmd = f"{DOCKER_COMPOSE_CMD} run --rm -l traefik.enable=false"
+    cmd = f"{DOCKER_COMPOSE_CMD} run --rm -l traefik.enable=false{run_opts}"
     if ODOO_VERSION >= 20:
         # `odoo db` rejects the `--load-language` the entrypoint adds for a missing DB
         cmd += " -e INITIAL_LANG="
@@ -1156,6 +1158,43 @@ def _copydb_cmd(source_db, destination_db):
     if ODOO_VERSION >= 20:
         return _db_run_cmd(f"odoo db duplicate {source_db} {destination_db}")
     return _db_run_cmd(f"click-odoo-copydb {source_db} {destination_db}")
+
+
+def _dumpdb_cmd(dbname, dest, filestore):
+    """Return the command to dump a DB into a host zip file."""
+    target = "/tmp/backups"
+    run_opts = " -v " + shlex.quote(f"{dest.parent}:{target}:z")
+    opts = "" if filestore else " --no-filestore"
+    if ODOO_VERSION >= 20:
+        return _db_run_cmd(
+            f"odoo db dump{opts} {dbname} {target}/{shlex.quote(dest.name)}", run_opts
+        )
+    return _db_run_cmd(
+        f"click-odoo-backupdb{opts} {dbname} {target}/{shlex.quote(dest.name)}",
+        run_opts,
+    )
+
+
+def _db_exists(c, dbname):
+    """Return whether the DB exists."""
+    res = c.run(
+        f"{DOCKER_COMPOSE_CMD} run --rm -e LOG_LEVEL=WARNING odoo psql -tAc"
+        " 'SELECT datname FROM pg_database;'",
+        env=UID_ENV,
+        hide="stdout",
+        in_stream=False,
+    )
+    return dbname in (line.strip() for line in res.stdout.splitlines())
+
+
+def _restoredb_cmd(dbname, backup, neutralize):
+    """Return the command to restore a host backup into a DB."""
+    target = f"/tmp/backup{backup.suffix}"
+    run_opts = " -v " + shlex.quote(f"{backup}:{target}:ro,z")
+    opts = " --neutralize" if neutralize else ""
+    if ODOO_VERSION >= 20:
+        return _db_run_cmd(f"odoo db load{opts} {dbname} {target}", run_opts)
+    return _db_run_cmd(f"click-odoo-restoredb{opts} {dbname} {target}", run_opts)
 
 
 @task(
@@ -1393,6 +1432,77 @@ def restore_snapshot(
         )
         if "Stopping" in cur_state:
             c.run(f"{DOCKER_COMPOSE_CMD} start odoo db", pty=True)
+
+
+@task(
+    positional=["dest"],
+    help={
+        "dest": "Path of the zip dump to create.",
+        "dbname": "The DB to dump. Default: 'devel'.",
+        "filestore": "Include the filestore in the dump. Default: True",
+    },
+)
+def dumpdb(c, dbname="devel", dest=None, filestore=True):
+    """Dump a DB and its filestore into a zip that restoredb can restore.
+
+    Uses the DB management commands of the odoo image behind the scenes.
+    """
+    dest = Path(dest).resolve()
+    if dest.exists():
+        raise exceptions.ParseError(msg=f"Dump {dest} already exists.")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    with c.cd(str(PROJECT_ROOT)):
+        c.run(_dumpdb_cmd(dbname, dest, filestore), env=UID_ENV, pty=True)
+    _logger.info("Dump saved to %s", dest)
+
+
+@task(
+    help={
+        "backup": "Path to a zip backup (dump.sql plus optional filestore)."
+        " Below v20, a pg_dump custom-format file or backup folder also works.",
+        "dbname": "The DB that will be DESTROYED and restored. Default: 'devel'.",
+        "neutralize": "Neutralize the DB after restoring it (only available for"
+        " v16+). Default: True",
+        "force": "Replace an existing DB other than 'devel' without asking."
+        " Default: False",
+    },
+)
+def restoredb(c, backup, dbname="devel", neutralize=True, force=False):
+    """Restore a DB backup, such as one taken from production.
+
+    Uses the DB management commands of the odoo image behind the scenes.
+    """
+    backup = Path(backup).resolve()
+    if not backup.exists():
+        raise exceptions.ParseError(msg=f"Backup {backup} not found.")
+    if neutralize and ODOO_VERSION < 16:
+        _logger.warning(
+            f"Skipping neutralize as it is not available in v{ODOO_VERSION}"
+        )
+        neutralize = False
+    with c.cd(str(PROJECT_ROOT)):
+        if not force and dbname != "devel" and _db_exists(c, dbname):
+            if not sys.stdin.isatty():
+                raise exceptions.Exit(
+                    f"DB {dbname} already exists. Use --force to replace it.", 1
+                )
+            answer = input(f"DB {dbname} will be DESTROYED. Type its name to confirm: ")
+            if answer.strip() != dbname:
+                raise exceptions.Exit("Restore cancelled.", 1)
+        cur_state = c.run(f"{DOCKER_COMPOSE_CMD} stop odoo", pty=True).stdout
+        c.run(
+            _dropdb_cmd(dbname),
+            env=UID_ENV,
+            warn=True,
+            pty=True,
+        )
+        c.run(
+            _restoredb_cmd(dbname, backup, neutralize),
+            env=UID_ENV,
+            pty=True,
+        )
+        if "Stopping" in cur_state:
+            c.run(f"{DOCKER_COMPOSE_CMD} start odoo", pty=True)
 
 
 @task(
