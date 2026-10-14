@@ -363,6 +363,12 @@ postgres_exposed_enable_password:
   when: "{{ postgres_exposed }}"
   help: >-
     Allow access via password to exposed postgres db
+postgres_exposed_mtls:
+  default: true
+  type: bool
+  help: >-
+    Enables TLS passthrough to the exposed postgres container, it must then handle the
+    tls certs itself, and the ssl cert for traefik is ignored.
 odoo_dbfilter:
   default: "^{{ postgres_dbname }}"
   type: str
