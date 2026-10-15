@@ -40,10 +40,13 @@ jobs:
     needs: pre-commit
     strategy:
       matrix:
-        odoo-version: ["19.0"]
-        python-version: ["3.12"]
+        odoo-version: ["20.0"]
+        python-version: ["3.14"]
         traefik-version: [3]
         include:
+          - odoo-version: "19.0"
+            python-version: "3.12"
+            traefik-version: 3
           - odoo-version: "18.0"
             python-version: "3.10"
             traefik-version: 2
