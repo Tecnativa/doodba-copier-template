@@ -262,7 +262,11 @@
       traefik.tcp.routers.{{ key }}-database.entrypoints: postgres
       traefik.tcp.services.{{ key }}-database.loadbalancer.server.port: 5432
       traefik.tcp.routers.{{ key }}-database.tls: "true"
+      {%- if not postgres_exposed_mtls %}
       traefik.tcp.routers.{{ key }}-database.tls.certResolver: letsencrypt
+      {%- else %}
+      traefik.tcp.routers.{{ key }}-database.tls.passthrough: "true"
+      {%- endif %}
 
       {%- if cidr_whitelist %}
       {#- Declare whitelist middleware #}
