@@ -73,6 +73,10 @@ def test_doodba_main_domain_label(cloned_template: Path, single_project_path: Pa
         test_config.services["gatekeeper"].labels["doodba.domain.main"]
         == "yes.test.example.com"
     )
+    # Odoo uses the gatekeeper's network namespace, so on a daemon restart
+    # it can only come back if the gatekeeper is restarted too
+    test_config_json = dc_test.compose.config(return_json=True)
+    assert test_config_json["services"]["gatekeeper"]["restart"] == "unless-stopped"
     # These labels must be present to avoid that Traefik 1 builds its own
     # main domain assumption and tries to download its Let's Encrypt certs,
     # which would possibly fail and hit LE's rate limits

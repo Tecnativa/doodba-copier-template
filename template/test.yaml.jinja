@@ -71,6 +71,7 @@ services:
     extends:
       file: common.yaml
       service: gatekeeper
+    restart: unless-stopped
     {%- if domain_spec %}
     hostname: {{ macros.first_main_domain(domain_spec)|tojson }}
     {%- endif %}
