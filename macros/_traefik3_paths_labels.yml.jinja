@@ -257,15 +257,15 @@
       {%- endif %}
 {%- endmacro %}
 
-{%- macro database(domain_groups_list, cidr_whitelist, key, port, project_name) %}
+{%- macro database(domain_groups_list, cidr_whitelist, key, port, project_name, passthrough) %}
       {#- Service #}
       traefik.tcp.routers.{{ key }}-database.entrypoints: postgres
       traefik.tcp.services.{{ key }}-database.loadbalancer.server.port: 5432
       traefik.tcp.routers.{{ key }}-database.tls: "true"
-      {%- if not postgres_exposed_mtls %}
-      traefik.tcp.routers.{{ key }}-database.tls.certResolver: letsencrypt
-      {%- else %}
+      {%- if passthrough %}
       traefik.tcp.routers.{{ key }}-database.tls.passthrough: "true"
+      {%- else %}
+      traefik.tcp.routers.{{ key }}-database.tls.certResolver: letsencrypt
       {%- endif %}
 
       {%- if cidr_whitelist %}

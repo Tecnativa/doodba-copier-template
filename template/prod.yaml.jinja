@@ -115,6 +115,7 @@ services:
         _key,
         postgres_exposed_port,
         project_name,
+        passthrough=postgres_exposed_mtls,
       ) }}
     {%- else %}
     ports:
