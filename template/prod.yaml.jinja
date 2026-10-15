@@ -153,6 +153,36 @@ services:
       - smtp
       {%- endif %}
   {%- endif %}
+  {%- if use_odooclaw and 16.0 <= odoo_version <= 18.0 %}
+
+  odooclaw:
+    build:
+      context: ./odooclaw
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .docker/odooclaw.env
+    environment:
+      # Pin the DB the agent talks to so a shared env file never points at the
+      # wrong database (devel in devel.yaml, $POSTGRES_DB here).
+      ODOO_DB: "{{ postgres_dbname }}"
+      ODOOCLAW_CHANNELS_ODOO_TARGET_DB: "{{ postgres_dbname }}"
+    volumes:
+      - odooclaw_data:/home/odooclaw/.odooclaw
+      - ./odooclaw/config/config.json:/home/odooclaw/.odooclaw/config.json:ro
+    depends_on:
+      - odoo
+      - redis
+    networks:
+      default:
+        aliases:
+          - odooclaw
+
+  redis:
+    image: docker.io/library/redis:7-alpine
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+  {%- endif %}
 
 networks:
   default:
@@ -170,6 +200,9 @@ volumes:
   {%- endif %}
   filestore:
   db:
+  {%- if use_odooclaw and 16.0 <= odoo_version <= 18.0 %}
+  odooclaw_data:
+  {%- endif %}
   {%- if smtp_relay_host %}
   mailconfig:
   maildata:
