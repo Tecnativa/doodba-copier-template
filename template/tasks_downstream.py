@@ -745,6 +745,9 @@ def start(c, detach=True, debugpy=False, _reload=True, port_prefix=0):
         "enterprise": "Install all enterprise addons. Default: False",
         "cur-file": "Path to the current file."
         " Addon name will be obtained from there to install.",
+        "auto_install": "Allows toggling installation of auto_install addons. "
+        "Supported on v17+ only, earlier versions will always include auto_install "
+        "addons. Default: False",
     },
 )
 def install(
@@ -755,6 +758,7 @@ def install(
     extra=False,
     private=False,
     enterprise=False,
+    auto_install=False,
 ):
     """Install Odoo addons
 
@@ -782,6 +786,8 @@ def install(
         cmd += " --enterprise"
     if modules:
         cmd += f" -w {modules}"
+    if not auto_install and ODOO_VERSION >= 17:
+        cmd += "--skip-auto-install"
     with c.cd(str(PROJECT_ROOT)):
         c.run(DOCKER_COMPOSE_CMD + " stop odoo")
         c.run(
@@ -1030,6 +1036,9 @@ def _get_module_list(
         "db_filter": "DB_FILTER regex to pass to the test container Set to ''"
         " to disable. Default: '^devel$'",
         "tags": "Comma-separated list of tags to test. Default: ',/'.join(modules)",
+        "auto_install": "Allows toggling installation of auto_install addons. "
+        "Supported on v17+ only, earlier versions will always include auto_install "
+        "addons. Default: False",
     },
 )
 def test(
@@ -1045,7 +1054,8 @@ def test(
     mode="init",
     db_filter="^devel$",
     tags=None,
-):
+    auto_install=False,
+):  # noqa: C901
     """Run Odoo tests
 
     By default, tests addon from directory being worked on,
@@ -1065,7 +1075,15 @@ def test(
         modules = cur_module
     else:
         modules = _get_module_list(c, modules, core, extra, private, enterprise)
-    odoo_command = ["odoo", "--test-enable", "--stop-after-init", "--workers=0"]
+    odoo_command = [
+        "odoo",
+        "--test-enable",
+        "--stop-after-init",
+        "--workers=0",
+        "--no-http",
+    ]
+    if not auto_install and ODOO_VERSION >= 17:
+        odoo_command.append("--skip-auto-install")
     if mode == "init":
         if ODOO_VERSION >= 19:
             mods = [m for m in modules.split(",") if m]
