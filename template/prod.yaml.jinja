@@ -104,7 +104,7 @@ services:
         aliases:
           - "{{ _key }}-db"
     {%- if postgres_exposed %}
-    {%- if traefik_version >= 3 %}
+    {%- if postgres_exposed_behind_traefik %}
       inverseproxy_shared:
     labels:
       traefik.enable: "true"

@@ -350,13 +350,30 @@ postgres_exposed:
   type: bool
   help: >-
     Do you want to expose database service?
-
+postgres_exposed_demo:
+  default: false
+  when: "{{ postgres_exposed }}"
+  type: bool
+  help: >-
+    Do you want to expose database service in the test environment?
+postgres_exposed_behind_traefik:
+  default: "{{ traefik_version == 3}}"
+  type: bool
+  when: "{{ traefik_version == 3}}"
+  help: >-
+    Use traefik to proxy requests to postgres server instead of exposing directly
 postgres_exposed_port:
   default: 5432
   type: int
   when: "{{ postgres_exposed and traefik_version != 3 }}"
   help: >-
     Indicate the port to connect to the database.
+postgres_exposed_port_demo:
+  default: 5433
+  type: int
+  when: "{{ postgres_exposed_demo and traefik_version != 3 }}"
+  help: >-
+    Indicate the port to connect to the database in the test environment.
 postgres_exposed_enable_password:
   default: false
   type: bool
@@ -365,6 +382,7 @@ postgres_exposed_enable_password:
     Allow access via password to exposed postgres db
 postgres_exposed_mtls:
   default: true
+  when: "{{ postgres_exposed }}"
   type: bool
   help: >-
     Enables TLS passthrough to the exposed postgres container, it must then handle the
