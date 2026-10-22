@@ -668,11 +668,13 @@ def closed_prs(c):
 
 
 @task()
-def img_build(c, pull=True):
+def img_build(c, pull=True, cache=True):
     """Build docker images."""
     cmd = DOCKER_COMPOSE_CMD + " build"
     if pull:
         cmd += " --pull"
+    if not cache:
+        cmd += " --no-cache"
     with c.cd(str(PROJECT_ROOT)):
         c.run(cmd, env=UID_ENV, pty=True)
 
