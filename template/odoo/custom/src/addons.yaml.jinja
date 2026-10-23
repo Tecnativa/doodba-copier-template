@@ -1,0 +1,14 @@
+{% if use_odooclaw and 16.0 <= odoo_version <= 18.0 -%}
+# BEGIN odooclaw (managed block; do not edit inside the markers)
+odoo-addons:
+{%- if odoo_version >= 18.0 %}
+    - mail_bot_odooclaw
+    - mail_bot_odooclaw_account
+    - mail_bot_odooclaw_crm
+    - mail_bot_odooclaw_expense
+    - mail_bot_odooclaw_fleet
+{%- else %}
+    - mail_bot_odooclaw
+{%- endif %}
+# END odooclaw
+{% endif -%}
