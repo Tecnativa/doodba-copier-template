@@ -1273,9 +1273,187 @@ def logs(c, tail=10, follow=True, container=None):
         c.run(cmd, pty=True)
 
 
+# Marker-delimited blocks appended to repos.yaml/addons.yaml when a project
+# switches use_odooclaw on. Kept in sync with the template blocks in
+# template/odoo/custom/src/{repos,addons}.yaml.jinja.
+ODOOCLAW_REPOS_BLOCK = """
+# BEGIN odooclaw (managed block; do not edit inside the markers)
+# OdooClaw Odoo modules (mail_bot_odooclaw and area addons). The upstream repo
+# has one branch per Odoo version, so $ODOO_VERSION is also the branch name.
+./odoo-addons:
+  defaults:
+    depth: $DEPTH_DEFAULT
+  remotes:
+    odooclaw: https://github.com/nicolasramos/odoo-addons.git
+  target: odooclaw $ODOO_VERSION
+  merges:
+    - odooclaw $ODOO_VERSION
+# END odooclaw
+"""
+
+ODOOCLAW_ADDONS_BLOCK_18 = """
+# BEGIN odooclaw (managed block; do not edit inside the markers)
+odoo-addons:
+    - mail_bot_odooclaw
+    - mail_bot_odooclaw_account
+    - mail_bot_odooclaw_crm
+    - mail_bot_odooclaw_expense
+    - mail_bot_odooclaw_fleet
+# END odooclaw
+"""
+
+ODOOCLAW_ADDONS_BLOCK = """
+# BEGIN odooclaw (managed block; do not edit inside the markers)
+odoo-addons:
+    - mail_bot_odooclaw
+# END odooclaw
+"""
+
+_ODOOCLAW_GENERATED_FILES = (
+    "scripts/setup-odooclaw.sh",
+    "scripts/smoke-test-odooclaw.sh",
+    "odooclaw/config/config.json",
+    "odooclaw/.gitignore",
+)
+
+
+def _strip_odooclaw_block(text):
+    """Remove the BEGIN/END odooclaw marked region from a YAML document."""
+    out, skipping = [], False
+    for line in text.splitlines(keepends=True):
+        if "BEGIN odooclaw" in line:
+            skipping = True
+            # Drop the blank separator the append added — only that one, so a
+            # file with blank lines of its own keeps them across an on/off cycle.
+            if out and not out[-1].strip():
+                out.pop()
+            continue
+        if "END odooclaw" in line:
+            skipping = False
+            continue
+        if not skipping:
+            out.append(line)
+    return "".join(out)
+
+
+def reconcile_odooclaw_files():
+    """Reconcile skipped OdooClaw files with the current ``use_odooclaw`` answer.
+
+    Copier never overwrites files listed in ``_skip_if_exists``
+    (``repos.yaml``/``addons.yaml``), so both transitions of ``use_odooclaw``
+    need help from ``after-update``:
+
+    - Enabling: append the marker-delimited OdooClaw blocks to the existing
+      ``repos.yaml``/``addons.yaml`` without touching the user's own entries.
+    - Disabling: strip those blocks, delete the generated scripts and remove the
+      whole ``odooclaw/`` tree (generated config plus the fetched gateway
+      source, which ``scripts/setup-odooclaw.sh`` fetches again on the next
+      enable). The tree has to go here: copier applies its own deletions
+      *after* this task runs, so an ignore file written back for it would not
+      survive the update and every third-party file would become committable.
+      ``.docker/odooclaw.env`` is removed by copier itself (it stopped being
+      generated).
+
+    The ``odooclaw``/``redis`` compose services need no handling here:
+    ``devel.yaml``/``prod.yaml`` are not skipped, so copier re-renders them.
+    """
+    answers = _copier_answers()
+    enabled = bool(answers.get("use_odooclaw"))
+    odoo_version = float(answers.get("odoo_version", 0))
+
+    repos_yaml = PROJECT_ROOT / "odoo/custom/src/repos.yaml"
+    addons_yaml = PROJECT_ROOT / "odoo/custom/src/addons.yaml"
+
+    addons_block = (
+        ODOOCLAW_ADDONS_BLOCK_18 if odoo_version >= 18.0 else ODOOCLAW_ADDONS_BLOCK
+    )
+    for path, block in (
+        (repos_yaml, ODOOCLAW_REPOS_BLOCK),
+        (addons_yaml, addons_block),
+    ):
+        if not path.exists():
+            continue
+        text = path.read_text()
+        if enabled:
+            if "# BEGIN odooclaw" in text:
+                continue  # Already reconciled.
+            base = text.rstrip("\n")
+            # A pristine addons.yaml can be empty: never prepend separators
+            # that would make the file differ from pristine after a round trip.
+            separator = "\n" if base else ""
+            body = block if base else block.lstrip("\n")
+            path.write_text(base + separator + body)
+            _logger.info(f"Added OdooClaw entries to {path.relative_to(PROJECT_ROOT)}.")
+        elif "# BEGIN odooclaw" in text:
+            path.write_text(_strip_odooclaw_block(text))
+            _logger.info(
+                f"Removed OdooClaw entries from {path.relative_to(PROJECT_ROOT)}."
+            )
+
+    if not enabled:
+        gateway_root = PROJECT_ROOT / "odooclaw"
+        had_gateway = gateway_root.exists()
+        removed = False
+        if had_gateway:
+            # Copier applies its own deletions *after* this task runs (its
+            # render of the disabled version has no odooclaw/), so an ignore
+            # file written back here would not survive the update and the
+            # fetched tree would end up committable. The tree is pure cache —
+            # generated config plus a clone scripts/setup-odooclaw.sh fetches
+            # again — so remove it instead of leaving it behind.
+            shutil.rmtree(gateway_root, ignore_errors=True)
+            removed = not gateway_root.exists()
+
+        leftovers = [
+            rel
+            for rel in _ODOOCLAW_GENERATED_FILES
+            if (PROJECT_ROOT / rel).exists()
+            # If the tree survived, its .gitignore is what keeps the source
+            # untracked: never strip it in that case.
+            and not (rel == "odooclaw/.gitignore" and had_gateway and not removed)
+        ]
+        for rel in leftovers:
+            (PROJECT_ROOT / rel).unlink()
+            _logger.info(f"Removed {rel} (use_odooclaw is now false).")
+
+        if had_gateway and not removed:
+            _logger.warning(
+                "⚠️  odooclaw/ could not be removed: its .gitignore stays so "
+                "the third-party source remains untracked; delete the "
+                "directory by hand."
+            )
+        if leftovers or had_gateway:
+            if removed:
+                note = (
+                    "odooclaw/ (generated config plus the fetched gateway "
+                    "source) was removed with it; run scripts/setup-odooclaw.sh "
+                    "again after re-enabling to fetch it back. "
+                )
+            else:
+                note = ""
+            _logger.warning(
+                "⚠️  OdooClaw was disabled. " + note + ".docker/odooclaw.env "
+                "is gone too — restore it from a backup if you still need its "
+                "values."
+            )
+
+
+def _copier_answers():
+    """Read the copier answers file of this generated project, if available."""
+    answers_file = PROJECT_ROOT / ".copier-answers.yml"
+    if not answers_file.is_file():
+        return {}
+    try:
+        return yaml.safe_load(answers_file.read_text()) or {}
+    except yaml.YAMLError:
+        return {}
+
+
 @task
 def after_update(c):
     """Execute some actions after a copier update or init"""
+    # Keep skipped OdooClaw files in sync with the use_odooclaw answer
+    reconcile_odooclaw_files()
     # Make custom build scripts executable
     if ODOO_VERSION < 11:
         files = (
@@ -1302,6 +1480,14 @@ def after_update(c):
             # Python 3.8
             if script_file.exists():
                 script_file.unlink()
+    # Make generated OdooClaw scripts executable (if this project enabled them)
+    if _copier_answers().get("use_odooclaw"):
+        for script_name in ("setup-odooclaw.sh", "smoke-test-odooclaw.sh"):
+            script_file = Path(PROJECT_ROOT, "scripts", script_name)
+            if script_file.exists():
+                cur_stat = script_file.stat()
+                # Like chmod ug+x
+                script_file.chmod(cur_stat.st_mode | stat.S_IXUSR | stat.S_IXGRP)
 
 
 @task(
