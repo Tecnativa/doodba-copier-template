@@ -13,6 +13,7 @@ import re
 import shutil
 import stat
 import subprocess
+import sys
 import tempfile
 import time
 import xml.etree.ElementTree as ET
@@ -738,6 +739,11 @@ def start(c, detach=True, debugpy=False, _reload=True, port_prefix=0):
         time.sleep(SERVICES_WAIT_TIME)
 
 
+def _check_bool_default(flag: str):
+    flag = flag.replace("_", "-")
+    return f"--{flag}" not in sys.argv and f"--no-{flag}" not in sys.argv
+
+
 @task(
     help={
         "modules": "Comma-separated list of modules to install.",
@@ -747,6 +753,8 @@ def start(c, detach=True, debugpy=False, _reload=True, port_prefix=0):
         "enterprise": "Install all enterprise addons. Default: False",
         "cur-file": "Path to the current file."
         " Addon name will be obtained from there to install.",
+        "auto_install": "Allows toggling installation of auto_install addons. "
+        "Always. Default: True",
     },
 )
 def install(
@@ -757,12 +765,15 @@ def install(
     extra=False,
     private=False,
     enterprise=False,
+    auto_install=True,
 ):
     """Install Odoo addons
 
     By default, installs addon from directory being worked on,
     unless other options are specified.
     """
+    if ODOO_VERSION >= 19 and _check_bool_default("auto_install"):
+        auto_install = False
     if not (modules or core or extra or private or enterprise):
         cur_module = _get_cwd_addon(cur_file or Path.cwd())
         if not cur_module:
@@ -784,6 +795,8 @@ def install(
         cmd += " --enterprise"
     if modules:
         cmd += f" -w {modules}"
+    if not auto_install and ODOO_VERSION >= 17:
+        cmd += " --skip-auto-install"
     with c.cd(str(PROJECT_ROOT)):
         c.run(DOCKER_COMPOSE_CMD + " stop odoo")
         c.run(
@@ -985,6 +998,7 @@ def _get_module_list(
     extra=False,
     private=False,
     enterprise=False,
+    cur_file=None,
     only_installable=True,
 ):
     """Returns a list of addons according to the passed parameters.
@@ -992,6 +1006,16 @@ def _get_module_list(
     By default, refers to the addon from directory being worked on,
     unless other options are specified.
     """
+    if not (modules or core or extra or private or enterprise):
+        cur_module = _get_cwd_addon(cur_file or Path.cwd())
+        if not cur_module:
+            raise exceptions.ParseError(
+                msg="Odoo addon to install not found. "
+                "You must provide at least one option for modules"
+                " or be in a subdirectory of one."
+                " See --help for details."
+            )
+        modules = cur_module
     # Get list of dependencies for addon
     cmd = DOCKER_COMPOSE_CMD + " run --rm odoo addons list"
     if core:
@@ -1032,6 +1056,9 @@ def _get_module_list(
         "db_filter": "DB_FILTER regex to pass to the test container Set to ''"
         " to disable. Default: '^devel$'",
         "tags": "Comma-separated list of tags to test. Default: ',/'.join(modules)",
+        "auto_install": "Allows toggling installation of auto_install addons. "
+        "Supported on v17+ only, earlier versions will always include auto_install "
+        "addons. Default: False",
     },
 )
 def test(
@@ -1047,6 +1074,7 @@ def test(
     mode="init",
     db_filter="^devel$",
     tags=None,
+    auto_install=False,
 ):
     """Run Odoo tests
 
@@ -1055,19 +1083,16 @@ def test(
 
     NOTE: Odoo must be restarted manually after this to go back to normal mode
     """
-    if not (modules or core or extra or private or enterprise):
-        cur_module = _get_cwd_addon(cur_file or Path.cwd())
-        if not cur_module:
-            raise exceptions.ParseError(
-                msg="Odoo addon to install not found. "
-                "You must provide at least one option for modules"
-                " or be in a subdirectory of one."
-                " See --help for details."
-            )
-        modules = cur_module
-    else:
-        modules = _get_module_list(c, modules, core, extra, private, enterprise)
-    odoo_command = ["odoo", "--test-enable", "--stop-after-init", "--workers=0"]
+    modules = _get_module_list(c, modules, core, extra, private, enterprise, cur_file)
+    odoo_command = [
+        "odoo",
+        "--test-enable",
+        "--stop-after-init",
+        "--workers=0",
+        "--no-http",
+    ]
+    if not auto_install and ODOO_VERSION >= 17:
+        odoo_command.append("--skip-auto-install")
     if mode == "init":
         if ODOO_VERSION >= 19:
             mods = [m for m in modules.split(",") if m]
@@ -1216,7 +1241,7 @@ def resetdb(
             pty=True,
         )
     if populate and ODOO_VERSION < 11:
-        _logger.warn(
+        _logger.warning(
             f"Skipping populate task as it is not available in v{ODOO_VERSION}"
         )
         populate = False
@@ -1325,7 +1350,7 @@ def snapshot(
         destination_db = f"{source_db}-{datetime.now().strftime('%Y_%m_%d-%H_%M')}"
     with c.cd(str(PROJECT_ROOT)):
         cur_state = c.run(f"{DOCKER_COMPOSE_CMD} stop odoo db", pty=True).stdout
-        _logger.info("Snapshoting current %s DB to %s", (source_db, destination_db))
+        _logger.info("Snapshoting current %s DB to %s", source_db, destination_db)
         c.run(
             _copydb_cmd(source_db, destination_db),
             env=UID_ENV,
