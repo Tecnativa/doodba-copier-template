@@ -396,7 +396,7 @@ services:
       - "--entrypoints.web-insecure.http.redirections.entryPoint.to=web-main"
       - "--entrypoints.web-insecure.http.redirections.entryPoint.scheme=https"
       - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web-insecure"
-      - "--entrypoints.postgres-entrypoint.address=:5432" # Define entrypoint for PostgreSQL for direct database access
+      - "--entrypoints.postgres.address=:5432" # Define entrypoint for PostgreSQL for direct database access
   dockersocket:
     image: tecnativa/docker-socket-proxy
     privileged: true
