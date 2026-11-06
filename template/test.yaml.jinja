@@ -115,6 +115,25 @@ services:
       default:
         aliases:
           - "{{ _key }}-db"
+    {%- if postgres_exposed_demo %}
+    {%- if postgres_exposed_behind_traefik %}
+      inverseproxy_shared:
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "inverseproxy_shared"
+      {{- traefik3_labels_2.database(
+        domain_spec,
+        postgres_cidr_whitelist,
+        _key,
+        postgres_exposed_port,
+        project_name,
+        passthrough=postgres_exposed_mtls,
+      ) }}
+    {%- else %}
+    ports:
+      - "{{ postgres_exposed_port_demo }}:5432"
+    {%- endif %}
+    {%- endif %}
     restart: unless-stopped
   {%- endif %}
 
