@@ -364,8 +364,9 @@ postgres_exposed_enable_password:
   help: >-
     Allow access via password to exposed postgres db
 postgres_exposed_mtls:
-  default: true
+  default: false
   type: bool
+  when: "{{ postgres_exposed }}"
   help: >-
     Enables TLS passthrough to the exposed postgres container, it must then handle the
     tls certs itself, and the ssl cert for traefik is ignored.
