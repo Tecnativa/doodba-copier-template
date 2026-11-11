@@ -288,6 +288,50 @@ use_refurb:
     Python codebase.
   when: "{{ odoo_version >= 13.0 }}"
 
+use_odooclaw:
+  default: false
+  type: bool
+  help: >-
+    Use OdooClaw (https://github.com/nicolasramos/odooclaw), a fully local AI agent that
+    answers @OdooClaw mentions in Odoo Discuss.
+
+    Enabling this adds to your stack: an `odooclaw` gateway service (built from source),
+    a `redis` service for its job store, an `odoo-mcp` MCP server configuration, the
+    OdooClaw gateway source in `odooclaw/`, and the `mail_bot_odooclaw` Odoo module,
+    fetched from https://github.com/nicolasramos/odoo-addons via `repos.yaml`.
+
+    💡 You will need an LLM provider API key (OpenAI, Anthropic, Ollama...) to make the
+    agent answer. Set it in `.docker/odooclaw.env` after generating.
+
+    ⚠️ Available for Odoo 16, 17 and 18 only. The OdooClaw Odoo modules are published
+    per Odoo version, so this question is hidden when you generate a project for any
+    other version, and no OdooClaw files are added to it.
+  when: "{{ odoo_version >= 16.0 and odoo_version <= 18.0 }}"
+
+odooclaw_provider:
+  default: openai
+  type: str
+  help: >-
+    LLM provider used by the OdooClaw agent.
+  when: "{{ use_odooclaw }}"
+  choices:
+    OpenAI: openai
+    Anthropic: anthropic
+    OpenRouter: openrouter
+    Groq: groq
+    Ollama (local): ollama
+    Gemini: gemini
+
+odooclaw_model:
+  type: str
+  default:
+    "{{ {'openai': 'gpt-4o-mini', 'anthropic': 'claude-sonnet-4-20250514', 'openrouter':
+    'openai/gpt-4o-mini', 'groq': 'llama-3.3-70b-versatile', 'ollama': 'llama3',
+    'gemini': 'gemini-2.0-flash'}[odooclaw_provider] }}"
+  help: >-
+    Model name used by the OdooClaw agent (default depends on the provider).
+  when: "{{ use_odooclaw }}"
+
 gitlab_url:
   type: str
   help: >-

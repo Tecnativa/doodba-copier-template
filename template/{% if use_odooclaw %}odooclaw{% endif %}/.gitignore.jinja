@@ -1,0 +1,11 @@
+# OdooClaw gateway source: fetched by scripts/setup-odooclaw.sh from
+# https://github.com/nicolasramos/odooclaw and used only as the docker build
+# context of the `odooclaw` service. It is third-party code, not project code,
+# so keep it out of this repository. Only the generated gateway config
+# (config/config.json) is tracked — the gateway's own config.example.json
+# stays ignored; credentials never live here, they go in .docker/odooclaw.env.
+/*
+!/config/
+/config/*
+!/config/config.json
+!.gitignore
