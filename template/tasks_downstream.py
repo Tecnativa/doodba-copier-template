@@ -1211,7 +1211,10 @@ def _restoredb_cmd(dbname, backup, neutralize):
         " Default: True",
         "dependencies": "Install only the dependencies of the specified addons."
         "Default: False",
-        "demo": "Create the DB with demo data. Default: True.",
+        "demo": (
+            "Create the DB with demo data. "
+            "Default: follow what is defined in the compose file."
+        ),
     },
 )
 def resetdb(
@@ -1248,6 +1251,14 @@ def resetdb(
         )
         lang = os.getenv("INITIAL_LANG")
         lang_opt = f" --lang {lang}" if lang else ""
+        if "--demo" not in sys.argv and "--no-demo" not in sys.argv:
+            config = yaml.safe_load(
+                c.run(f"{DOCKER_COMPOSE_CMD} config", hide=True).stdout
+            )
+            without_demo = config["services"]["odoo"]["environment"][
+                "WITHOUT_DEMO"
+            ].lower()
+            demo = without_demo in ["all", "true", "1"]
         demo_opt = " --demo" if demo else " --no-demo"
         c.run(
             f"{_run} click-odoo-initdb -n {dbname} -m {modules}{lang_opt}{demo_opt}",
@@ -1255,7 +1266,7 @@ def resetdb(
             pty=True,
         )
     if populate and ODOO_VERSION < 11:
-        _logger.warn(
+        _logger.warning(
             f"Skipping populate task as it is not available in v{ODOO_VERSION}"
         )
         populate = False
