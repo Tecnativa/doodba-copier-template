@@ -1256,7 +1256,7 @@ def resetdb(
         )
     if populate and ODOO_VERSION < 11:
         _logger.warn(
-            f"Skipping populate task as it is not available in v{ODOO_VERSION}"
+            "Skipping populate task as it is not available in v%s", ODOO_VERSION
         )
         populate = False
     if populate:
@@ -1479,7 +1479,7 @@ def restoredb(c, backup, dbname="devel", neutralize=True, force=False):
         raise exceptions.ParseError(msg=f"Backup {backup} not found.")
     if neutralize and ODOO_VERSION < 16:
         _logger.warning(
-            f"Skipping neutralize as it is not available in v{ODOO_VERSION}"
+            "Skipping neutralize as it is not available in v%s", ODOO_VERSION
         )
         neutralize = False
     with c.cd(str(PROJECT_ROOT)):
