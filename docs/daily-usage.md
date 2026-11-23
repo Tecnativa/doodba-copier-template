@@ -31,6 +31,7 @@ it now? You'll learn that here.
   - [Inspect the database](#inspect-the-database)
   - [Restart Odoo](#restart-odoo)
   - [Run unit tests for some addon](#run-unit-tests-for-some-addon)
+    - [Run unit tests against a throwaway database](#run-unit-tests-against-a-throwaway-database)
   - [Reading the logs](#reading-the-logs)
   - [Install some addon without stopping current running process](#install-some-addon-without-stopping-current-running-process)
   - [Update some addon without stopping current running process](#update-some-addon-without-stopping-current-running-process)
@@ -489,6 +490,20 @@ docker compose run --rm odoo addons update --test --with $modules
 ```
 
 \* Note: This replaces the old deprecated `unittest` script.
+
+#### Run unit tests against a throwaway database
+
+`--dbname` selects the database for `invoke test` and `invoke install`: it sets
+`PGDATABASE` and defaults `DB_FILTER` to `^<dbname>$` (`--db-filter` still wins). The
+filter alone cannot select one, because the entrypoint writes `db_name = $PGDATABASE`.
+
+```bash
+invoke resetdb --dbname probe_x -m addon1 --dependencies --no-populate # from the initdb cache
+invoke test --dbname probe_x -m addon1                                 # devel is left untouched
+docker compose run --rm odoo click-odoo-dropdb probe_x                 # drop DB + filestore
+```
+
+On Odoo 20+, drop it with `docker compose run --rm odoo odoo db drop probe_x` instead.
 
 ### Reading the logs
 
