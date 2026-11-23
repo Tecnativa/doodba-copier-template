@@ -9,6 +9,7 @@ Maybe not so frequent, but interesting anyway. 🤷
 <summary>Table of contents</summary>
 
 - [Can I have my own private template?](#can-i-have-my-own-private-template)
+- [How do I add my own invoke tasks?](#how-do-i-add-my-own-invoke-tasks)
 - [Can I use environments for what they're not?](#can-i-use-environments-for-what-theyre-not)
 - [How can I run a Posbox/IoT box service for development?](#how-can-i-run-a-posboxiot-box-service-for-development)
 - [How can I whitelist a service and allow external access to it?](#how-can-i-whitelist-a-service-and-allow-external-access-to-it)
@@ -51,6 +52,13 @@ copier --answers-file .copier-answers.private.yml update .
 ```
 
 Check Copier docs for more details.
+
+## How do I add my own invoke tasks?
+
+Put them in `tasks_local.py` at the project root. `copier update` never overwrites that
+file, and a local task with the same name as a template task wins. For heavier
+customization, you can layer your own private template on top (see
+[Can I have my own private template?](#can-i-have-my-own-private-template)).
 
 ## Can I use environments for what they're not?
 

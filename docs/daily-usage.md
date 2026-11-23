@@ -12,6 +12,7 @@ it now? You'll learn that here.
 - [Prior knowledge](#prior-knowledge)
 - [Environments](#environments)
   - [Development](#development)
+    - [Project-owned tasks](#project-owned-tasks)
     - [MailHog](#mailhog)
     - [Network isolation](#network-isolation)
     - [wdb](#wdb)
@@ -120,6 +121,12 @@ See the other tasks we ship for you with:
 ```bash
 invoke --list
 ```
+
+#### Project-owned tasks
+
+Put project-specific invoke tasks in `tasks_local.py` at the project root.
+`copier update` never overwrites that file. A local task with the same name as a
+template task overrides it. See `tasks.py.jinja` for how the file is imported.
 
 To browse Odoo go to `http://localhost:${ODOO_MAJOR}069` (i.e. for Odoo 11.0 this would
 be `http://localhost:11069`).
