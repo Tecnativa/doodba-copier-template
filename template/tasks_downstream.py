@@ -80,7 +80,7 @@ DOCKER_COMPOSE_CMD = (
 _logger = getLogger(__name__)
 
 
-def _override_docker_command(service, command, file, orig_file=None):
+def _override_docker_command(service, command, file, orig_file=None, env=None):
     # Read config from main file
     if orig_file:
         with open(orig_file) as fd:
@@ -91,11 +91,28 @@ def _override_docker_command(service, command, file, orig_file=None):
     docker_config = {
         "services": {service: {"command": command}},
     }
+    if env:
+        docker_config["services"][service]["environment"] = dict(env)
     if not docker_compose_v2 and docker_compose_file_version:
         docker_config["version"] = docker_compose_file_version
     docker_config_yaml = yaml.dump(docker_config)
     file.write(docker_config_yaml)
     file.flush()
+
+
+def _db_env(dbname, db_filter):
+    """Environment that makes the odoo container use ``dbname``."""
+    env = {"PGDATABASE": dbname}
+    if db_filter:
+        env["DB_FILTER"] = db_filter
+    return env
+
+
+def _db_env_args(dbname, db_filter):
+    args = []
+    for key, value in _db_env(dbname, db_filter).items():
+        args.extend(["-e", f"{key}={shlex.quote(str(value))}"])
+    return args
 
 
 def _remove_auto_reload(file, orig_file):
@@ -165,7 +182,7 @@ def _modules_installed(c, modules_list, dbname="devel"):
     quoted = ",".join(repr(m) for m in modules_list if m)
     cmd = (
         f"{DOCKER_COMPOSE_CMD} exec -T db "
-        f"psql -U odoo -d {dbname} -Atc "
+        f"psql -U odoo -d {shlex.quote(dbname)} -Atc "
         f'"select name from ir_module_module '
         f"where state='installed' and name in ({quoted});\""
     )
@@ -747,6 +764,7 @@ def start(c, detach=True, debugpy=False, _reload=True, port_prefix=0):
         "extra": "Install all extra addons. Default: False",
         "private": "Install all private addons. Default: False",
         "enterprise": "Install all enterprise addons. Default: False",
+        "dbname": "Database to install the addons into. Default: 'devel'.",
         "cur-file": "Path to the current file."
         " Addon name will be obtained from there to install.",
     },
@@ -759,6 +777,7 @@ def install(
     extra=False,
     private=False,
     enterprise=False,
+    dbname="devel",
 ):
     """Install Odoo addons
 
@@ -775,7 +794,10 @@ def install(
                 " See --help for details."
             )
         modules = cur_module
-    cmd = DOCKER_COMPOSE_CMD + " run --rm odoo addons init"
+    cmd = (
+        DOCKER_COMPOSE_CMD
+        + f" run --rm -e PGDATABASE={shlex.quote(dbname)} odoo addons init"
+    )
     if core:
         cmd += " --core"
     if extra:
@@ -956,7 +978,7 @@ def _get_module_dependencies(
     return dependencies
 
 
-def _test_in_debug_mode(c, odoo_command):
+def _test_in_debug_mode(c, odoo_command, dbname, db_filter):
     with tempfile.NamedTemporaryFile(
         mode="w", suffix=".yaml"
     ) as tmp_docker_compose_file:
@@ -969,6 +991,7 @@ def _test_in_debug_mode(c, odoo_command):
             odoo_command,
             file=tmp_docker_compose_file,
             orig_file=Path(str(PROJECT_ROOT), "docker-compose.yml"),
+            env=_db_env(dbname, db_filter),
         )
         with c.cd(str(PROJECT_ROOT)):
             c.run(
@@ -1031,8 +1054,9 @@ def _get_module_list(
         "cur-file": "Path to the current file."
         " Addon name will be obtained from there to run tests",
         "mode": "Mode in which tests run. Options: ['init'(default), 'update']",
-        "db_filter": "DB_FILTER regex to pass to the test container Set to ''"
-        " to disable. Default: '^devel$'",
+        "dbname": "Database to run the tests against. Default: 'devel'.",
+        "db_filter": "DB_FILTER regex to pass to the test container. Set to ''"
+        " to disable. Default: '^<dbname>$'",
         "tags": "Comma-separated list of tags to test. Default: ',/'.join(modules)",
     },
 )
@@ -1047,16 +1071,18 @@ def test(
     debugpy=False,
     cur_file=None,
     mode="init",
-    db_filter="^devel$",
+    dbname="devel",
+    db_filter=None,
     tags=None,
 ):
     """Run Odoo tests
 
     By default, tests addon from directory being worked on,
-    unless other options are specified.
+    unless other options are specified. ``--dbname`` selects the database.
 
     NOTE: Odoo must be restarted manually after this to go back to normal mode
     """
+    db_filter = f"^{dbname}$" if db_filter is None else db_filter
     if not (modules or core or extra or private or enterprise):
         cur_module = _get_cwd_addon(cur_file or Path.cwd())
         if not cur_module:
@@ -1073,7 +1099,7 @@ def test(
     if mode == "init":
         if ODOO_VERSION >= 19:
             mods = [m for m in modules.split(",") if m]
-            installed = _modules_installed(c, mods)
+            installed = _modules_installed(c, mods, dbname=dbname)
             to_install = [m for m in mods if m not in installed]
             to_update = sorted(installed)
 
@@ -1112,11 +1138,9 @@ def test(
             test_tags = tags
         odoo_command.extend(["--test-tags", test_tags])
     if debugpy:
-        _test_in_debug_mode(c, odoo_command)
+        _test_in_debug_mode(c, odoo_command, dbname, db_filter)
     else:
-        cmd = [DOCKER_COMPOSE_CMD, "run", "--rm"]
-        if db_filter:
-            cmd.extend(["-e", f"DB_FILTER='{db_filter}'"])
+        cmd = [DOCKER_COMPOSE_CMD, "run", "--rm"] + _db_env_args(dbname, db_filter)
         cmd.append("odoo")
         cmd.extend(odoo_command)
         with c.cd(str(PROJECT_ROOT)):

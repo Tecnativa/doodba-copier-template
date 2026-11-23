@@ -17,12 +17,14 @@ from .conftest import (
 )
 
 
-def _install_status(module):
+def _install_status(module, dbname="devel"):
     docker = DockerClient(compose_files=["devel.yaml"])
     return docker.compose.run(
         "odoo",
         command=[
             "psql",
+            "-d",
+            dbname,
             "-tc",
             f"select state from ir_module_module where name='{module}'",
         ],
@@ -219,6 +221,17 @@ class TestDoodbaTasks(SharedTemplate):
             invoke("img-build")
             invoke("git-aggregate")
             invoke("resetdb")
+        # --dbname leaves this database alone
+        probe_db = "probe_tmp"
+        module_name = "note" if supported_odoo_version < 17 else "project_todo"
+        invoke("resetdb", "--dbname", probe_db, "-m", "mail", "--no-populate")
+        stdout = invoke("test", "-m", module_name, "--dbname", probe_db, retcode=None)
+        _tests_ran(stdout, supported_odoo_version, module_name)
+        assert _install_status(module_name, dbname=probe_db) == "installed"
+        assert _install_status(module_name) == "uninstalled"
+        invoke("install", "-m", "mail", "--dbname", probe_db)
+        assert _install_status("mail", dbname=probe_db) == "installed"
+        assert _install_status("mail") == "uninstalled"
         # Install "mail"
         assert _install_status("mail") == "uninstalled"
         stdout = invoke("install", "-m", "mail")
@@ -234,7 +247,6 @@ class TestDoodbaTasks(SharedTemplate):
             assert _install_status("mail") == "installed"
             assert _install_status("utm") == "installed"
         # Test "note" or "project_todo" simple call in init mode (default)
-        module_name = "note" if supported_odoo_version < 17 else "project_todo"
         assert _install_status(module_name) == "uninstalled"
         stdout = invoke("test", "-m", module_name, "--mode", "init", retcode=None)
         # Ensure module was installed and tests ran
