@@ -157,6 +157,37 @@ services:
       - "127.0.0.1:${PORT_PREFIX:-{{ macros.version_major(odoo_version) -}} }984:1984"
     # HACK https://github.com/Kozea/wdb/issues/136
     init: true
+{%- if use_odooclaw and 16.0 <= odoo_version <= 18.0 %}
+
+  odooclaw:
+    build:
+      context: ./odooclaw
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .docker/odooclaw.env
+    environment:
+      # Pin the DB the agent talks to so a shared env file never points at the
+      # wrong database (devel here, $POSTGRES_DB in prod).
+      ODOO_DB: *dbname
+      ODOOCLAW_CHANNELS_ODOO_TARGET_DB: *dbname
+    ports:
+      - "127.0.0.1:${PORT_PREFIX:-{{ macros.version_major(odoo_version) -}} }990:18790"
+    # The gateway must reach the configured LLM provider on the internet, and the
+    # default network is internal (no egress). Same anchor the proxy uses.
+    networks: *public
+    volumes:
+      - odooclaw_data:/home/odooclaw/.odooclaw
+      - ./odooclaw/config/config.json:/home/odooclaw/.odooclaw/config.json:ro
+    depends_on:
+      - odoo
+      - redis
+
+  redis:
+    image: docker.io/library/redis:7-alpine
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+{%- endif %}
 networks:
   default:
     internal: ${DOODBA_NETWORK_INTERNAL-true}
@@ -165,3 +196,6 @@ networks:
 volumes:
   filestore:
   db:
+{%- if use_odooclaw and 16.0 <= odoo_version <= 18.0 %}
+  odooclaw_data:
+{%- endif %}

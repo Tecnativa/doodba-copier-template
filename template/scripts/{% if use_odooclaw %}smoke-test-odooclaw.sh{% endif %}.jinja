@@ -1,0 +1,45 @@
+#!/bin/bash
+# Smoke-test the OdooClaw gateway in a generated Doodba project.
+#
+# Checks that the gateway answers on its health endpoint and that redis is up.
+# Works against both devel.yaml and prod.yaml (pass the compose file as $1;
+# defaults to devel.yaml).
+set -uo pipefail
+
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+COMPOSE_FILE="${1:-$PROJECT_ROOT/devel.yaml}"
+# Host port follows the devel.yaml mapping: ${PORT_PREFIX:-<major>}990 -> 18790
+ODOOCLAW_HOST_PORT="${ODOOCLAW_HOST_PORT:-${PORT_PREFIX:-{{- "%.0f"|format(odoo_version) -}} }990}"
+HEALTH_URL="${ODOOCLAW_HEALTH_URL:-http://127.0.0.1:${ODOOCLAW_HOST_PORT}/health}"
+
+cd "$PROJECT_ROOT"
+
+if docker compose -f "$COMPOSE_FILE" ps --status running odooclaw 2>/dev/null | grep -q odooclaw; then
+    echo ">> odooclaw container is running."
+else
+    echo "!! odooclaw container is NOT running. Start it with:"
+    echo "   docker compose -f $COMPOSE_FILE up -d odooclaw"
+    exit 1
+fi
+
+echo ">> Checking gateway health at $HEALTH_URL ..."
+for i in 1 2 3 4 5; do
+    if curl -fsS "$HEALTH_URL" >/dev/null 2>&1; then
+        echo ">> Gateway healthy."
+        break
+    fi
+    [ "$i" -eq 5 ] && { echo "!! Gateway not answering after 5 tries." >&2; exit 1; }
+    sleep 2
+done
+
+if docker compose -f "$COMPOSE_FILE" ps --status running redis 2>/dev/null | grep -q redis; then
+    echo ">> redis is running."
+else
+    echo "!! redis is NOT running (job store will fail)." >&2
+    exit 1
+fi
+
+echo ""
+echo "Smoke test passed. To end-to-end test the bot:"
+echo "  1) Install mail_bot_odooclaw in Odoo (Apps -> 'OdooClaw')."
+echo "  2) Open a DM in Discuss and mention @OdooClaw."

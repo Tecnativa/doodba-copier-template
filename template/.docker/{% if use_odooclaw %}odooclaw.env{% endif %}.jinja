@@ -1,0 +1,63 @@
+# OdooClaw settings (generated; managed by copier while use_odooclaw is true)
+# ⚠️ This file may contain secrets. Do NOT commit it (.docker/ is git-ignored).
+#
+# NOTE: docker compose reads this file verbatim as an `env_file`. A ${VAR}
+# reference written here is interpolated from your shell or from the project
+# `.env`, NEVER from this file — so always write values literally, as they
+# appear below.
+#
+# LLM provider credentials. The gateway reads them through the
+# ODOOCLAW_PROVIDERS_<PROVIDER>_API_KEY / _API_BASE convention.
+ODOOCLAW_AGENTS_DEFAULTS_PROVIDER={{ odooclaw_provider }}
+ODOOCLAW_AGENTS_DEFAULTS_MODEL={{ odooclaw_model }}
+{% if odooclaw_provider == "openai" -%}
+# Paste your OpenAI API key after '=' (leave empty for a keyless local setup).
+ODOOCLAW_PROVIDERS_OPENAI_API_KEY=
+ODOOCLAW_PROVIDERS_OPENAI_API_BASE=https://api.openai.com/v1
+{% elif odooclaw_provider == "anthropic" -%}
+# Paste your Anthropic API key after '=' .
+ODOOCLAW_PROVIDERS_ANTHROPIC_API_KEY=
+ODOOCLAW_PROVIDERS_ANTHROPIC_API_BASE=https://api.anthropic.com
+{% elif odooclaw_provider == "openrouter" -%}
+# Paste your OpenRouter API key after '=' .
+ODOOCLAW_PROVIDERS_OPENROUTER_API_KEY=
+ODOOCLAW_PROVIDERS_OPENROUTER_API_BASE=https://openrouter.ai/api/v1
+{% elif odooclaw_provider == "groq" -%}
+# Paste your Groq API key after '=' .
+ODOOCLAW_PROVIDERS_GROQ_API_KEY=
+ODOOCLAW_PROVIDERS_GROQ_API_BASE=https://api.groq.com/openai/v1
+{% elif odooclaw_provider == "ollama" -%}
+ODOOCLAW_PROVIDERS_OLLAMA_API_KEY=ollama
+ODOOCLAW_PROVIDERS_OLLAMA_API_BASE=http://host.docker.internal:11434/v1
+{% elif odooclaw_provider == "gemini" -%}
+# Paste your Gemini API key after '=' .
+ODOOCLAW_PROVIDERS_GEMINI_API_KEY=
+ODOOCLAW_PROVIDERS_GEMINI_API_BASE=https://generativelanguage.googleapis.com/v1beta/openai
+{% endif %}
+
+# Odoo channel (gateway webhook that the mail_bot_odooclaw module calls)
+ODOOCLAW_CHANNELS_ODOO_ENABLED=true
+ODOOCLAW_CHANNELS_ODOO_WEBHOOK_HOST=0.0.0.0
+ODOOCLAW_CHANNELS_ODOO_WEBHOOK_PORT=18790
+ODOOCLAW_CHANNELS_ODOO_WEBHOOK_PATH=/webhook/odoo
+ODOOCLAW_CHANNELS_ODOO_ALLOW_GROUP_MENTIONS=false
+
+# The gateway's HTTP server binds to $ODOOCLAW_GATEWAY_HOST, whose built-in
+# default is 127.0.0.1 — inside a container that makes the published port
+# unreachable and the template's own smoke test fail. Bind all interfaces here.
+ODOOCLAW_GATEWAY_HOST=0.0.0.0
+
+# Odoo XML-RPC credentials used by the odoo-mcp tools.
+# ODOO_DB / ODOOCLAW_CHANNELS_ODOO_TARGET_DB are environment-specific and are
+# set by the devel.yaml / prod.yaml compose files, NOT here, so that one shared
+# env file never points the agent at the wrong database.
+ODOO_URL=http://odoo:8069
+ODOO_USERNAME=admin
+# Doodba's Odoo admin password (copier answer `odoo_admin_password`). Prefer a
+# dedicated technical user in real setups: create it in Odoo and replace both
+# lines above (see odooclaw/docs/ODOO_TECHNICAL_USER.md).
+ODOO_PASSWORD={{ odoo_admin_password }}
+
+# Job store
+ODOOCLAW_JOB_STORE=odoo
+ODOOCLAW_REDIS_URL=redis://redis:6379/0

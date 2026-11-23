@@ -1,0 +1,36 @@
+{% if use_odooclaw -%}
+{
+  "agents": {
+    "defaults": {
+      "provider": "{{ odooclaw_provider }}",
+      "model": "{{ odooclaw_model }}",
+      "workspace": "~/.odooclaw/workspace",
+      "restrict_to_workspace": true
+    }
+  },
+  "channels": {
+    "odoo": {
+      "enabled": true,
+      "webhook_host": "0.0.0.0",
+      "webhook_port": 18790,
+      "webhook_path": "/webhook/odoo",
+      "allow_group_mentions": false
+    }
+  },
+  "tools": {
+    "mcp": {
+      "enabled": true,
+      "servers": {
+        "odoo-mcp": {
+          "enabled": true,
+          "command": "python3",
+          "args": ["-m", "odoo_mcp.server"],
+          "env": {
+            "PYTHONUNBUFFERED": "1"
+          }
+        }
+      }
+    }
+  }
+}
+{% endif -%}
