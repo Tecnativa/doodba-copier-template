@@ -13,6 +13,7 @@ from python_on_whales import DockerClient
 
 from .conftest import (
     DEFAULT_ODOO_VERSION,
+    PRE_COMMIT_CMD,
     build_file_tree,
     generate_test_addon,
 )
@@ -307,7 +308,7 @@ def test_dotdocker_ignore_content(single_project_path: Path, cloned_template: Pa
         unsafe=True,
     )
     git("add", ".")
-    local["pre-commit"]("run", "--all-files", "--show-diff-on-failure", retcode=1)
+    local[PRE_COMMIT_CMD]("run", "--all-files", "--show-diff-on-failure", retcode=1)
     git("commit", "-am", "Hello World")
     (single_project_path / ".docker" / "some-file").touch()
     assert not git("status", "--porcelain")
