@@ -193,7 +193,7 @@ class TestDoodbaTasks(SharedTemplate):
         # Test normal call
         print(stdout)
         assert "Reinitialized existing Git repository" in stdout
-        assert "pre-commit installed" in stdout
+        assert "pre-commit installed" in stdout or "Installed Git hook at" in stdout
         invoke("start")
         # Test "--debugpy and wait time call
         invoke_stop(shared_project)

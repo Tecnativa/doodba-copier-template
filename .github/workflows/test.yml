@@ -26,17 +26,13 @@ env:
   DOODBA_GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 jobs:
   pre-commit:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
-      - uses: &checkout-action actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        name: Checkout project
-      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
-        with:
-          python-version: "3.11"
-      - uses: tox-dev/action-pre-commit-uv@e09b8958484dfe71f4ac3bc7afb230ba506402ec # v1.0.5
+      - uses: &checkout-action actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: j178/prek-action@44924fe9ef4a6f88253c4b6b1bf11c689d3ce53d # v3.1.0
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: pre-commit
     strategy:
       matrix:

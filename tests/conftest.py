@@ -2,10 +2,8 @@ import logging
 import os
 import shutil
 import socket
-import stat
 import tempfile
 import textwrap
-from contextlib import contextmanager
 from pathlib import Path
 from typing import Union
 
@@ -33,7 +31,7 @@ DEFAULT_ODOO_VERSION = COPIER_SETTINGS["odoo_version"]["default"]
 
 SELECTED_ODOO_VERSIONS = frozenset(
     map(float, os.environ.get("SELECTED_ODOO_VERSIONS", "").split())
-) or [DEFAULT_ODOO_VERSION]
+) or [18.0]
 PRERELEASE_ODOO_VERSIONS = {20.0}
 
 # Postgres versions
@@ -44,6 +42,7 @@ yaml.SafeLoader.add_constructor(
     "!override",
     lambda loader, node: loader.construct_sequence(node),
 )
+PRE_COMMIT_CMD = shutil.which("prek") or shutil.which("pre-commit")
 
 
 @pytest.fixture(autouse=True)
@@ -347,31 +346,6 @@ def invoke_stop(exec_path, purge=True):
             assert not docker.compose.ps(), (
                 "Containers running or not removed. 'stop [--purge]' command did not work."  # noqa: E501
             )
-
-
-@contextmanager
-def bypass_pre_commit():
-    """A context manager to patch the pre-commit binary to ignore it"""
-    pre_commit_path_str = shutil.which("pre-commit")
-    try:
-        # Move current binary to different location
-        pre_commit_path = Path(pre_commit_path_str)
-        shutil.move(pre_commit_path_str, pre_commit_path_str + "-old")
-        with pre_commit_path.open("w") as fd:
-            fd.write(
-                "#!/usr/bin/python3\n"
-                "# -*- coding: utf-8 -*-\n"
-                "import sys\n"
-                "if __name__ == '__main__':\n"
-                "    sys.exit(0)\n"
-            )
-        cur_stat = pre_commit_path.stat()
-        # Like chmod ug+x
-        pre_commit_path.chmod(cur_stat.st_mode | stat.S_IXUSR | stat.S_IXGRP)
-        yield
-    finally:
-        # Restore original binary
-        shutil.move(pre_commit_path_str + "-old", pre_commit_path_str)
 
 
 def create_env_file(path, data):

@@ -76,7 +76,7 @@ DOCKER_COMPOSE_CMD = (
     if docker_compose_v2
     else shutil.which("docker-compose")
 )
-
+PRE_COMMIT_CMD = shutil.which("prek") or shutil.which("pre-commit")
 _logger = getLogger(__name__)
 
 
@@ -636,7 +636,7 @@ def develop(c):
         c.run("ln -sf devel.yaml docker-compose.yml")
         write_code_workspace_file(c)
         write_pycharm_debugger_configurations()
-        c.run("pre-commit install")
+        c.run(f"{PRE_COMMIT_CMD} install")
 
 
 @task(develop)
@@ -658,7 +658,7 @@ def git_aggregate(c):
             else "uninstall"
         )
         with c.cd(str(git_folder)):
-            c.run(f"pre-commit {action}")
+            c.run(f"{PRE_COMMIT_CMD} {action}")
 
 
 @task(develop)
@@ -694,7 +694,7 @@ def img_pull(c, ignore_buildable=True):
 @task()
 def lint(c, verbose=False):
     """Lint & format source code."""
-    cmd = "pre-commit run --show-diff-on-failure --all-files --color=always"
+    cmd = f"{PRE_COMMIT_CMD} run --show-diff-on-failure --all-files --color=always"
     if verbose:
         cmd += " --verbose"
     with c.cd(str(PROJECT_ROOT)):
@@ -867,17 +867,15 @@ def updatepot(
         new_lines = []
         for line in content.splitlines():
             if remove_dates and (
-                line.startswith('"POT-Creation-Date')
-                or line.startswith('"PO-Revision-Date')
+                line.startswith(('"POT-Creation-Date', '"PO-Revision-Date'))
             ):
                 continue
             new_lines.append(line)
         content = "\n".join(new_lines)
         Path(new_file).write_text(content.strip() + "\n")
     _logger.info(".po[t] files updated")
-    precommit_cmd = (
-        f"pre-commit run --files {' '.join(iglob(f'{glob}/*.po*'))} --color=always"
-    )
+    pot_files = iglob(f"{glob}/*.po*")
+    precommit_cmd = f"{PRE_COMMIT_CMD} run --files {' '.join(pot_files)} --color=always"
     if not repo and module:
         for folder in iglob(f"{PROJECT_ROOT}/odoo/custom/src/*/*"):
             if os.path.isdir(folder) and os.path.basename(folder) == module:

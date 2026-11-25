@@ -6,7 +6,7 @@ from plumbum import local
 from plumbum.cmd import git, invoke
 from python_on_whales import DockerClient
 
-from .conftest import SharedTemplate
+from .conftest import PRE_COMMIT_CMD, SharedTemplate
 
 
 class TestDefaultSettings(SharedTemplate):
@@ -21,7 +21,7 @@ class TestDefaultSettings(SharedTemplate):
         Path(shared_project, "odoo", "auto", "addons").rmdir()
         Path(shared_project, "odoo", "auto").rmdir()
         git("add", ".")
-        local["pre-commit"]("run", "--all-files", "--show-diff-on-failure", retcode=1)
+        local[PRE_COMMIT_CMD]("run", "--all-files", "--show-diff-on-failure", retcode=1)
         git("commit", "-am", "Hello World")
         # Assert all compose files are valid
         for filename in ["prod.yaml", "test.yaml", "devel.yaml", "migration.yaml"]:
